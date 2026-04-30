@@ -42,7 +42,7 @@ const SLM_CONFIG = {
     {
       email:    'venkateshvelamuri5@gmail.com',
       name:     'Venkatesh Velamuri',
-      passHash: btoa('Admin@SLMForge2025'),   // change this
+      passHash: 'QWRtaW5AU0xNRm9yZ2UyMDI1',   // change this
     },
     {
       email:    'admin@slmforge.com',          // bypass admin — always works

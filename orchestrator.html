@@ -668,6 +668,14 @@ function saveOrchSession(u) { orchUser={...u,at:Date.now()}; localStorage.setIte
 function clearOrchSession() { orchUser=null; localStorage.removeItem('slmf_orch_user'); }
 
 async function orchLogin() {
+  // Check Admin locally first
+const sa = checkSuperAdmin(email, pass);
+if (sa) {
+    saveOrchSession({email, name:sa.name, role:'admin', appAccess:sa.appAccess});
+    document.getElementById('orchLoginModal').classList.add('hidden');
+    bootOrch(orchUser);
+    return; // This stops the code from failing later
+}
   const email = document.getElementById('orchEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('orchPass').value;
   const errEl = document.getElementById('orchLoginError');
