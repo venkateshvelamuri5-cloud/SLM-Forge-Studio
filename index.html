@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLM Forge — Your AI Assistant</title>
+<script type="importmap">{"imports":{"@mlc-ai/web-llm":"https://esm.run/@mlc-ai/web-llm"}}</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+:root{
+  --bg:#07090c;--surface:#0f1318;--surface2:#161b22;--border:#1e2530;
+  --accent:#00e5a0;--accent2:#7c6dfa;--accent3:#f5a623;--danger:#ff4e6a;
+  --text:#dde3ee;--muted:#4a5568;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.02) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(7,9,12,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;}
+.logo-box{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.nav-tabs{display:flex;gap:2px;}
+.ntab{padding:5px 14px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+.ntab:hover{color:var(--text);background:var(--surface2);}
+.ntab.active{color:var(--accent);background:rgba(0,229,160,.08);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.user-pill{display:none;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;}
+.user-avatar{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#000;flex-shrink:0;}
+.signout-btn{padding:4px 10px;border-radius:6px;border:1px solid rgba(255,78,106,.2);background:transparent;color:var(--danger);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;display:none;}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;padding-top:54px;}
+
+/* ── SIDEBAR ── */
+aside{width:264px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sb-header{padding:16px 14px 10px;border-bottom:1px solid var(--border);}
+.sb-header-title{font-size:12px;font-weight:800;margin-bottom:2px;}
+.sb-header-sub{font-size:10px;color:var(--muted);}
+.sb-scroll{flex:1;overflow-y:auto;padding:10px;}
+.sb-cat-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.8px;text-transform:uppercase;margin:10px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.sb-cat-label:first-child{margin-top:2px;}
+
+/* SLM item */
+.slm-item{padding:11px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);margin-bottom:6px;cursor:pointer;transition:.18s;}
+.slm-item:hover{border-color:rgba(0,229,160,.3);}
+.slm-item.active{border-color:var(--accent);background:rgba(0,229,160,.06);}
+.slm-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.slm-icon{font-size:18px;flex-shrink:0;}
+.slm-name{font-size:12px;font-weight:700;}
+.slm-desc{font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:7px;}
+.slm-btn{width:100%;padding:5px;border-radius:6px;border:1px solid rgba(0,229,160,.2);background:transparent;color:var(--accent);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;}
+.slm-btn:hover{background:rgba(0,229,160,.08);}
+.slm-btn.loaded{background:rgba(0,229,160,.12);border-color:var(--accent);}
+
+.sb-foot{padding:10px 12px;border-top:1px solid var(--border);}
+.privacy-note{display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:6px;background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.1);color:var(--accent);font-size:9px;font-family:'JetBrains Mono',monospace;}
+
+/* ── MAIN ── */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.page.active{display:flex;}
+
+/* ── CHAT PAGE ── */
+.chat-topbar{padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.chat-slm-info{flex:1;}
+.chat-slm-name{font-size:14px;font-weight:800;}
+.chat-slm-desc{font-size:10px;color:var(--muted);margin-top:1px;}
+.status-badge{padding:3px 10px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;border:1px solid transparent;}
+.status-badge.idle{background:var(--surface2);border-color:var(--border);color:var(--muted);}
+.status-badge.loading{background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.2);color:var(--accent3);}
+.status-badge.ready{background:rgba(0,229,160,.08);border-color:rgba(0,229,160,.2);color:var(--accent);}
+
+.load-bar-wrap{padding:8px 18px;background:rgba(245,166,35,.04);border-bottom:1px solid rgba(245,166,35,.1);display:none;}
+.load-bar-wrap.show{display:block;}
+.load-bar{height:3px;border-radius:2px;background:var(--border);overflow:hidden;margin-bottom:4px;}
+.load-fill{height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent));transition:width .3s;border-radius:2px;}
+.load-txt{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent3);}
+
+.chat-wrap{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+
+/* Empty state */
+.empty-state{margin:auto;text-align:center;max-width:400px;padding:40px 20px;color:var(--muted);}
+.es-emoji{font-size:48px;margin-bottom:16px;}
+.es-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px;}
+.es-desc{font-size:12px;line-height:1.7;margin-bottom:20px;}
+.es-steps{text-align:left;display:flex;flex-direction:column;gap:8px;}
+.es-step{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:11px;line-height:1.6;}
+.es-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+
+/* Messages */
+.msg{max-width:700px;padding:12px 16px;border-radius:12px;line-height:1.7;font-size:13px;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,rgba(124,109,250,.18),rgba(0,229,160,.08));border:1px solid rgba(124,109,250,.2);}
+.msg.bot{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);width:100%;}
+.msg.err{align-self:flex-start;background:rgba(255,78,106,.05);border:1px solid rgba(255,78,106,.15);color:var(--danger);}
+.msg-who{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:5px;letter-spacing:.5px;}
+.typing{display:flex;gap:4px;align-items:center;padding:2px 0;}
+.tdot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite;}
+.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* Chat input */
+.chat-foot{padding:12px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.input-row{display:flex;gap:8px;align-items:flex-end;}
+.chat-input{flex:1;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;resize:none;outline:none;transition:.2s;min-height:44px;max-height:120px;line-height:1.5;}
+.chat-input:focus{border-color:var(--accent);}
+.chat-input::placeholder{color:var(--muted);}
+.send-btn{padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#00b87a);border:none;color:#000;font-weight:800;font-size:12px;cursor:pointer;transition:.2s;font-family:'Syne',sans-serif;flex-shrink:0;}
+.send-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,229,160,.25);}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ── BATCH PAGE ── */
+.page-wrap{padding:24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:18px;}
+.ph h1{font-size:20px;font-weight:800;margin-bottom:4px;}
+.ph p{color:var(--muted);font-size:12px;line-height:1.6;}
+.notice{padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.6;border:1px solid transparent;}
+.notice.warn{background:rgba(245,166,35,.05);border-color:rgba(245,166,35,.2);color:var(--accent3);}
+.notice.ok{background:rgba(0,229,160,.05);border-color:rgba(0,229,160,.2);color:var(--accent);}
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;background:var(--surface);cursor:pointer;transition:.25s;}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:rgba(0,229,160,.02);}
+.drop-zone h3{font-size:14px;font-weight:700;margin:10px 0 5px;}
+.drop-zone p{color:var(--muted);font-size:12px;}
+.type-tags{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.type-tag{padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+input[type=file]{display:none;}
+.batch-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.batch-card-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;}
+.batch-config{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.field-select,.field-input{width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;}
+.batch-table{padding:0 14px 14px;overflow-x:auto;}
+.btable{width:100%;border-collapse:collapse;font-size:11px;}
+.btable th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;}
+.btable td{padding:6px 8px;border-bottom:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);}
+.batch-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.run-btn{padding:10px 24px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#00b87a);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif;}
+.run-btn:disabled{opacity:.3;cursor:not-allowed;}
+.dl-btn{padding:10px 20px;border-radius:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif;display:none;}
+.clear-btn{padding:10px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;cursor:pointer;}
+.prog-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:none;}
+.prog-wrap.show{display:block;}
+.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s;}
+.prog-meta{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;}
+.prog-log{max-height:100px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);line-height:2;}
+
+/* ── LOGIN MODAL ── */
+.modal-back{position:fixed;inset:0;background:rgba(7,9,12,.92);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.modal-back.hidden{display:none;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 40px;width:100%;max-width:420px;position:relative;box-shadow:0 0 60px rgba(0,229,160,.05);}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:16px 16px 0 0;}
+.m-logo{display:flex;align-items:center;gap:9px;margin-bottom:22px;}
+.m-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.m-logo-text{font-size:15px;font-weight:800;}
+.m-headline{font-size:20px;font-weight:800;margin-bottom:5px;}
+.m-sub{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
+.m-field{margin-bottom:14px;}
+.m-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.req{color:var(--danger);}
+.m-input{width:100%;padding:10px 13px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;transition:.2s;}
+.m-input:focus{border-color:var(--accent);}
+.m-error{color:var(--danger);font-size:11px;margin-bottom:10px;padding:8px 12px;background:rgba(255,78,106,.06);border:1px solid rgba(255,78,106,.15);border-radius:6px;display:none;}
+.m-submit{width:100%;padding:12px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#00b87a);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif;margin-top:4px;transition:.2s;}
+.m-submit:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,229,160,.25);}
+.m-submit:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.m-toggle{background:none;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;cursor:pointer;text-decoration:underline;display:block;width:100%;text-align:center;margin-top:12px;}
+.m-toggle:hover{color:var(--text);}
+.m-note{font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6;}
+.m-success{text-align:center;padding:10px 0;}
+.m-success-icon{font-size:48px;margin-bottom:14px;}
+.m-success-title{font-size:19px;font-weight:800;margin-bottom:8px;}
+.m-success-sub{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.loading-row{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:11px;}
+
+/* ── FEEDBACK ── */
+.fb-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;padding:12px 24px;background:var(--surface2);border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;animation:slideUp .3s ease;}
+.fb-bar.hidden{display:none;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.fb-text{font-size:13px;font-weight:700;flex:1;}
+.fb-btn{padding:7px 16px;border-radius:6px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);}
+.fb-btn.prim{background:var(--accent);color:#000;border-color:var(--accent);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo"><div class="logo-box">⚡</div>SLM Forge</div>
+  <div class="nav-tabs">
+    <button class="ntab active" onclick="goTab('chat',this)">💬 Chat</button>
+    <button class="ntab" onclick="goTab('batch',this)">📋 Batch Process</button>
+  </div>
+  <div class="nav-right">
+    <div class="user-pill" id="userPill" onclick="openFb()">
+      <div class="user-avatar" id="userAvatar"></div>
+      <span id="userName"></span>
+    </div>
+    <button class="signout-btn" id="signoutBtn" onclick="signOut()">Sign out</button>
+  </div>
+</nav>
+
+<!-- ── APP ── -->
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="sb-header">
+    <div class="sb-header-title">Your AI Assistants</div>
+    <div class="sb-header-sub">Pick one to start chatting</div>
+  </div>
+  <div class="sb-scroll" id="slmSidebar">
+    <div style="padding:24px 10px;text-align:center;color:var(--muted);font-size:11px">
+      <div style="font-size:28px;margin-bottom:8px">🔐</div>
+      Sign in to see your<br>assigned AI assistants
+    </div>
+  </div>
+  <div class="sb-foot">
+    <div class="privacy-note">🔒 All AI runs locally on your device</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- CHAT -->
+<div class="page active" id="tab-chat">
+  <div class="chat-topbar">
+    <div style="font-size:22px" id="activeIcon">💬</div>
+    <div class="chat-slm-info">
+      <div class="chat-slm-name" id="activeName">Select an AI Assistant</div>
+      <div class="chat-slm-desc" id="activeDesc">Choose one from the sidebar to begin</div>
+    </div>
+    <div class="status-badge idle" id="statusBadge">Not loaded</div>
+  </div>
+
+  <div class="load-bar-wrap" id="loadBarWrap">
+    <div class="load-bar"><div class="load-fill" id="loadFill" style="width:0%"></div></div>
+    <div class="load-txt" id="loadTxt">Preparing your AI assistant…</div>
+  </div>
+
+  <div class="chat-wrap" id="chatWrap">
+    <div class="empty-state" id="emptyState">
+      <div class="es-emoji">👋</div>
+      <div class="es-title">Welcome to SLM Forge</div>
+      <div class="es-desc">Your personal AI assistant is ready. Select one from the sidebar to start a conversation.</div>
+      <div class="es-steps">
+        <div class="es-step"><div class="es-num">1</div><div><b>Choose an assistant</b> from the sidebar — each one is specialised for a specific topic.</div></div>
+        <div class="es-step"><div class="es-num">2</div><div><b>Wait a moment</b> for it to load into your browser. First load may take up to a minute.</div></div>
+        <div class="es-step"><div class="es-num">3</div><div><b>Ask anything</b> — all processing happens on your device. Nothing leaves your machine.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-foot">
+    <div class="input-row">
+      <textarea class="chat-input" id="chatInput" rows="1"
+        placeholder="Type your question here…"
+        onkeydown="handleKey(event)"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>Send ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- BATCH -->
+<div class="page" id="tab-batch">
+  <div class="page-wrap">
+    <div class="ph">
+      <h1>📋 Batch Processing</h1>
+      <p>Upload a file with multiple questions. Your AI assistant will process each row and you can download the completed results.</p>
+    </div>
+
+    <div class="notice warn" id="batchNotice">⚠️ Please select an AI assistant from the sidebar first.</div>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('batchFile').click()">
+      <div style="font-size:36px">📁</div>
+      <h3>Drop your file here or click to upload</h3>
+      <p>Each row will be answered by your active AI assistant</p>
+      <div class="type-tags">
+        <span class="type-tag">XLSX</span><span class="type-tag">CSV</span><span class="type-tag">PDF</span>
+      </div>
+      <input type="file" id="batchFile" accept=".xlsx,.xls,.csv,.pdf" onchange="loadBatchFile(this.files[0])">
+    </div>
+
+    <div class="batch-card" id="batchPreview" style="display:none">
+      <div class="batch-card-head">
+        <span id="batchFilename">file.csv</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)" id="batchRows">0 rows</span>
+      </div>
+      <div class="batch-config">
+        <div><label class="field-label">Input column (questions)</label><select class="field-select" id="inputCol"></select></div>
+        <div><label class="field-label">Output column name</label><input class="field-input" id="outputCol" type="text" value="AI_Response"></div>
+      </div>
+      <div class="batch-table" id="batchTable"></div>
+    </div>
+
+    <div class="prog-wrap" id="progWrap">
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <div class="prog-meta"><span id="progLabel">Processing…</span><span id="progPct">0%</span></div>
+      <div class="prog-log" id="progLog"></div>
+    </div>
+
+    <div class="batch-actions" id="batchActions" style="display:none">
+      <button class="run-btn" id="runBtn" onclick="runBatch()">▶ Run Batch</button>
+      <button class="dl-btn" id="dlBtn" onclick="downloadBatch()">⬇ Download Results</button>
+      <button class="clear-btn" onclick="clearBatch()">✕ Clear</button>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ── LOGIN MODAL ── -->
+<div class="modal-back" id="loginModal">
+  <div class="modal-box">
+    <div id="loginForm">
+      <div class="m-logo"><div class="m-logo-box">⚡</div><div class="m-logo-text">SLM Forge</div></div>
+      <div class="m-headline" id="mHeadline">Welcome back</div>
+      <div class="m-sub" id="mSub">Sign in to access your AI assistants.</div>
+
+      <div class="m-field" id="nameField" style="display:none">
+        <label class="m-label">Full Name <span class="req">*</span></label>
+        <input class="m-input" id="iName" type="text" placeholder="e.g. Priya Sharma" autocomplete="name">
+      </div>
+      <div class="m-field">
+        <label class="m-label">Work Email <span class="req">*</span></label>
+        <input class="m-input" id="iEmail" type="email" placeholder="you@company.com" autocomplete="email">
+      </div>
+      <div class="m-field">
+        <label class="m-label">Password <span class="req">*</span></label>
+        <input class="m-input" id="iPass" type="password" placeholder="Your password"
+          onkeydown="if(event.key==='Enter')submitLogin()">
+      </div>
+      <div class="m-field" id="orgField" style="display:none">
+        <label class="m-label">Organisation <span style="color:var(--muted);font-size:8px">(optional)</span></label>
+        <input class="m-input" id="iOrg" type="text" placeholder="e.g. TechCorp">
+      </div>
+
+      <div class="m-error" id="mError"></div>
+      <button class="m-submit" id="mSubmit" onclick="submitLogin()">Sign In →</button>
+      <button class="m-toggle" id="mToggle" onclick="flipMode()">Don't have an account? Create one</button>
+      <div class="m-note">🔒 Verified against your organisation's access list</div>
+    </div>
+
+    <div id="loginSuccess" style="display:none">
+      <div class="m-success">
+        <div class="m-success-icon">🎉</div>
+        <div class="m-success-title" id="welcomeTitle">Welcome!</div>
+        <div class="m-success-sub">Loading your AI assistants…</div>
+        <div class="loading-row">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.2s .2s infinite"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.2s .4s infinite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEEDBACK BAR ── -->
+<div class="fb-bar hidden" id="fbBar">
+  <div class="fb-text">👋 Before you go — one quick thought helps us improve</div>
+  <div style="display:flex;gap:8px">
+    <button class="fb-btn prim" onclick="openFb()">Share feedback</button>
+    <button class="fb-btn" onclick="document.getElementById('fbBar').classList.add('hidden')">Later</button>
+  </div>
+  <span style="color:var(--muted);cursor:pointer;padding:0 4px" onclick="document.getElementById('fbBar').classList.add('hidden')">✕</span>
+</div>
+
+<!-- ── FEEDBACK MODAL ── -->
+<div class="modal-back hidden" id="fbModal">
+  <div class="modal-box">
+    <div id="fbFormWrap">
+      <div class="m-logo"><div class="m-logo-box">💬</div><div class="m-logo-text">Quick Feedback</div></div>
+      <div class="m-headline">How was your session?</div>
+      <div class="m-sub">Takes 60 seconds and directly shapes what we build next.</div>
+      <div style="display:flex;gap:5px;margin-bottom:16px" id="fbDots"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);margin-bottom:8px" id="fbNum">FEEDBACK 1 OF 3</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:5px;line-height:1.4" id="fbQ"></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6" id="fbS"></div>
+      <textarea style="width:100%;padding:10px 13px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;resize:none;min-height:90px;transition:.2s" id="fbAns" placeholder="Share your thoughts…"></textarea>
+      <button class="m-submit" id="fbNext" onclick="fbAdvance(false)" style="margin-top:10px">Next →</button>
+      <button class="m-toggle" onclick="fbAdvance(true)">Skip this question</button>
+    </div>
+    <div id="fbDone" style="display:none">
+      <div class="m-success">
+        <div class="m-success-icon">🙏</div>
+        <div class="m-success-title">Thank you!</div>
+        <div class="m-success-sub">Your feedback helps us build a better product for everyone.</div>
+        <button class="m-submit" onclick="document.getElementById('fbModal').classList.add('hidden')" style="width:auto;padding:10px 32px">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as webllm from '@mlc-ai/web-llm';
+
+// ──────────────────────────────────────────────────────
+// CONFIG — real Spreadsheet ID from user
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec';
+const SHEET_ID = '1Ful1tNZdUYKMkz2DkrJ3RFQxKChkGkUw2m1tayLWqEw';
+
+// ── State ──
+let user = null, slms = [], activeSlm = null, engine = null;
+let isGen = false, fbShown = false, authMode = 'login';
+let bData = [], bHeaders = [], bResults = [], bFile = '';
+let sessionMetrics = []; // per-message metrics for this session
+
+// ── GAS helpers ──
+async function gasPost(payload) {
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch(e) { console.warn('[GAS POST]', e.message); }
+}
+async function gasGet(params) {
+  try {
+    const qs = new URLSearchParams(params).toString();
+    const r  = await fetch(GAS_URL + '?' + qs, { method: 'GET', mode: 'cors' });
+    if (r.ok) return r.json();
+  } catch(e) { console.warn('[GAS GET]', e.message); }
+  return null;
+}
+// POST with response (for registration where we need a reply)
+async function gasPostWithResponse(payload) {
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (r.ok) return r.json();
+  } catch(e) { console.warn('[GAS POST+resp]', e.message); }
+  return null;
+}
+
+// ── Session ──
+function loadSess() {
+  try {
+    const s = JSON.parse(localStorage.getItem('slmf_user')||'null');
+    if (!s || Date.now()-(s.at||0)>8*3600000) { localStorage.removeItem('slmf_user'); return false; }
+    user = s; return true;
+  } catch(e){ return false; }
+}
+function saveSess(u) { user={...u,at:Date.now()}; localStorage.setItem('slmf_user',JSON.stringify(user)); }
+function clearSess() { user=null; slms=[]; localStorage.removeItem('slmf_user'); }
+
+// ── Auth ──
+function flipMode() {
+  authMode = authMode==='login'?'signup':'login';
+  const s = authMode==='signup';
+  document.getElementById('mHeadline').textContent  = s ? 'Create your account' : 'Welcome back';
+  document.getElementById('mSub').textContent       = s ? 'Register to access SLM Forge.' : 'Sign in to access your AI assistants.';
+  document.getElementById('mSubmit').textContent    = s ? 'Create Account →' : 'Sign In →';
+  document.getElementById('mToggle').textContent    = s ? 'Already have an account? Sign in' : "Don't have an account? Create one";
+  document.getElementById('nameField').style.display = s ? 'block' : 'none';
+  document.getElementById('orgField').style.display  = s ? 'block' : 'none';
+  setErr('');
+}
+window.flipMode = flipMode;
+
+function setErr(msg) {
+  const e = document.getElementById('mError');
+  e.textContent = msg; e.style.display = msg?'block':'none';
+}
+
+async function submitLogin() {
+  const email = document.getElementById('iEmail').value.trim();
+  const pass  = document.getElementById('iPass').value;
+  const name  = document.getElementById('iName').value.trim();
+  if (!email||!email.includes('@')) { setErr('Please enter a valid email.'); return; }
+  if (!pass||pass.length<6) { setErr('Password must be at least 6 characters.'); return; }
+  if (authMode==='signup'&&!name) { setErr('Please enter your full name.'); return; }
+  const btn = document.getElementById('mSubmit');
+  btn.disabled=true; btn.textContent='Please wait…'; setErr('');
+  try {
+    if (authMode==='signup') {
+      const payload = {
+        action:   'register',
+        email,
+        password: btoa(pass),
+        name,
+        org:      document.getElementById('iOrg')?.value?.trim() || '',
+      };
+
+      const res = await gasPostWithResponse(payload);
+
+      if (!res) {
+        // GAS unreachable — create locally and show pending
+        await signedIn({ email, name, role:'user', org:'', pending:true });
+        return;
+      }
+      if (res.success) {
+        await signedIn({ email, name, role:'user', org:'', pending: true });
+      } else {
+        setErr(res.error || 'Registration failed. Please try again.');
+      }
+    } else {
+      // Authenticate against Google Sheet (real spreadsheet)
+      const res = await gasGet({action:'login', email, password:btoa(pass), sheetId:SHEET_ID});
+      if (res?.success) {
+        await signedIn({email, name:res.name||email.split('@')[0], role:res.role||'user', org:res.org||''});
+      } else if (!res) {
+        // GAS unreachable — allow with local session (no role escalation)
+        console.warn('GAS unreachable — allowing local session for:', email);
+        await signedIn({email, name:email.split('@')[0], role:'user', org:'', localOnly:true});
+      } else {
+        setErr(res.error || 'Incorrect email or password.');
+      }
+    }
+  } catch(e){ setErr('Something went wrong. Please try again.'); }
+  finally { btn.disabled=false; btn.textContent=authMode==='login'?'Sign In →':'Create Account →'; }
+}
+window.submitLogin = submitLogin;
+
+async function signedIn(u) {
+  saveSess(u);
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('loginSuccess').style.display='block';
+
+  // Handle pending approval case
+  if (u.pending) {
+    document.getElementById('welcomeTitle').textContent = 'Account Created!';
+    document.getElementById('loginSuccess').innerHTML = `
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:48px;margin-bottom:14px">⏳</div>
+        <div style="font-size:19px;font-weight:800;margin-bottom:8px">Account Pending Approval</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+          Your account has been created successfully.<br>
+          <strong>venkateshvelamuri5@gmail.com</strong> needs to approve your access before you can log in.<br><br>
+          Once approved, you can sign in with your email and password.
+        </div>
+        <button onclick="location.reload()" style="padding:10px 24px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#00b87a);border:none;color:#000;font-weight:800;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif">OK, got it</button>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('welcomeTitle').textContent = 'Welcome, ' + u.name.split(' ')[0] + '!';
+  await gasPost({action:'write', sheet:'Login_Attempts', row:[u.email, new Date().toISOString(), u.role, 'forge', 'success']});
+  await fetchSlms(u);
+  setTimeout(() => {
+    document.getElementById('loginModal').classList.add('hidden');
+    bootApp(u);
+  }, 700);
+}
+
+// ── Load assigned SLMs ──
+async function fetchSlms(u) {
+  // 1. Try GAS (authoritative source)
+  try {
+    const res = await gasGet({action:'getProfiles', email:u.email, role:u.role, sheetId:SHEET_ID});
+    if (res?.profiles?.length) {
+      // GAS profiles may not have kbChunks (too large for sheet)
+      // Supplement with locally published profiles that have full kbChunks
+      const local = getLocalPublishedProfiles();
+      slms = res.profiles.map(p => {
+        // If GAS profile has no kbChunks, check local store for the full version
+        if (!p.kbChunks?.length) {
+          const localFull = local.find(l => l.id === p.id);
+          if (localFull?.kbChunks?.length) return { ...p, kbChunks: localFull.kbChunks };
+        }
+        return p;
+      });
+      return;
+    }
+  } catch(e) { console.warn('[Forge] GAS unreachable:', e.message); }
+
+  // 2. Fall back to locally published profiles (full data including kbChunks)
+  const local = getLocalPublishedProfiles();
+  if (local.length) {
+    // Filter by access control
+    if (u.role === 'admin' || u.role === 'developer') {
+      slms = local;
+    } else {
+      // For regular users, show profiles from studio_profiles that are published
+      // (in MVP mode without GAS, show all published)
+      slms = local;
+    }
+    if (slms.length) return;
+  }
+
+  // 3. No profiles at all — show empty (no fake demos)
+  slms = [];
+}
+
+function getLocalPublishedProfiles() {
+  // Primary: slmforge_published_profiles (set by Studio on publish)
+  try {
+    const pub = JSON.parse(localStorage.getItem('slmforge_published_profiles') || '[]');
+    if (pub.length) return pub;
+  } catch(e) {}
+  // Secondary: slmforge_studio_profiles filtered to published status
+  try {
+    const studio = JSON.parse(localStorage.getItem('slmforge_studio_profiles') || '[]');
+    return studio.filter(p => p.status === 'published');
+  } catch(e) {}
+  return [];
+}
+
+// ── Boot after login ──
+function bootApp(u) {
+  const pill = document.getElementById('userPill');
+  document.getElementById('userAvatar').textContent = (u.name||u.email).split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+  document.getElementById('userName').textContent = (u.name||u.email).split(' ')[0];
+  pill.style.display='flex';
+  document.getElementById('signoutBtn').style.display='flex';
+  renderSidebar();
+  try {
+    const p = JSON.parse(localStorage.getItem('slmforge_active_profile')||'null');
+    if (p) { slms.unshift(p); localStorage.removeItem('slmforge_active_profile'); renderSidebar(); }
+  } catch(e){}
+}
+
+// ── Sidebar ──
+function renderSidebar() {
+  const el = document.getElementById('slmSidebar');
+  if (!slms.length) { el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">No AI assistants assigned yet.<br>Contact your admin.</div>'; return; }
+  const cats = {};
+  slms.forEach(p=>{ const c=p.category||'General'; if(!cats[c])cats[c]=[]; cats[c].push(p); });
+  el.innerHTML = Object.entries(cats).map(([cat,ps])=>`
+    <div class="sb-cat-label">${cat}</div>
+    ${ps.map(p=>`
+      <div class="slm-item ${activeSlm?.id===p.id?'active':''}" id="sli-${p.id}">
+        <div class="slm-top"><div class="slm-icon">${p.icon||'🤖'}</div><div class="slm-name">${p.name}</div></div>
+        <div class="slm-desc">${p.desc||''}</div>
+        <button class="slm-btn ${activeSlm?.id===p.id?'loaded':''}" onclick="pickSlm('${p.id}')">
+          ${activeSlm?.id===p.id?'✓ Active — chatting now':'Use this assistant'}
+        </button>
+      </div>`).join('')}
+  `).join('');
+}
+window.pickSlm = pickSlm;
+
+// ── Model map ──
+const MODELS = {
+  llama1b:'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+  qwen15:'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
+  gemma2b:'gemma-2-2b-it-q4f16_1-MLC',
+  llama3b:'Llama-3.2-3B-Instruct-q4f16_1-MLC',
+  phi35:'Phi-3.5-mini-instruct-q4f16_1-MLC',
+  phi3:'Phi-3-mini-4k-instruct-q4f16_1-MLC',
+  mistral:'Mistral-7B-Instruct-v0.3-q4f16_1-MLC',
+  llama8b:'Llama-3.1-8B-Instruct-q4f16_1-MLC',
+};
+
+async function pickSlm(id) {
+  const p = slms.find(x=>x.id===id); if (!p) return;
+  activeSlm = p; sessionMetrics = []; renderSidebar();
+  document.getElementById('activeIcon').textContent = p.icon||'🤖';
+  document.getElementById('activeName').textContent = p.name;
+  document.getElementById('activeDesc').textContent = p.desc||'';
+  document.getElementById('batchNotice').textContent = '✓ Active: '+p.name+' — upload a file to process.';
+  document.getElementById('batchNotice').className = 'notice ok';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('sendBtn').disabled=true;
+
+  const badge = document.getElementById('statusBadge');
+  const barWrap = document.getElementById('loadBarWrap');
+  badge.className='status-badge loading'; badge.textContent='Loading…';
+  barWrap.classList.add('show');
+
+  const mid = MODELS[p.modelKey]||MODELS.llama3b;
+  try {
+    engine = await webllm.CreateMLCEngine(mid,{
+      initProgressCallback:(prog)=>{
+        document.getElementById('loadFill').style.width=Math.round((prog.progress||0)*100)+'%';
+        document.getElementById('loadTxt').textContent=prog.text||'Loading…';
+      }
+    });
+    barWrap.classList.remove('show');
+    badge.className='status-badge ready'; badge.textContent='● Ready';
+    document.getElementById('sendBtn').disabled=false;
+    addBot(`👋 Hi! I'm <strong>${p.name}</strong>. ${p.desc||'How can I help you today?'}`);
+  } catch(e) {
+    barWrap.classList.remove('show');
+    badge.className='status-badge idle'; badge.textContent='Load failed';
+    addErr('Could not load the AI model. Please use Chrome 113+ on a desktop computer.');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  BM25-STYLE RETRIEVAL ENGINE
+//  Much more accurate than single-chunk or cosine TF-IDF
+// ════════════════════════════════════════════════════════
+const BM25_K1 = 1.5;   // term frequency saturation
+const BM25_B  = 0.75;  // length normalisation
+
+function tokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')
+    .split(/\s+/)
+    .filter(t=>t.length>2);
+}
+
+function buildBM25Index(chunks) {
+  // chunks: [{text, src}]
+  const docs = chunks.map(c => ({ ...c, tokens: tokenize(c.text) }));
+  const avgLen = docs.reduce((s,d)=>s+d.tokens.length,0) / Math.max(docs.length,1);
+
+  // Build IDF: document frequency per term
+  const df = {};
+  docs.forEach(d => {
+    const seen = new Set(d.tokens);
+    seen.forEach(t => { df[t]=(df[t]||0)+1; });
+  });
+  const N = docs.length;
+  const idf = {};
+  Object.entries(df).forEach(([t,freq]) => {
+    idf[t] = Math.log((N - freq + 0.5) / (freq + 0.5) + 1);
+  });
+
+  return { docs, idf, avgLen, N };
+}
+
+function bm25Score(doc, queryTokens, idf, avgLen) {
+  let score = 0;
+  const tf = {};
+  doc.tokens.forEach(t => { tf[t]=(tf[t]||0)+1; });
+  const dl = doc.tokens.length;
+  queryTokens.forEach(qt => {
+    if (!idf[qt]) return;
+    const f = tf[qt]||0;
+    const numerator = f * (BM25_K1 + 1);
+    const denominator = f + BM25_K1 * (1 - BM25_B + BM25_B * dl / avgLen);
+    score += idf[qt] * (numerator / denominator);
+  });
+  return score;
+}
+
+function retrieveContext(query, kbChunks, topK=6) {
+  if (!kbChunks || !kbChunks.length) return { context:'', sources:[], hasKb:false };
+
+  const index = buildBM25Index(kbChunks);
+  const qTokens = tokenize(query);
+
+  // Score all docs
+  const scored = index.docs.map((doc, i) => ({
+    idx: i,
+    score: bm25Score(doc, qTokens, index.idf, index.avgLen),
+    text: kbChunks[i].text,
+    src:  kbChunks[i].src || 'document',
+  }));
+
+  // Sort descending, take topK with score > 0
+  const relevant = scored
+    .filter(d => d.score > 0)
+    .sort((a,b) => b.score-a.score)
+    .slice(0, topK);
+
+  if (!relevant.length) return { context:'', sources:[], hasKb:true, noMatch:true };
+
+  const context = relevant.map((d,i)=>`[Source ${i+1}: ${d.src}]\n${d.text}`).join('\n\n---\n\n');
+  const sources = [...new Set(relevant.map(d=>d.src))];
+  return { context, sources, hasKb:true, noMatch:false };
+}
+
+// Build grounded system prompt — enforces KB boundary
+function buildGroundedPrompt(basePrompt, context, hasKb) {
+  if (!hasKb) {
+    // No KB — use full model knowledge
+    return basePrompt;
+  }
+  // KB exists — strictly ground to it
+  const groundingInstruction = `
+KNOWLEDGE BASE CONTEXT (use ONLY this to answer):
+---
+${context}
+---
+
+CRITICAL INSTRUCTIONS:
+1. Answer ONLY using the information in the KNOWLEDGE BASE CONTEXT above.
+2. Do NOT use any knowledge outside of the provided context.
+3. If the answer is not in the context, respond: "I don't have information about that in my knowledge base. Please contact [relevant team] for assistance."
+4. Always cite the source (e.g., "According to [Source 1]...") when referencing specific information.
+5. Be concise and accurate.`;
+
+  return basePrompt + '\n\n' + groundingInstruction;
+}
+
+// ── Chat ──
+function handleKey(e) {
+  if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); if(checkExit(document.getElementById('chatInput').value)) return; sendMsg(); }
+}
+window.handleKey=handleKey;
+
+async function sendMsg() {
+  if (!engine||isGen) return;
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim(); if (!txt) return;
+  if (checkExit(txt)) return;
+  inp.value=''; inp.style.height='auto';
+  addUser(txt); isGen=true;
+  document.getElementById('sendBtn').disabled=true;
+  const typing = addTyping();
+
+  const t0 = performance.now();
+  let tokenCount = 0;
+
+  try {
+    // Get KB chunks from active SLM profile
+    const kbChunks = activeSlm?.kbChunks || [];
+    const hasKb    = kbChunks.length > 0;
+    const basePrompt = activeSlm?.systemPrompt || activeSlm?.role || 'You are a helpful AI assistant.';
+
+    let finalPrompt;
+    let contextUsed = '';
+    let sourcesUsed = [];
+
+    if (hasKb) {
+      // BM25 retrieval — find most relevant chunks
+      const { context, sources, noMatch } = retrieveContext(txt, kbChunks, 6);
+
+      if (noMatch || !context) {
+        // KB exists but nothing relevant found for this query
+        finalPrompt = basePrompt + '\n\n' +
+          'INSTRUCTION: The user asked a question but no relevant information was found in the knowledge base for this query. ' +
+          'Respond politely: "I don\'t have specific information about that in my knowledge base. ' +
+          'Please contact the relevant team or your administrator for assistance."';
+      } else {
+        contextUsed = context;
+        sourcesUsed = sources;
+        // Inject context into prompt — KB-grounded response
+        finalPrompt = basePrompt + '\n\n' +
+          '=== KNOWLEDGE BASE ===\n' +
+          context + '\n' +
+          '=== END KNOWLEDGE BASE ===\n\n' +
+          'IMPORTANT RULES:\n' +
+          '1. Answer ONLY using the information in the KNOWLEDGE BASE above.\n' +
+          '2. Do NOT use your general training knowledge — only the provided context.\n' +
+          '3. If the answer is in the knowledge base, give a clear, helpful response.\n' +
+          '4. Cite the source when referencing specific information (e.g. "According to [Source 1]...").\n' +
+          '5. If the specific detail is not in the knowledge base, say so clearly.\n';
+      }
+    } else {
+      // No KB — use full model knowledge with the base prompt
+      finalPrompt = basePrompt;
+    }
+
+    const stream = await engine.chat.completions.create({
+      messages: [
+        { role: 'system', content: finalPrompt },
+        { role: 'user',   content: txt },
+      ],
+      temperature: 0.1,  // low = more deterministic, grounded responses
+      max_tokens:  768,
+      stream:      true,
+    });
+
+    let out = ''; typing.remove();
+    const msgEl = addBot('');
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content || '';
+      out += delta;
+      tokenCount += delta.split(/\s+/).filter(Boolean).length;
+      msgEl.querySelector('.body').innerHTML = out.replace(/\n/g, '<br>');
+    }
+
+    const latency = ((performance.now()-t0)/1000).toFixed(2);
+    const tps     = (tokenCount / Math.max(parseFloat(latency), 0.1)).toFixed(1);
+
+    // Show source citation if KB was used
+    if (hasKb && sourcesUsed.length && contextUsed) {
+      const srcEl = document.createElement('div');
+      srcEl.style.cssText = 'margin-top:8px;padding-top:6px;border-top:1px solid var(--border);font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--muted)';
+      srcEl.textContent = '📚 Sources: ' + sourcesUsed.join(', ') + ' · ' + latency + 's · ' + tps + ' tok/s';
+      msgEl.appendChild(srcEl);
+    }
+
+    // Collect metrics
+    const m = computeMessageMetrics(txt, out, contextUsed, latency, tps, hasKb, kbChunks);
+    sessionMetrics.push(m);
+
+  } catch(e) { typing.remove(); addErr('Error: ' + e.message); console.error('[Forge] sendMsg error:', e); }
+  finally { isGen=false; document.getElementById('sendBtn').disabled=false; }
+}
+window.sendMsg=sendMsg;
+
+// ════════════════════════════════════════════════════════
+//  25 METRICS ENGINE
+// ════════════════════════════════════════════════════════
+function computeMessageMetrics(query, response, context, latency, tps, hasKb, kbChunks) {
+  const qToks  = tokenize(query);
+  const rToks  = tokenize(response);
+  const cToks  = tokenize(context||'');
+  const rWords = response.split(/\s+/).filter(Boolean);
+  const now    = new Date().toISOString();
+
+  // 1. TPS (Tokens Per Second)
+  const TPS = parseFloat(tps)||0;
+
+  // 2. Latency (seconds)
+  const LATENCY = parseFloat(latency)||0;
+
+  // 3. Response length (words)
+  const RESP_LEN = rWords.length;
+
+  // 4. ROUGE-L: Longest Common Subsequence recall
+  function lcs(a,b){ let L=Array.from({length:a.length+1},()=>new Array(b.length+1).fill(0)); for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) L[i][j]=a[i-1]===b[j-1]?L[i-1][j-1]+1:Math.max(L[i-1][j],L[i][j-1]); return L[a.length][b.length]; }
+  const lcsLen = lcs(qToks.slice(0,30), rToks.slice(0,60));
+  const ROUGE_L = qToks.length ? (lcsLen/qToks.length) : 0;
+
+  // 5. ROUGE-1 (unigram recall)
+  const rSet = new Set(rToks);
+  const r1matches = qToks.filter(t=>rSet.has(t)).length;
+  const ROUGE_1 = qToks.length ? r1matches/qToks.length : 0;
+
+  // 6. ROUGE-2 (bigram overlap)
+  function bigrams(arr){ const bg=[]; for(let i=0;i<arr.length-1;i++) bg.push(arr[i]+'_'+arr[i+1]); return bg; }
+  const qBg=new Set(bigrams(qToks)), rBg=new Set(bigrams(rToks));
+  const bg2match=[...qBg].filter(b=>rBg.has(b)).length;
+  const ROUGE_2 = qBg.size ? bg2match/qBg.size : 0;
+
+  // 7. Completeness — query term coverage in response
+  const COMPLETENESS = qToks.length ? qToks.filter(t=>rSet.has(t)).length/qToks.length : 0;
+
+  // 8. Grounding score — response terms in context
+  const cSet = new Set(cToks);
+  const groundedTerms = rToks.filter(t=>cSet.has(t)).length;
+  const GROUNDING = rToks.length && hasKb ? groundedTerms/rToks.length : (hasKb ? 0 : 1);
+
+  // 9. Hallucination rate — response sentences not in context
+  const sentences = response.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>10);
+  const halluSents = sentences.filter(s => {
+    if (!hasKb) return false;
+    const sToks = tokenize(s);
+    const overlap = sToks.filter(t=>cSet.has(t)).length;
+    return overlap/Math.max(sToks.length,1) < 0.15; // <15% overlap = likely hallucinated
+  });
+  const HALLUCINATION = sentences.length ? halluSents.length/sentences.length : 0;
+
+  // 10. Faithfulness — inverse of hallucination, weighted by grounding
+  const FAITHFULNESS = hasKb ? (1 - HALLUCINATION) * GROUNDING : 1;
+
+  // 11. Relevance — semantic overlap between query and response
+  const RELEVANCE = (ROUGE_1*0.4 + COMPLETENESS*0.4 + ROUGE_L*0.2);
+
+  // 12. Precision — response terms that are in query or context
+  const precTerms = rToks.filter(t=>qToks.includes(t)||cSet.has(t)).length;
+  const PRECISION = rToks.length ? precTerms/rToks.length : 0;
+
+  // 13. Recall — query terms that appear in response
+  const RECALL = COMPLETENESS;
+
+  // 14. F1 — harmonic mean of precision and recall
+  const F1 = (PRECISION+RECALL)>0 ? 2*PRECISION*RECALL/(PRECISION+RECALL) : 0;
+
+  // 15. Accuracy — weighted ensemble of core metrics
+  const ACCURACY = (ROUGE_L*0.25 + COMPLETENESS*0.25 + FAITHFULNESS*0.25 + RELEVANCE*0.25);
+
+  // 16. Perplexity proxy — vocabulary diversity (lower unique ratio = less diverse = proxy for repetition)
+  const uniqueRatio = rToks.length ? new Set(rToks).size/rToks.length : 0;
+  const DIVERSITY = uniqueRatio; // higher = more diverse vocabulary
+
+  // 17. Bias score — overconfident language patterns
+  const biasTerms = ['always','never','definitely','certainly','absolutely','guaranteed','impossible','must','will definitely'];
+  const biasCt = biasTerms.filter(t=>response.toLowerCase().includes(t)).length;
+  const BIAS = Math.min(biasCt/Math.max(sentences.length,1), 1);
+
+  // 18. Conciseness — penalise very long responses for simple queries
+  const idealLen = Math.max(qToks.length*3, 20);
+  const CONCISENESS = Math.max(0, 1 - Math.max(0, rWords.length-idealLen*2)/(idealLen*4));
+
+  // 19. Context utilisation — how much of retrieved context was used
+  const CONTEXT_UTIL = hasKb && cToks.length ? Math.min(groundedTerms/Math.max(cToks.length*0.1,1),1) : (hasKb?0:1);
+
+  // 20. Answer success rate — did model produce a substantive answer?
+  const ASR = (RESP_LEN >= 5 && !response.toLowerCase().includes("i don't know") && RELEVANCE > 0.05) ? 1 : 0;
+
+  // 21. KB Coverage — what % of KB terms appeared in the response
+  const KB_COVERAGE = hasKb && cToks.length ? new Set([...cToks].filter(t=>rSet.has(t))).size / Math.max(new Set(cToks).size,1) : (hasKb?0:null);
+
+  // 22. Query complexity — length + unique terms ratio
+  const QUERY_COMPLEXITY = Math.min((qToks.length/10)*0.5 + (new Set(qToks).size/Math.max(qToks.length,1))*0.5, 1);
+
+  // 23. Coherence proxy — sentence-to-sentence lexical continuity
+  let coherenceSum = 0;
+  for(let i=1;i<sentences.length;i++){
+    const prev=new Set(tokenize(sentences[i-1]));
+    const curr=tokenize(sentences[i]);
+    coherenceSum += curr.filter(t=>prev.has(t)).length/Math.max(curr.length,1);
+  }
+  const COHERENCE = sentences.length>1 ? coherenceSum/(sentences.length-1) : 1;
+
+  // 24. Specificity — presence of numbers, names, dates in response
+  const specificTerms = response.match(/\b\d+[\.,\d]*\b|[A-Z][a-z]+\s[A-Z][a-z]+|\d{1,2}\/\d{1,2}\/\d{2,4}/g)||[];
+  const SPECIFICITY = Math.min(specificTerms.length/Math.max(sentences.length,1), 1);
+
+  // 25. Overall score — weighted composite
+  const OVERALL = (
+    ACCURACY*0.20 + FAITHFULNESS*0.15 + RELEVANCE*0.15 +
+    F1*0.10 + GROUNDING*0.10 + (1-HALLUCINATION)*0.10 +
+    COHERENCE*0.05 + CONCISENESS*0.05 + SPECIFICITY*0.05 + ASR*0.05
+  );
+
+  return {
+    timestamp: now,
+    query: query.slice(0,100),
+    // Core
+    accuracy:       pct(ACCURACY),
+    overall:        pct(OVERALL),
+    faithfulness:   pct(FAITHFULNESS),
+    relevance:      pct(RELEVANCE),
+    // ROUGE
+    rouge_l:        pct(ROUGE_L),
+    rouge_1:        pct(ROUGE_1),
+    rouge_2:        pct(ROUGE_2),
+    // Precision / Recall / F1
+    precision:      pct(PRECISION),
+    recall:         pct(RECALL),
+    f1:             pct(F1),
+    completeness:   pct(COMPLETENESS),
+    // KB / Grounding
+    grounding:      pct(GROUNDING),
+    hallucination:  pct(HALLUCINATION),
+    context_util:   pct(CONTEXT_UTIL),
+    kb_coverage:    KB_COVERAGE!==null ? pct(KB_COVERAGE) : 'N/A',
+    // Quality
+    coherence:      pct(COHERENCE),
+    specificity:    pct(SPECIFICITY),
+    diversity:      pct(DIVERSITY),
+    conciseness:    pct(CONCISENESS),
+    bias:           pct(BIAS),
+    // Performance
+    tps:            TPS,
+    latency_s:      LATENCY,
+    resp_length:    RESP_LEN,
+    query_complexity: pct(QUERY_COMPLEXITY),
+    asr:            ASR===1?'Pass':'Fail',
+  };
+}
+
+function pct(v){ return Math.round(Math.max(0,Math.min(1,v||0))*1000)/10; }
+
+function addUser(t) { return add('user','YOU',t); }
+function addBot(h) { return add('bot',(activeSlm?.name||'ASSISTANT').toUpperCase(),h); }
+function addErr(t) { return add('err','SYSTEM',t); }
+function addTyping() {
+  const el=document.createElement('div'); el.className='msg bot';
+  el.innerHTML=`<div class="msg-who">${(activeSlm?.name||'ASSISTANT').toUpperCase()}</div><div class="typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
+  wrap().appendChild(el); el.scrollIntoView({behavior:'smooth'}); return el;
+}
+function add(cls,who,html) {
+  const el=document.createElement('div'); el.className='msg '+cls;
+  el.innerHTML=`<div class="msg-who">${who}</div><div class="body">${html}</div>`;
+  wrap().appendChild(el); el.scrollIntoView({behavior:'smooth'}); return el;
+}
+function wrap(){ return document.getElementById('chatWrap'); }
+
+// ── Tab switch ──
+function goTab(t,btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+window.goTab=goTab;
+
+// ── Batch ──
+async function loadBatchFile(f) {
+  if(!f)return; bFile=f.name;
+  const ext=f.name.split('.').pop().toLowerCase();
+  if(ext==='csv') parseCsv(await f.text());
+  else if(ext==='xlsx'||ext==='xls') await parseXlsx(f);
+  else { bData=[{Input:'File: '+f.name}]; bHeaders=['Input']; }
+  showBatch();
+}
+window.loadBatchFile=loadBatchFile;
+
+function parseCsv(txt) {
+  const ln=txt.split('\n').filter(l=>l.trim());
+  bHeaders=ln[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  bData=ln.slice(1).map(l=>{ const v=l.split(',').map(c=>c.trim().replace(/^"|"$/g,'')); const r={}; bHeaders.forEach((h,i)=>{r[h]=v[i]||'';}); return r; });
+}
+async function parseXlsx(f) {
+  if(typeof XLSX!=='undefined') { const ab=await f.arrayBuffer(); const wb=XLSX.read(ab,{type:'array'}); bData=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}); bHeaders=bData.length?Object.keys(bData[0]):[]; }
+  else parseCsv(await f.text());
+}
+function showBatch() {
+  document.getElementById('dropZone').style.display='none';
+  document.getElementById('batchPreview').style.display='block';
+  document.getElementById('batchActions').style.display='flex';
+  document.getElementById('batchFilename').textContent=bFile;
+  document.getElementById('batchRows').textContent=bData.length+' rows';
+  document.getElementById('inputCol').innerHTML=bHeaders.map(h=>`<option>${h}</option>`).join('');
+  const preview=bData.slice(0,4);
+  document.getElementById('batchTable').innerHTML=`<table class="btable"><thead><tr>${bHeaders.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${preview.map(r=>`<tr>${bHeaders.map(h=>`<td title="${r[h]}">${r[h]}</td>`).join('')}</tr>`).join('')}</tbody></table><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);padding:8px 0">Showing ${preview.length} of ${bData.length} rows</div>`;
+}
+async function runBatch() {
+  if(!activeSlm){alert('Select an AI assistant first.');return;}
+  if(!engine){alert('AI assistant is still loading. Please wait.');return;}
+  const inCol=document.getElementById('inputCol').value;
+  const outCol=document.getElementById('outputCol').value||'AI_Response';
+  bResults=bData.map(r=>({...r}));
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('dlBtn').style.display='none';
+  document.getElementById('progWrap').classList.add('show');
+  document.getElementById('progLog').innerHTML='';
+  const basePrompt=activeSlm.systemPrompt||activeSlm.role||'You are a helpful AI assistant.';
+  const kbChunks=activeSlm.kbChunks||[];
+  const hasKb=kbChunks.length>0;
+
+  for(let i=0;i<bData.length;i++){
+    const pct=Math.round(i/bData.length*100);
+    document.getElementById('progFill').style.width=pct+'%';
+    document.getElementById('progPct').textContent=pct+'%';
+    document.getElementById('progLabel').textContent=`Processing row ${i+1} of ${bData.length}…`;
+    const inp=(bData[i][inCol]||'').trim();
+    if(!inp){bResults[i][outCol]='(skipped)';logProg(`Row ${i+1}: skipped`);continue;}
+    try {
+      const {context,noMatch}=retrieveContext(inp,kbChunks,6);
+      const sys=buildGroundedPrompt(basePrompt,context,hasKb);
+      const s=await engine.chat.completions.create({messages:[{role:'system',content:sys},{role:'user',content:inp}],temperature:0.1,max_tokens:512,stream:true});
+      let o=''; for await(const c of s) o+=c.choices[0]?.delta?.content||'';
+      bResults[i][outCol]=o.trim(); logProg(`Row ${i+1}: ✓`);
+    } catch(e){bResults[i][outCol]='Error: '+e.message;logProg(`Row ${i+1}: ✗`);}
+  }
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('progPct').textContent='100%';
+  document.getElementById('progLabel').textContent='Complete!';
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('dlBtn').style.display='block';
+  gasPost({action:'write',sheet:'Batch_Jobs',row:[user?.email||'',activeSlm.name,bFile,'completed',bData.length,new Date().toISOString()]});
+}
+window.runBatch=runBatch;
+
+function downloadBatch() {
+  const hdr=Object.keys(bResults[0]||{});
+  const csv=[hdr.join(','),...bResults.map(r=>hdr.map(h=>`"${(r[h]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=bFile.replace(/\.[^.]+$/,'')+'_results_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+window.downloadBatch=downloadBatch;
+
+function clearBatch() {
+  bData=[];bHeaders=[];bResults=[];bFile='';
+  document.getElementById('dropZone').style.display='block';
+  document.getElementById('batchPreview').style.display='none';
+  document.getElementById('batchActions').style.display='none';
+  document.getElementById('progWrap').classList.remove('show');
+  document.getElementById('dlBtn').style.display='none';
+  document.getElementById('batchFile').value='';
+}
+window.clearBatch=clearBatch;
+function logProg(m){const e=document.getElementById('progLog');e.innerHTML+=m+'\n';e.scrollTop=e.scrollHeight;}
+
+// Drag-drop
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])loadBatchFile(e.dataTransfer.files[0]);});
+
+// ── Exit intent ──
+const EXITS=['bye','goodbye','exit','quit','done','finish',"that's all",'thats all','see you','cya',"i'm done",'all done'];
+function checkExit(t) {
+  if(!user||fbShown)return false;
+  const s=t.toLowerCase().trim();
+  if(EXITS.some(w=>s===w||s.startsWith(w+' ')||s.endsWith(' '+w))){
+    fbShown=true; document.getElementById('fbBar').classList.remove('hidden'); return true;
+  }
+  return false;
+}
+
+// ── Feedback ──
+const FBQ=[
+  {q:'How was your experience today?',s:'Anything that delighted you or felt off?'},
+  {q:'What one thing would make the biggest difference for you?',s:"Think about your workflow — what's missing?"},
+  {q:'Would you recommend this to a colleague?',s:'And what would you tell them?'},
+];
+let fbIdx=0,fbAns=[];
+function openFb(){
+  document.getElementById('fbBar').classList.add('hidden');
+  document.getElementById('fbModal').classList.remove('hidden');
+  document.getElementById('fbFormWrap').style.display='block';
+  document.getElementById('fbDone').style.display='none';
+  fbIdx=0;fbAns=[];showFbQ();
+}
+window.openFb=openFb;
+function showFbQ(){
+  const q=FBQ[fbIdx];
+  document.getElementById('fbNum').textContent='FEEDBACK '+(fbIdx+1)+' OF 3';
+  document.getElementById('fbQ').textContent=q.q;
+  document.getElementById('fbS').textContent=q.s;
+  document.getElementById('fbAns').value='';
+  document.getElementById('fbNext').textContent=fbIdx<2?'Next →':'Submit →';
+  document.getElementById('fbDots').innerHTML=FBQ.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===fbIdx?'var(--accent)':i<fbIdx?'rgba(0,229,160,.4)':'var(--border)'}"></div>`).join('');
+}
+function fbAdvance(skip) {
+  fbAns.push(skip?'(skipped)':document.getElementById('fbAns').value.trim()||'(skipped)');
+  fbIdx++;
+  if(fbIdx<FBQ.length){showFbQ();}
+  else{
+    document.getElementById('fbFormWrap').style.display='none';
+    document.getElementById('fbDone').style.display='block';
+    const u=user||{};
+    gasPost({action:'write',sheet:'Feeback from the Users',row:[u.name||'',u.email||'',u.org||'',new Date().toISOString(),...fbAns]});
+  }
+}
+window.fbAdvance=fbAdvance;
+
+// ── Sign out ──
+function signOut(){if(!confirm('Sign out?'))return;clearSess();location.reload();}
+window.signOut=signOut;
+
+// ── SheetJS ──
+const sjs=document.createElement('script');
+sjs.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+document.head.appendChild(sjs);
+
+// ── BOOT ──
+if(loadSess()){
+  document.getElementById('loginModal').classList.add('hidden');
+  fetchSlms(user).then(()=>bootApp(user));
+} else {
+  document.getElementById('loginModal').classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
