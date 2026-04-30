@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLM Forge — Studio</title>
+<script type="importmap">{"imports":{"@mlc-ai/web-llm":"https://esm.run/@mlc-ai/web-llm"}}</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{
+  --bg:#0a0c10;
+  --surface:#111318;
+  --surface2:#181c24;
+  --surface3:#1e2330;
+  --border:#252b38;
+  --border2:#2e3547;
+  --accent:#7c6dfa;
+  --accent-hover:#9585fb;
+  --accent-glow:rgba(124,109,250,.12);
+  --a2:#22c55e;
+  --a2-glow:rgba(34,197,94,.1);
+  --a3:#f59e0b;
+  --danger:#ef4444;
+  --text:#e8eaf0;
+  --text2:#9aa3b5;
+  --text3:#5c6478;
+  --radius:10px;
+  --radius-sm:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,109,250,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(124,109,250,.018) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(7,9,12,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;}
+.logo-box{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.studio-badge{padding:2px 8px;border-radius:4px;background:rgba(124,109,250,.15);border:1px solid rgba(124,109,250,.3);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.nav-links{display:flex;gap:8px;}
+.nav-link{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;transition:.15s;}
+.nav-link:hover{color:var(--text);}
+.nav-link.orch{border-color:rgba(245,166,35,.3);color:var(--a3);}
+.nav-link.forge{border-color:rgba(0,229,160,.3);color:var(--a2);}
+.dev-user{display:flex;align-items:center;gap:8px;}
+.dev-pill{padding:3px 10px;border-radius:20px;background:rgba(124,109,250,.1);border:1px solid rgba(124,109,250,.25);color:var(--accent);font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;padding-top:54px;}
+
+/* LEFT PANEL — profiles list */
+.left-panel{width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.lp-header{padding:14px 12px;border-bottom:1px solid var(--border);}
+.lp-title{font-size:11px;font-weight:800;margin-bottom:2px;}
+.lp-sub{font-size:10px;color:var(--muted);}
+.lp-list{flex:1;overflow-y:auto;padding:8px;}
+.profile-card{padding:10px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:5px;cursor:pointer;transition:.15s;}
+.profile-card:hover{border-color:rgba(124,109,250,.35);}
+.profile-card.active{border-color:var(--accent);background:rgba(124,109,250,.06);}
+.profile-card.pub{border-left:3px solid var(--a2);}
+.pc-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.pc-meta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.pc-status{display:inline-block;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;margin-top:4px;}
+.pc-status.draft{background:rgba(74,85,104,.2);color:var(--muted);}
+.pc-status.published{background:rgba(0,229,160,.12);color:var(--a2);}
+.new-btn{width:calc(100% - 16px);margin:6px 8px;padding:8px;border-radius:7px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.new-btn:hover{border-color:var(--accent);color:var(--accent);}
+.lp-foot{padding:10px 12px;border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.lp-stat b{color:var(--a2);}
+
+/* MAIN */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* WIZARD STEPS */
+.wizard{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+.wizard-steps{display:flex;align-items:center;gap:0;padding:0 24px;height:52px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;overflow-x:auto;}
+.step{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:7px;cursor:pointer;transition:.15s;white-space:nowrap;border:1px solid transparent;}
+.step:hover{background:var(--surface2);}
+.step.active{background:rgba(124,109,250,.1);border-color:rgba(124,109,250,.25);}
+.step.done{opacity:.7;}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--muted);flex-shrink:0;transition:.15s;}
+.step.active .step-num{background:var(--accent);color:#fff;}
+.step.done .step-num{background:rgba(0,229,160,.3);color:var(--a2);}
+.step-label{font-size:11px;font-weight:700;color:var(--muted);}
+.step.active .step-label{color:var(--text);}
+.step-sep{width:24px;height:1px;background:var(--border);flex-shrink:0;}
+.wizard-body{flex:1;overflow-y:auto;}
+
+/* STEP PANELS */
+.step-panel{display:none;padding:28px 32px;max-width:800px;}
+.step-panel.active{display:block;}
+.step-head{margin-bottom:24px;}
+.step-head h2{font-size:20px;font-weight:800;margin-bottom:5px;}
+.step-head p{font-size:12px;color:var(--muted);line-height:1.7;}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.step-card h3{font-size:13px;font-weight:700;margin-bottom:4px;}
+.step-card>p{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
+.field-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.field-input{width:100%;padding:9px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;transition:.2s;resize:vertical;}
+.field-input:focus{border-color:var(--accent);}
+.field-select{width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;cursor:pointer;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+
+/* Model grid */
+.model-grid{display:flex;flex-direction:column;gap:6px;}
+.model-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;}
+.model-item:hover{border-color:rgba(124,109,250,.3);}
+.model-item.sel{border-color:var(--accent);background:rgba(124,109,250,.07);}
+.model-speed{font-size:13px;flex-shrink:0;width:52px;}
+.model-info{flex:1;}
+.model-name{font-size:12px;font-weight:700;margin-bottom:2px;}
+.model-desc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.model-badges{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.model-badge{padding:1px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.model-ram{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);}
+.model-section-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+
+/* Params */
+.params-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+.param-item label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;}
+.param-row{display:flex;align-items:center;gap:8px;}
+.param-row input[type=range]{flex:1;accent-color:var(--accent);}
+.param-val{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);min-width:36px;text-align:right;}
+
+/* Persona chips */
+.persona-cat{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.persona-cat:first-child{margin-top:0;}
+.persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:4px;}
+.persona-chip{padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;text-align:center;}
+.persona-chip:hover{border-color:rgba(124,109,250,.35);}
+.persona-chip.active{border-color:var(--accent);background:rgba(124,109,250,.08);}
+.persona-chip-icon{font-size:18px;margin-bottom:4px;display:block;}
+.persona-chip-name{font-size:10px;font-weight:700;}
+.persona-chip-desc{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+
+/* KB */
+.kb-drop{border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:.25s;}
+.kb-drop:hover,.kb-drop.drag{border-color:var(--a2);background:rgba(0,229,160,.02);}
+.kb-drop h4{font-size:13px;font-weight:700;margin:8px 0 4px;}
+.kb-drop p{color:var(--muted);font-size:11px;}
+.kb-file-list{display:flex;flex-direction:column;gap:5px;margin-top:12px;}
+.kb-file{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:var(--bg);border:1px solid var(--border);font-size:11px;}
+.kb-file-name{flex:1;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kb-file-info{font-size:9px;color:var(--muted);}
+.kb-file-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;transition:.15s;}
+.kb-file-del:hover{color:var(--danger);}
+.kb-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.kb-stat{padding:10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);text-align:center;}
+.kb-stat-n{font-size:18px;font-weight:800;color:var(--a2);font-family:'JetBrains Mono',monospace;}
+.kb-stat-l{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* Examples */
+.ex-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.ex-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px;position:relative;}
+.ex-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+.ex-del:hover{color:var(--danger);}
+.ex-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.ex-text{font-size:11px;line-height:1.5;max-height:56px;overflow:hidden;}
+.add-ex{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;}
+
+/* Preview box */
+.preview-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:pre-wrap;line-height:1.7;max-height:220px;overflow-y:auto;}
+
+/* Test console */
+.console-wrap{background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.console-head{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.console-head span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.console-out{padding:14px;min-height:140px;max-height:260px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7;}
+.console-in{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);}
+.console-input{flex:1;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;}
+.console-input:focus{border-color:var(--accent);}
+.console-send{padding:8px 16px;border-radius:6px;background:var(--accent);border:none;color:#fff;font-weight:800;font-size:11px;cursor:pointer;font-family:'Syne',sans-serif;}
+
+/* Publish card */
+.pub-card{background:linear-gradient(135deg,rgba(124,109,250,.08),rgba(0,229,160,.04));border:1px solid rgba(124,109,250,.2);border-radius:12px;padding:22px;}
+.pub-card h3{font-size:16px;font-weight:800;margin-bottom:6px;}
+.pub-card p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:18px;}
+.pub-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.pub-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;}
+.pub-item-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.8px;text-transform:uppercase;}
+.pub-item-value{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Buttons */
+.btn{padding:9px 20px;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;border:1px solid var(--border);}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#5a4fd8);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,109,250,.3);}
+.btn-success{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--a2);}
+.btn-success:hover{background:rgba(0,229,160,.18);}
+.btn-ghost{background:transparent;color:var(--muted);}
+.btn-ghost:hover{color:var(--text);border-color:var(--text);}
+.btn-danger{background:rgba(255,78,106,.08);border-color:rgba(255,78,106,.25);color:var(--danger);}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+/* Notices */
+.notice{padding:10px 14px;border-radius:7px;font-size:11px;line-height:1.6;border:1px solid transparent;}
+.notice.info{background:rgba(124,109,250,.06);border-color:rgba(124,109,250,.2);color:var(--accent);}
+.notice.ok{background:rgba(0,229,160,.05);border-color:rgba(0,229,160,.2);color:var(--a2);}
+.notice.warn{background:rgba(245,166,35,.05);border-color:rgba(245,166,35,.2);color:var(--a3);}
+
+/* Load overlay */
+.overlay{position:fixed;inset:0;background:rgba(7,9,12,.88);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(5px);}
+.overlay.hidden{display:none;}
+.spin{width:44px;height:44px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.obar{width:280px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;}
+.ofill{height:100%;background:linear-gradient(90deg,var(--accent),var(--a2));transition:width .4s;}
+.otxt{font-size:12px;color:var(--muted);max-width:280px;text-align:center;line-height:1.5;}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:700;z-index:9999;animation:fadeUp .2s ease;border:1px solid transparent;}
+.toast.ok{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--a2);}
+.toast.err{background:rgba(255,78,106,.1);border-color:rgba(255,78,106,.3);color:var(--danger);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-icon{font-size:42px;margin-bottom:14px;}
+.empty h3{font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px;}
+.empty p{font-size:12px;line-height:1.7;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo"><div class="logo-box">⚡</div>SLM Forge</div>
+    <div class="studio-badge">STUDIO</div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link orch" href="orchestrator.html">🗄 Orchestrator</a>
+    <a class="nav-link forge" href="index.html">⚡ End User</a>
+  </div>
+  <div class="dev-user">
+    <div class="dev-pill" id="devPill">Developer</div>
+  </div>
+</nav>
+
+<div class="app">
+
+<!-- LEFT: Profile List -->
+<div class="left-panel">
+  <div class="lp-header">
+    <div class="lp-title">My SLM Profiles</div>
+    <div class="lp-sub">Click to edit · sidebar saves your work</div>
+  </div>
+  <div class="lp-list" id="profileList">
+    <div style="font-size:10px;color:var(--muted);padding:8px 4px">No profiles yet.</div>
+  </div>
+  <button class="new-btn" onclick="newProfile()">＋ New SLM Profile</button>
+  <div class="lp-foot">
+    <div class="lp-stat">Total: <b id="lpTotal">0</b> · Published: <b id="lpPub">0</b></div>
+    <div style="margin-top:6px">
+      <button class="btn btn-ghost" style="width:100%;padding:5px;font-size:10px" onclick="document.getElementById('importIn').click()">⬆ Import .slmtune</button>
+      <input type="file" id="importIn" accept=".slmtune,.json" style="display:none" onchange="importProfile(this)">
+    </div>
+  </div>
+</div>
+
+<!-- MAIN: Wizard -->
+<main>
+<div class="wizard" id="mainWizard">
+
+  <!-- Empty state -->
+  <div class="empty" id="mainEmpty">
+    <div class="empty-icon">🎛</div>
+    <h3>No profile selected</h3>
+    <p>Create a new SLM profile or select one from the sidebar to start building.</p>
+    <button class="btn btn-primary" style="margin-top:16px" onclick="newProfile()">＋ Create your first SLM</button>
+  </div>
+
+  <!-- Wizard (hidden until profile selected) -->
+  <div id="wizardWrap" style="display:none;display:flex;flex-direction:column;height:100%">
+
+    <!-- Step tabs -->
+    <div class="wizard-steps">
+      <div class="step active" id="st-1" onclick="goStep(1)">
+        <div class="step-num">1</div>
+        <div class="step-label">Profile Identity</div>
+      </div>
+      <div class="step-sep"></div>
+      <div class="step" id="st-2" onclick="goStep(2)">
+        <div class="step-num">2</div>
+        <div class="step-label">Select Model</div>
+      </div>
+      <div class="step-sep"></div>
+      <div class="step" id="st-3" onclick="goStep(3)">
+        <div class="step-num">3</div>
+        <div class="step-label">Choose Persona</div>
+      </div>
+      <div class="step-sep"></div>
+      <div class="step" id="st-4" onclick="goStep(4)">
+        <div class="step-num">4</div>
+        <div class="step-label">Knowledge Base</div>
+      </div>
+      <div class="step-sep"></div>
+      <div class="step" id="st-5" onclick="goStep(5)">
+        <div class="step-num">5</div>
+        <div class="step-label">Examples</div>
+      </div>
+      <div class="step-sep"></div>
+      <div class="step" id="st-6" onclick="goStep(6)">
+        <div class="step-num">6</div>
+        <div class="step-label">Test</div>
+      </div>
+      <div class="step-sep"></div>
+      <div class="step" id="st-7" onclick="goStep(7)">
+        <div class="step-num">7</div>
+        <div class="step-label">Publish</div>
+      </div>
+    </div>
+
+    <!-- Step panels -->
+    <div class="wizard-body">
+
+      <!-- STEP 1: Identity -->
+      <div class="step-panel active" id="panel-1">
+        <div class="step-head">
+          <h2>① Profile Identity</h2>
+          <p>Give your SLM a name and description. This is what end users will see when they choose an assistant.</p>
+        </div>
+        <div class="step-card">
+          <label class="field-label" style="margin-bottom:6px">SLM Name <span style="color:var(--danger)">*</span></label>
+          <input class="field-input" id="pName" type="text" placeholder="e.g. HR Policy Assistant" style="margin-bottom:14px;resize:none;height:38px">
+          <label class="field-label" style="margin-bottom:6px">Short Description <span style="color:var(--muted);font-size:8px">(shown to end users)</span></label>
+          <textarea class="field-input" id="pDesc" rows="2" placeholder="e.g. Ask me anything about company HR policies, leave, and benefits."></textarea>
+          <div style="margin-top:14px">
+            <label class="field-label" style="margin-bottom:6px">Department / Category</label>
+            <input class="field-input" id="pCategory" type="text" placeholder="e.g. Human Resources, Finance, Sales…" style="resize:none;height:38px">
+          </div>
+          <div style="margin-top:14px">
+            <label class="field-label" style="margin-bottom:6px">Icon (emoji)</label>
+            <input class="field-input" id="pIcon" type="text" placeholder="e.g. 👥" style="resize:none;height:38px;width:80px">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goStep(2)">Next: Select Model →</button>
+          <button class="btn btn-ghost" onclick="saveProfile()">💾 Save</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Model -->
+      <div class="step-panel" id="panel-2">
+        <div class="step-head">
+          <h2>② Select Model</h2>
+          <p>Pick the AI model that will power this SLM. Choose based on the complexity of your use case and the hardware your users have. All models run 100% in the browser — no cloud required.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="model-section-label">⚡⚡⚡ Fast & Light (under 2 GB) — good for most tasks</div>
+          <div class="model-grid" id="modelGrid1"></div>
+          <div class="model-section-label" style="margin-top:16px">⚡⚡ Balanced (2–3 GB) — better reasoning</div>
+          <div class="model-grid" id="modelGrid2"></div>
+          <div class="model-section-label" style="margin-top:16px">⚡ High Quality (4+ GB) — complex analysis, needs good hardware</div>
+          <div class="model-grid" id="modelGrid3"></div>
+        </div>
+
+        <div class="step-card">
+          <h3>Generation Parameters</h3>
+          <p>These control how the model generates text. You can leave the defaults — they work well for most tasks.</p>
+          <div class="params-grid">
+            <div class="param-item">
+              <label>Temperature <span style="font-size:8px;color:var(--muted)">(creativity)</span></label>
+              <div class="param-row">
+                <input type="range" min="0" max="100" value="20" id="pTemp" oninput="document.getElementById('pTempV').textContent=(this.value/100).toFixed(2);params.temp=this.value/100">
+                <span class="param-val" id="pTempV">0.20</span>
+              </div>
+            </div>
+            <div class="param-item">
+              <label>Max Tokens <span style="font-size:8px;color:var(--muted)">(response length)</span></label>
+              <div class="param-row">
+                <input type="range" min="64" max="1024" step="64" value="512" id="pMaxTok" oninput="document.getElementById('pMaxTokV').textContent=this.value;params.maxTok=+this.value">
+                <span class="param-val" id="pMaxTokV">512</span>
+              </div>
+            </div>
+            <div class="param-item">
+              <label>RAG Top-K <span style="font-size:8px;color:var(--muted)">(context chunks)</span></label>
+              <div class="param-row">
+                <input type="range" min="1" max="8" value="4" id="pTopK" oninput="document.getElementById('pTopKV').textContent=this.value;params.topK=+this.value">
+                <span class="param-val" id="pTopKV">4</span>
+              </div>
+            </div>
+            <div class="param-item">
+              <label>Chunk Size (words) <span style="font-size:8px;color:var(--muted)">(for docs)</span></label>
+              <div class="param-row">
+                <input type="range" min="100" max="600" step="50" value="300" id="pChunk" oninput="document.getElementById('pChunkV').textContent=this.value;params.chunk=+this.value">
+                <span class="param-val" id="pChunkV">300</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goStep(3)">Next: Choose Persona →</button>
+          <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+          <button class="btn btn-ghost" onclick="saveProfile()">💾 Save</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Persona -->
+      <div class="step-panel" id="panel-3">
+        <div class="step-head">
+          <h2>③ Choose a Persona</h2>
+          <p>Select a starting template that matches your use case. All fields will auto-fill — you can then edit everything freely. You don't need to be a coder. Just describe the role in plain English.</p>
+        </div>
+
+        <div class="step-card">
+          <h3>Select a Persona Template</h3>
+          <p>Click any persona to auto-fill the role, evaluation criteria, output format and scoring scale.</p>
+          <div id="personaGrid"></div>
+        </div>
+
+        <div class="step-card">
+          <h3>Role Definition</h3>
+          <p>Describe who the AI is and what it should do. Write in plain English — no coding needed.</p>
+          <label class="field-label" style="margin-bottom:6px">System Role</label>
+          <textarea class="field-input" id="pRole" rows="4" placeholder="e.g. You are a helpful HR assistant for TechCorp. Your job is to answer employee questions about company policies clearly, professionally and with empathy. Always be concise and refer to company guidelines where relevant."></textarea>
+        </div>
+
+        <div class="step-card">
+          <div class="field-row">
+            <div>
+              <label class="field-label" style="margin-bottom:6px">Output Format</label>
+              <select class="field-select" id="pFormat">
+                <option value="structured">Structured Report (Score + Strengths + Gaps + Decision)</option>
+                <option value="scorecard">Scorecard Table (criteria rows with ratings)</option>
+                <option value="shortlist">Shortlist Memo (brief paragraph per item)</option>
+                <option value="freeform" selected>Free-form (model decides the best format)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" style="margin-bottom:6px">Scoring Scale</label>
+              <select class="field-select" id="pScale">
+                <option value="none" selected>No score — qualitative only</option>
+                <option value="10">Out of 10</option>
+                <option value="5">Out of 5 stars</option>
+                <option value="100">Percentage (0–100%)</option>
+                <option value="tier">Tier (Strong Yes / Yes / Maybe / No)</option>
+              </select>
+            </div>
+          </div>
+          <label class="field-label" style="margin-bottom:6px;margin-top:4px">Evaluation Criteria <span style="color:var(--muted);font-size:8px">(one per line)</span></label>
+          <textarea class="field-input" id="pCriteria" rows="5" placeholder="Policy accuracy&#10;Clarity of response&#10;Empathy and tone&#10;Action orientation"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goStep(4)">Next: Knowledge Base →</button>
+          <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+          <button class="btn btn-ghost" onclick="saveProfile()">💾 Save</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Knowledge Base -->
+      <div class="step-panel" id="panel-4">
+        <div class="step-head">
+          <h2>④ Upload Knowledge Base</h2>
+          <p>Upload the documents this SLM should know about. These files stay within the browser and get chunked into a searchable index. End users will never see these documents directly — they just get answers grounded in them.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="kb-drop" id="kbDrop" onclick="document.getElementById('kbFile').click()">
+            <div style="font-size:32px">📂</div>
+            <h4>Drop files here or click to upload</h4>
+            <p>PDF, TXT, Markdown, JSON, CSV — all parsed locally</p>
+            <input type="file" id="kbFile" multiple accept=".pdf,.txt,.md,.json,.csv" onchange="addKbFiles(this.files)">
+          </div>
+
+          <div class="kb-file-list" id="kbFileList"></div>
+
+          <div class="kb-stats" id="kbStats" style="display:none">
+            <div class="kb-stat"><div class="kb-stat-n" id="kbDocN">0</div><div class="kb-stat-l">Documents</div></div>
+            <div class="kb-stat"><div class="kb-stat-n" id="kbChunkN">0</div><div class="kb-stat-l">Chunks</div></div>
+            <div class="kb-stat"><div class="kb-stat-n" id="kbWordN">0</div><div class="kb-stat-l">Words</div></div>
+          </div>
+        </div>
+
+        <div class="notice info">ℹ️ Knowledge base documents are stored with the SLM profile. When published, end users query this knowledge — they do not have direct access to the files.</div>
+
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="goStep(5)">Next: Add Examples →</button>
+          <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
+          <button class="btn btn-ghost" onclick="saveProfile()">💾 Save</button>
+        </div>
+      </div>
+
+      <!-- STEP 5: Examples -->
+      <div class="step-panel" id="panel-5">
+        <div class="step-head">
+          <h2>⑤ Add Few-Shot Examples</h2>
+          <p>Show the AI exactly what a great answer looks like. The more examples you add, the more consistent and accurate the outputs. This is optional but highly recommended for specialised tasks.</p>
+        </div>
+
+        <div class="step-card">
+          <h3>Your Examples</h3>
+          <div class="ex-list" id="exList">
+            <div style="color:var(--muted);font-size:11px;text-align:center;padding:12px 0" id="noExMsg">No examples yet — add at least one for best results</div>
+          </div>
+
+          <div class="add-ex">
+            <label class="field-label" style="margin-bottom:6px">Example Input <span style="color:var(--muted);font-size:8px">(what the user sends)</span></label>
+            <textarea class="field-input" id="exIn" rows="2" placeholder="e.g. How many days of annual leave do I get?" style="margin-bottom:10px"></textarea>
+            <label class="field-label" style="margin-bottom:6px">Ideal Output <span style="color:var(--muted);font-size:8px">(how the AI should respond)</span></label>
+            <textarea class="field-input" id="exOut" rows="3" placeholder="e.g. You are entitled to 21 working days of annual leave per year (per our HR Policy, Section 3.2). This accrues monthly and must be approved by your manager 5 working days in advance."></textarea>
+            <button class="btn btn-ghost" style="margin-top:8px;width:100%" onclick="addExample()">＋ Add Example</button>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <h3>System Prompt Preview</h3>
+          <p>This is the exact instruction the AI will receive before every user query.</p>
+          <div class="preview-box" id="promptPreview">Click "Refresh Preview" to generate…</div>
+          <button class="btn btn-ghost" style="margin-top:10px" onclick="refreshPreview()">↺ Refresh Preview</button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goStep(6)">Next: Test It →</button>
+          <button class="btn btn-ghost" onclick="goStep(4)">← Back</button>
+          <button class="btn btn-ghost" onclick="saveProfile()">💾 Save</button>
+        </div>
+      </div>
+
+      <!-- STEP 6: Test -->
+      <div class="step-panel" id="panel-6">
+        <div class="step-head">
+          <h2>⑥ Test Your SLM</h2>
+          <p>Try a few queries to see how the AI responds with your persona and knowledge base applied. The model must be loaded first — this may take a moment.</p>
+        </div>
+
+        <div class="step-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="font-size:12px;font-weight:700">Model Status:</div>
+            <div id="testStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Not loaded</div>
+          </div>
+          <button class="btn btn-success" id="loadModelBtn" onclick="loadTestModel()">⬇ Load Model for Testing</button>
+          <div id="loadProg" style="display:none;margin-top:12px">
+            <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:5px"><div style="height:100%;background:linear-gradient(90deg,var(--accent),var(--a2));transition:width .3s;border-radius:2px" id="loadProgFill"></div></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--a3)" id="loadProgTxt">Loading…</div>
+          </div>
+        </div>
+
+        <div class="console-wrap">
+          <div class="console-head">
+            <span id="consoleModel">No model loaded</span>
+            <span style="margin-left:auto;cursor:pointer" onclick="clearConsole()">Clear</span>
+          </div>
+          <div class="console-out" id="consoleOut">
+            <span style="color:var(--muted)">// Load model above, then send a test query…</span>
+          </div>
+          <div class="console-in">
+            <input class="console-input" id="consoleIn" placeholder="Type a test question here…" onkeydown="if(event.key==='Enter')testQuery()">
+            <button class="console-send" onclick="testQuery()">Run</button>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="goStep(7)">Next: Publish →</button>
+          <button class="btn btn-ghost" onclick="goStep(5)">← Back</button>
+        </div>
+
+        <!-- METRICS DASHBOARD -->
+        <div class="step-card" style="margin-top:16px">
+          <h3>📊 25-Metric Evaluation Dashboard</h3>
+          <p>Live metrics computed after each test query. Shows accuracy, faithfulness, hallucination rate, ROUGE scores, and 20 more.</p>
+          <div id="metricsDashboard" style="margin-top:12px">
+            <div style="font-size:10px;color:var(--muted);text-align:center;padding:16px">Run test queries above to see metrics here.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 7: Publish -->
+      <div class="step-panel" id="panel-7">
+        <div class="step-head">
+          <h2>⑦ Publish to Orchestrator</h2>
+          <p>Once you're happy with your SLM, publish it. The Orchestrator admin can then assign it to the right end users.</p>
+        </div>
+
+        <div class="pub-card">
+          <h3>📦 SLM Package Summary</h3>
+          <p>Everything below will be published as a single SLM package. Admins can then assign it to specific users from the Orchestrator.</p>
+          <div class="pub-summary" id="pubSummary">
+            <div class="pub-item"><div class="pub-item-label">SLM Name</div><div class="pub-item-value" id="pubName">—</div></div>
+            <div class="pub-item"><div class="pub-item-label">Category</div><div class="pub-item-value" id="pubCat">—</div></div>
+            <div class="pub-item"><div class="pub-item-label">Model</div><div class="pub-item-value" id="pubModel">—</div></div>
+            <div class="pub-item"><div class="pub-item-label">Persona</div><div class="pub-item-value" id="pubPersona">—</div></div>
+            <div class="pub-item"><div class="pub-item-label">Knowledge Base</div><div class="pub-item-value" id="pubKb">—</div></div>
+            <div class="pub-item"><div class="pub-item-label">Examples</div><div class="pub-item-value" id="pubEx">—</div></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" style="font-size:13px;padding:11px 28px" onclick="publishProfile()">🚀 Publish to Orchestrator</button>
+            <button class="btn btn-ghost" onclick="exportProfile()">⬇ Export .slmtune</button>
+          </div>
+        </div>
+
+        <div class="notice ok" id="publishSuccess" style="display:none;margin-top:14px">
+          ✓ Published successfully! Go to the Orchestrator to assign this SLM to your users.
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <a href="orchestrator.html" class="btn btn-ghost" style="text-decoration:none">Open Orchestrator →</a>
+        </div>
+      </div>
+
+    </div><!-- wizard-body -->
+  </div><!-- wizardWrap -->
+</div><!-- wizard -->
+</main>
+</div><!-- app -->
+
+<!-- Loading overlay -->
+<div class="overlay hidden" id="overlay">
+  <div class="spin"></div>
+  <div class="obar"><div class="ofill" id="oFill" style="width:0%"></div></div>
+  <div class="otxt" id="oTxt">Working…</div>
+</div>
+
+<script type="module">
+import * as webllm from '@mlc-ai/web-llm';
+
+// ──────────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec';
+
+// ── State ──
+let profiles = [], activeId = null, currentStep = 1;
+let params = { temp:0.2, maxTok:512, topK:4, chunk:300 };
+let examples = [], kbFiles = [], kbChunks = [];
+let selectedModel = 'llama3b';
+let testEngine = null;
+
+// ── Models ──
+const MODELS = {
+  fast: [
+    { key:'llama1b', name:'Llama 3.2 1B', speed:'⚡⚡⚡', badge:'Meta', badgeClr:'rgba(0,229,160,.1)', badgeTxt:'var(--a2)', ramGB:0.7, desc:'~700 MB · very fast · simple tasks', id:'Llama-3.2-1B-Instruct-q4f16_1-MLC' },
+    { key:'qwen15',  name:'Qwen2.5 1.5B', speed:'⚡⚡⚡', badge:'Alibaba', badgeClr:'rgba(255,106,0,.1)', badgeTxt:'#ff6a00', ramGB:1.1, desc:'~1.1 GB · fast · multilingual', id:'Qwen2.5-1.5B-Instruct-q4f16_1-MLC' },
+    { key:'gemma2b', name:'Gemma 2 2B',   speed:'⚡⚡⚡', badge:'Google',  badgeClr:'rgba(66,133,244,.1)',  badgeTxt:'#4285f4', ramGB:1.9, desc:'~1.9 GB · smart · low resource', id:'gemma-2-2b-it-q4f16_1-MLC' },
+  ],
+  mid: [
+    { key:'llama3b', name:'Llama 3.2 3B', speed:'⚡⚡', badge:'Meta', badgeClr:'rgba(0,229,160,.1)', badgeTxt:'var(--a2)', ramGB:2.0, desc:'~2.0 GB · fast · great balance', id:'Llama-3.2-3B-Instruct-q4f16_1-MLC' },
+    { key:'phi35',   name:'Phi-3.5 Mini', speed:'⚡⚡', badge:'Microsoft', badgeClr:'rgba(0,120,212,.1)', badgeTxt:'#0078d4', ramGB:2.4, desc:'~2.4 GB · best quality/size · smart', id:'Phi-3.5-mini-instruct-q4f16_1-MLC' },
+    { key:'phi3',    name:'Phi-3 Mini 4K',speed:'⚡⚡', badge:'Microsoft', badgeClr:'rgba(0,120,212,.1)', badgeTxt:'#0078d4', ramGB:2.5, desc:'~2.5 GB · 4K context · long docs', id:'Phi-3-mini-4k-instruct-q4f16_1-MLC' },
+    { key:'qwen3b',  name:'Qwen2.5 3B',   speed:'⚡⚡', badge:'Alibaba',   badgeClr:'rgba(255,106,0,.1)',  badgeTxt:'#ff6a00', ramGB:2.0, desc:'~2.0 GB · strong multilingual', id:'Qwen2.5-3B-Instruct-q4f16_1-MLC' },
+  ],
+  large: [
+    { key:'mistral', name:'Mistral 7B v0.3', speed:'⚡', badge:'Mistral', badgeClr:'rgba(124,109,250,.1)', badgeTxt:'var(--accent)', ramGB:4.1, desc:'~4.1 GB · highest quality · complex tasks', id:'Mistral-7B-Instruct-v0.3-q4f16_1-MLC' },
+    { key:'llama8b', name:'Llama 3.1 8B',   speed:'⚡', badge:'Meta',    badgeClr:'rgba(0,229,160,.1)',   badgeTxt:'var(--a2)',   ramGB:4.9, desc:'~4.9 GB · Meta flagship · top quality', id:'Llama-3.1-8B-Instruct-q4f16_1-MLC' },
+    { key:'qwen7b',  name:'Qwen2.5 7B',     speed:'⚡', badge:'Alibaba', badgeClr:'rgba(255,106,0,.1)',   badgeTxt:'#ff6a00',    ramGB:4.5, desc:'~4.5 GB · enterprise multilingual', id:'Qwen2.5-7B-Instruct-q4f16_1-MLC' },
+    { key:'gemma9b', name:'Gemma 2 9B',     speed:'⚡', badge:'Google',  badgeClr:'rgba(66,133,244,.1)',  badgeTxt:'#4285f4',    ramGB:6.4, desc:'~6.4 GB · Google flagship · 8 GB+ VRAM', id:'gemma-2-9b-it-q4f16_1-MLC' },
+  ],
+};
+
+function modelCard(m) {
+  return `<div class="model-item ${m.key===selectedModel?'sel':''}" onclick="selectModel('${m.key}')">
+    <div class="model-speed">${m.speed}</div>
+    <div class="model-info">
+      <div class="model-name">${m.name}</div>
+      <div class="model-desc">${m.desc}</div>
+    </div>
+    <div class="model-badges">
+      <span class="model-badge" style="background:${m.badgeClr};color:${m.badgeTxt}">${m.badge}</span>
+      <span class="model-ram">${m.ramGB} GB</span>
+    </div>
+  </div>`;
+}
+
+function renderModels() {
+  document.getElementById('modelGrid1').innerHTML = MODELS.fast.map(modelCard).join('');
+  document.getElementById('modelGrid2').innerHTML = MODELS.mid.map(modelCard).join('');
+  document.getElementById('modelGrid3').innerHTML = MODELS.large.map(modelCard).join('');
+}
+
+function selectModel(key) { selectedModel=key; renderModels(); }
+window.selectModel = selectModel;
+
+// ── Personas ──
+const PERSONAS = {
+  'Talent & HR': [
+    { key:'resume',    icon:'📄', name:'Resume Screener',  desc:'Score CVs vs JD', role:`You are a senior HR specialist and talent acquisition expert. Rigorously screen resumes against a job description and give a clear, actionable hiring recommendation.`, criteria:`Technical skills match to JD requirements\nYears of relevant experience\nEducation and certifications\nLeadership or management exposure\nIndustry and domain relevance\nCareer progression and stability`, format:'structured', scale:'10' },
+    { key:'profile',   icon:'👤', name:'Profile Evaluator',desc:'Assess candidates',  role:`You are a professional profile evaluator. Assess a candidate's overall professional profile — skills, experience, achievements, and career trajectory — and provide a holistic evaluation.`, criteria:`Depth and breadth of expertise\nCareer growth trajectory\nNotable achievements and impact\nCommunication and soft skills\nCultural and team fit indicators\nOverall profile strength`, format:'structured', scale:'10' },
+    { key:'jd',        icon:'📋', name:'JD Matcher',       desc:'Match skills to spec',role:`You are a skills-matching specialist. Compare a candidate's background against a job description, identify exact matches, partial matches, and gaps, then give an overall fit percentage.`, criteria:`Must-have skills present vs. missing\nNice-to-have skills coverage\nExperience level alignment\nIndustry and domain fit\nOverall role fit percentage`, format:'structured', scale:'100' },
+    { key:'interview', icon:'🎤', name:'Interview Scorer', desc:'Rate answers',       role:`You are an experienced interview assessor. Evaluate interview answers for clarity, depth, relevance, and evidence of real-world competency, then provide structured feedback.`, criteria:`Clarity and structure of answer\nSpecificity and use of real examples\nDepth of technical knowledge\nProblem-solving approach\nCommunication quality`, format:'scorecard', scale:'10' },
+    { key:'hr',        icon:'👥', name:'HR Assistant',     desc:'Policy & benefits',  role:`You are a helpful HR assistant. Answer employee questions about company policies, leave, benefits, and workplace guidelines clearly, professionally and empathetically.`, criteria:'', format:'freeform', scale:'none' },
+  ],
+  'Sales & Revenue': [
+    { key:'lead',     icon:'🎯', name:'Lead Qualifier',  desc:'Score leads',      role:`You are a B2B sales qualification expert. Evaluate inbound leads against ideal customer profile criteria and score their likelihood to convert, helping sales reps prioritise their pipeline.`, criteria:`ICP fit (industry, company size, geography)\nBudget signals and purchasing authority\nTimeline and urgency indicators\nPain point alignment with product\nOverall lead score and priority tier`, format:'structured', scale:'tier' },
+    { key:'proposal', icon:'📝', name:'Proposal Reviewer',desc:'Improve win rates', role:`You are a senior sales strategist. Review sales proposals and RFP responses, identify weaknesses, and suggest improvements to increase win probability.`, criteria:`Executive summary clarity\nValue proposition strength\nCompetitive differentiation\nPricing structure and justification\nCall to action and next steps`, format:'structured', scale:'10' },
+  ],
+  'Legal & Finance': [
+    { key:'contract',  icon:'⚖️', name:'Contract Analyst',  desc:'Flag clauses & risks', role:`You are a contract analysis specialist. Review contract documents, identify key clauses, flag risk areas, and summarise obligations for each party.`, criteria:`Payment terms and penalties\nTermination and exit clauses\nLiability caps and indemnification\nIP ownership and licensing\nConfidentiality obligations`, format:'structured', scale:'none' },
+    { key:'financial', icon:'💹', name:'Financial Analyst', desc:'Analyse reports',       role:`You are a financial analysis expert. Analyse financial documents and produce clear insights on performance, trends, risks, and investment considerations.`, criteria:`Revenue and growth trajectory\nMargin and profitability trends\nLiquidity and cash flow health\nDebt structure and leverage\nOverall financial health assessment`, format:'structured', scale:'none' },
+  ],
+  'Product & Engineering': [
+    { key:'prd',        icon:'🗂️', name:'PRD Reviewer',   desc:'Review specs',       role:`You are a principal product manager. Review product requirement documents, identify gaps and ambiguities, and ensure the spec is ready for engineering handoff.`, criteria:`Problem statement clarity\nUser story completeness\nAcceptance criteria specificity\nEdge cases and error handling\nSuccess metrics defined`, format:'structured', scale:'tier' },
+    { key:'codereview', icon:'💻', name:'Code Reviewer',   desc:'Quality & security', role:`You are a senior software engineer. Review code for quality, security, performance, and maintainability, and provide clear, actionable improvement suggestions.`, criteria:`Correctness and logic accuracy\nSecurity vulnerabilities\nPerformance and efficiency\nCode readability and naming\nTest coverage and edge cases`, format:'structured', scale:'10' },
+  ],
+  'Custom': [
+    { key:'custom', icon:'✏️', name:'Custom Task', desc:'Define your own', role:'', criteria:'', format:'freeform', scale:'none' },
+  ],
+};
+
+let selectedPersona = null;
+
+function renderPersonas() {
+  const el = document.getElementById('personaGrid');
+  el.innerHTML = Object.entries(PERSONAS).map(([cat, ps]) => `
+    <div class="persona-cat">${cat}</div>
+    <div class="persona-grid">
+      ${ps.map(p => `
+        <div class="persona-chip ${selectedPersona===p.key?'active':''}" onclick="applyPersona('${p.key}')">
+          <span class="persona-chip-icon">${p.icon}</span>
+          <div class="persona-chip-name">${p.name}</div>
+          <div class="persona-chip-desc">${p.desc}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function applyPersona(key) {
+  selectedPersona = key;
+  const p = Object.values(PERSONAS).flat().find(x=>x.key===key);
+  if (!p) return;
+
+  const roleEl     = document.getElementById('pRole');
+  const critEl     = document.getElementById('pCriteria');
+  const fmtEl      = document.getElementById('pFormat');
+  const scaleEl    = document.getElementById('pScale');
+  const nameEl     = document.getElementById('pName');
+
+  // Check if developer has already filled any fields
+  const hasRole  = roleEl.value.trim().length > 0;
+  const hasCrit  = critEl.value.trim().length > 0;
+  const hasCustomContent = hasRole || hasCrit;
+
+  if (hasCustomContent && key !== 'custom') {
+    const overwrite = confirm(
+      'You have already filled in some fields.\n\n' +
+      'Click OK to replace them with the "' + p.name + '" template.\n' +
+      'Click Cancel to keep your current content and only fill the empty fields.'
+    );
+    if (overwrite) {
+      // Replace everything
+      roleEl.value   = p.role     || '';
+      critEl.value   = p.criteria || '';
+      fmtEl.value    = p.format   || 'freeform';
+      scaleEl.value  = p.scale    || 'none';
+    } else {
+      // Only fill what's empty
+      if (!hasRole  && p.role)     roleEl.value  = p.role;
+      if (!hasCrit  && p.criteria) critEl.value  = p.criteria;
+      if (fmtEl.value  === 'freeform' && p.format)  fmtEl.value  = p.format;
+      if (scaleEl.value === 'none'    && p.scale)    scaleEl.value = p.scale;
+    }
+  } else {
+    // Nothing filled yet — auto-fill everything
+    if (p.role)     roleEl.value  = p.role;
+    if (p.criteria) critEl.value  = p.criteria;
+    if (p.format)   fmtEl.value   = p.format;
+    if (p.scale)    scaleEl.value = p.scale;
+  }
+
+  // Always suggest profile name if empty
+  if (nameEl && !nameEl.value.trim() && key !== 'custom') {
+    nameEl.value = p.name + ' Profile';
+  }
+
+  renderPersonas();
+  refreshPreview();
+  toast('Persona applied — all fields are editable', 'ok');
+}
+window.applyPersona = applyPersona;
+
+// ── KB ──
+async function addKbFiles(files) {
+  for (const f of files) {
+    const ext = f.name.split('.').pop().toLowerCase();
+    let text = '';
+
+    try {
+      if (ext === 'pdf') {
+        // Read PDF as text (works for text-based PDFs)
+        // Try reading as text first; binary PDFs will show garbled text but we still chunk
+        const arrBuf = await f.arrayBuffer();
+        const decoded = new TextDecoder('utf-8', {fatal:false}).decode(arrBuf);
+        // Extract readable strings from PDF (lines with >3 printable chars)
+        const lines = decoded.split(/[\r\n\x00-\x1F]+/);
+        const readable = lines.filter(l => /[a-zA-Z]{3,}/.test(l) && l.trim().length > 5);
+        text = readable.join(' ').replace(/\s+/g,' ').trim();
+        if (!text || text.length < 50) {
+          text = `[PDF: ${f.name} — this is a scanned/image PDF. Text extraction requires a PDF library. Please convert to .txt or .md for best results.]`;
+        }
+      } else if (ext === 'json') {
+        const raw = await f.text();
+        try {
+          const obj = JSON.parse(raw);
+          text = JSON.stringify(obj, null, 2);
+        } catch(e) { text = raw; }
+      } else {
+        // txt, md, csv — direct text read
+        text = await f.text();
+      }
+    } catch(e) {
+      text = `[Error reading ${f.name}: ${e.message}]`;
+    }
+
+    // Chunk the text
+    const wordChunkSize = params.chunk || 300;
+    const chunks = chunkText(text, wordChunkSize);
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+    // Avoid duplicate files
+    const existing = kbFiles.findIndex(x=>x.name===f.name);
+    if (existing >= 0) {
+      kbChunks = kbChunks.filter(c=>c.src!==f.name);
+      kbFiles.splice(existing, 1);
+    }
+
+    kbFiles.push({ name:f.name, size:f.size, chunkCount:chunks.length, wordCount });
+    kbChunks.push(...chunks.map(c=>({ text:c, src:f.name })));
+  }
+  renderKbList();
+  updateKbStats();
+}
+window.addKbFiles = addKbFiles;
+
+function chunkText(text, wpc) {
+  const words = text.split(/\s+/); const chunks = [];
+  for (let i=0;i<words.length;i+=wpc) chunks.push(words.slice(i,i+wpc).join(' '));
+  return chunks;
+}
+
+function renderKbList() {
+  const el = document.getElementById('kbFileList');
+  el.innerHTML = kbFiles.map((f,i) => {
+    const sizeStr = f.size >= 1024*1024
+      ? (f.size/1024/1024).toFixed(1)+' MB'
+      : f.size >= 1024
+        ? (f.size/1024).toFixed(0)+' KB'
+        : f.size+' B';
+    const wordCount = kbChunks.filter(c=>c.src===f.name).reduce((s,c)=>s+c.text.split(/\s+/).filter(Boolean).length,0);
+    return `<div class="kb-file">
+      <span style="font-size:14px">${fileIcon(f.name)}</span>
+      <span class="kb-file-name">${f.name}</span>
+      <span class="kb-file-info">${f.chunkCount} chunks · ${wordCount} words · ${sizeStr}</span>
+      <button class="kb-file-del" onclick="removeKb(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeKb(i) {
+  const removed = kbFiles.splice(i,1)[0];
+  kbChunks = kbChunks.filter(c=>c.src!==removed.name);
+  renderKbList(); updateKbStats();
+}
+window.removeKb = removeKb;
+
+function updateKbStats() {
+  const statsEl = document.getElementById('kbStats');
+  if (!kbFiles.length) { statsEl.style.display='none'; return; }
+  statsEl.style.display='grid';
+  const totalWords = kbChunks.reduce((s,c)=>s+c.text.split(/\s+/).filter(Boolean).length, 0);
+  document.getElementById('kbDocN').textContent   = kbFiles.length;
+  document.getElementById('kbChunkN').textContent  = kbChunks.length;
+  // Show K only if ≥ 1000, otherwise show exact count
+  document.getElementById('kbWordN').textContent   = totalWords >= 1000
+    ? (totalWords/1000).toFixed(1)+'K'
+    : totalWords.toString();
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = { pdf:'📄', txt:'📝', md:'📝', json:'🗂️', csv:'📊' };
+  return icons[ext]||'📄';
+}
+
+// KB drag-drop
+const kbDrop = document.getElementById('kbDrop');
+kbDrop.addEventListener('dragover',e=>{e.preventDefault();kbDrop.classList.add('drag');});
+kbDrop.addEventListener('dragleave',()=>kbDrop.classList.remove('drag'));
+kbDrop.addEventListener('drop',e=>{e.preventDefault();kbDrop.classList.remove('drag');addKbFiles(e.dataTransfer.files);});
+
+// ── Examples ──
+function addExample() {
+  const i = document.getElementById('exIn').value.trim();
+  const o = document.getElementById('exOut').value.trim();
+  if (!i||!o) { toast('Fill both input and output','err'); return; }
+  examples.push({input:i,output:o});
+  document.getElementById('exIn').value='';
+  document.getElementById('exOut').value='';
+  renderExamples();
+}
+window.addExample = addExample;
+
+function renderExamples() {
+  const el = document.getElementById('exList');
+  const msg = document.getElementById('noExMsg');
+  if (!examples.length) { if(msg) msg.style.display='block'; el.innerHTML='<div style="color:var(--muted);font-size:11px;text-align:center;padding:12px 0" id="noExMsg">No examples yet — add at least one for best results</div>'; return; }
+  el.innerHTML = examples.map((ex,i)=>`
+    <div class="ex-item">
+      <button class="ex-del" onclick="delEx(${i})">✕</button>
+      <div class="ex-lbl">INPUT</div><div class="ex-text">${esc(ex.input)}</div>
+      <div class="ex-lbl" style="margin-top:6px">OUTPUT</div><div class="ex-text">${esc(ex.output)}</div>
+    </div>`).join('');
+}
+
+function delEx(i) { examples.splice(i,1); renderExamples(); }
+window.delEx = delEx;
+
+// ── System Prompt Builder ──
+function buildPrompt() {
+  const role = (document.getElementById('pRole')?.value||'').trim();
+  const crit = (document.getElementById('pCriteria')?.value||'').trim();
+  const fmt  = document.getElementById('pFormat')?.value||'freeform';
+  const scale= document.getElementById('pScale')?.value||'none';
+  const fmtMap = { structured:'a structured report with Score, Strengths, Gaps, and Decision', scorecard:'a scorecard table with each criterion rated', shortlist:'a concise shortlist memo', freeform:'the most helpful format for the user' };
+  const scaleMap = { '10':'out of 10','5':'out of 5 stars','100':'as a percentage (0–100%)','tier':'as a tier: Strong Yes / Yes / Maybe / No','none':'' };
+  let p = role ? role+'\n\n' : '';
+  if (crit) p += 'EVALUATION CRITERIA:\n'+crit.split('\n').filter(Boolean).map(l=>'• '+l.trim()).join('\n')+'\n\n';
+  if (fmt!=='freeform') p += `OUTPUT FORMAT: Always respond with ${fmtMap[fmt]||'a structured report'}.\n`;
+  if (scale!=='none') p += `SCORING: Express your score ${scaleMap[scale]||'out of 10'}.\n`;
+  if (examples.length) {
+    p += '\n---\nEXAMPLES OF IDEAL RESPONSES:\n';
+    examples.forEach((ex,i)=>{ p+=`\n[Example ${i+1}]\nUSER: ${ex.input}\nASSISTANT: ${ex.output}\n`; });
+    p += '---\n\nApply the same quality and format to the user\'s question below.\n';
+  }
+  return p.trim();
+}
+
+function refreshPreview() {
+  const el = document.getElementById('promptPreview');
+  if (el) el.textContent = buildPrompt() || '(empty — fill in the role to generate)';
+}
+window.refreshPreview = refreshPreview;
+
+// ── Test ──
+async function loadTestModel() {
+  const allModels = [...MODELS.fast,...MODELS.mid,...MODELS.large];
+  const m = allModels.find(x=>x.key===selectedModel);
+  if (!m) { toast('Select a model in Step 2 first','err'); return; }
+  document.getElementById('loadModelBtn').disabled=true;
+  document.getElementById('loadProg').style.display='block';
+  document.getElementById('testStatus').textContent='Loading '+m.name+'…';
+  try {
+    testEngine = await webllm.CreateMLCEngine(m.id,{
+      initProgressCallback:(p)=>{
+        document.getElementById('loadProgFill').style.width=Math.round((p.progress||0)*100)+'%';
+        document.getElementById('loadProgTxt').textContent=p.text||'Loading…';
+      }
+    });
+    document.getElementById('loadProg').style.display='none';
+    document.getElementById('testStatus').innerHTML=`<span style="color:var(--a2)">✓ ${m.name} ready</span>`;
+    document.getElementById('consoleModel').textContent=m.name+' · '+m.ramGB+'GB';
+    toast('Model loaded — ready to test','ok');
+  } catch(e) {
+    document.getElementById('loadProg').style.display='none';
+    document.getElementById('testStatus').innerHTML=`<span style="color:var(--danger)">✗ Failed: ${e.message}</span>`;
+    document.getElementById('loadModelBtn').disabled=false;
+    toast('Model load failed. Try a smaller model.','err');
+  }
+}
+window.loadTestModel = loadTestModel;
+
+// ════════════════════════════════════════════════════
+//  BM25 RETRIEVAL (same engine as Forge)
+// ════════════════════════════════════════════════════
+const BM25_K1=1.5, BM25_B=0.75;
+function tokenize(text){ return text.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(t=>t.length>2); }
+
+function buildBM25Index(chunks){
+  const docs=chunks.map(c=>({...c,tokens:tokenize(c.text)}));
+  const avgLen=docs.reduce((s,d)=>s+d.tokens.length,0)/Math.max(docs.length,1);
+  const df={};
+  docs.forEach(d=>{const seen=new Set(d.tokens);seen.forEach(t=>{df[t]=(df[t]||0)+1;});});
+  const N=docs.length,idf={};
+  Object.entries(df).forEach(([t,freq])=>{idf[t]=Math.log((N-freq+0.5)/(freq+0.5)+1);});
+  return {docs,idf,avgLen};
+}
+
+function bm25Score(doc,qToks,idf,avgLen){
+  let score=0;
+  const tf={};doc.tokens.forEach(t=>{tf[t]=(tf[t]||0)+1;});
+  const dl=doc.tokens.length;
+  qToks.forEach(qt=>{
+    if(!idf[qt])return;
+    const f=tf[qt]||0;
+    score+=idf[qt]*((f*(BM25_K1+1))/(f+BM25_K1*(1-BM25_B+BM25_B*dl/avgLen)));
+  });
+  return score;
+}
+
+function retrieveContext(query,chunks,topK){
+  if(!chunks||!chunks.length)return{context:'',sources:[],hasKb:false};
+  const idx=buildBM25Index(chunks);
+  const qToks=tokenize(query);
+  const scored=idx.docs.map((doc,i)=>({score:bm25Score(doc,qToks,idx.idf,idx.avgLen),text:chunks[i].text,src:chunks[i].src||'document'}));
+  const relevant=scored.filter(d=>d.score>0).sort((a,b)=>b.score-a.score).slice(0,topK);
+  if(!relevant.length)return{context:'',sources:[],hasKb:true,noMatch:true};
+  return{context:relevant.map((d,i)=>`[Source ${i+1}: ${d.src}]\n${d.text}`).join('\n\n---\n\n'),sources:[...new Set(relevant.map(d=>d.src))],hasKb:true,noMatch:false};
+}
+
+function buildGroundedPrompt(base,context,hasKb){
+  if(!hasKb) return base;
+  return base+`\n\nKNOWLEDGE BASE CONTEXT (use ONLY this to answer):\n---\n${context}\n---\nCRITICAL: Answer ONLY using the KNOWLEDGE BASE CONTEXT above. Do NOT use outside knowledge. If the answer is not in the context, say "I don't have information about that in my knowledge base."`;
+}
+
+// ════════════════════════════════════════════════════
+//  25 METRICS ENGINE (Developer version — full detail)
+// ════════════════════════════════════════════════════
+let testMetrics = []; // accumulate across test queries
+
+function pct(v){ return Math.round(Math.max(0,Math.min(1,v||0))*1000)/10; }
+
+function compute25Metrics(query, response, context, hasKb, latencyMs, tokenCount){
+  const qToks=tokenize(query), rToks=tokenize(response), cToks=tokenize(context||'');
+  const rWords=response.split(/\s+/).filter(Boolean);
+  const sentences=response.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>10);
+  const rSet=new Set(rToks), cSet=new Set(cToks);
+  const LATENCY=latencyMs/1000;
+  const TPS=tokenCount/Math.max(LATENCY,0.1);
+
+  function lcs(a,b){let L=Array.from({length:a.length+1},()=>new Array(b.length+1).fill(0));for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)L[i][j]=a[i-1]===b[j-1]?L[i-1][j-1]+1:Math.max(L[i-1][j],L[i][j-1]);return L[a.length][b.length];}
+  function bigrams(arr){const bg=[];for(let i=0;i<arr.length-1;i++)bg.push(arr[i]+'_'+arr[i+1]);return bg;}
+
+  const ROUGE_L = qToks.length ? lcs(qToks.slice(0,30),rToks.slice(0,60))/qToks.length : 0;
+  const ROUGE_1 = qToks.length ? qToks.filter(t=>rSet.has(t)).length/qToks.length : 0;
+  const qBg=new Set(bigrams(qToks)),rBg=new Set(bigrams(rToks));
+  const ROUGE_2 = qBg.size ? [...qBg].filter(b=>rBg.has(b)).length/qBg.size : 0;
+  const COMPLETENESS = qToks.length ? qToks.filter(t=>rSet.has(t)).length/qToks.length : 0;
+  const groundedTerms = rToks.filter(t=>cSet.has(t)).length;
+  const GROUNDING = rToks.length&&hasKb ? groundedTerms/rToks.length : (hasKb?0:1);
+  const halluSents = sentences.filter(s=>{ if(!hasKb)return false; const st=tokenize(s); return st.filter(t=>cSet.has(t)).length/Math.max(st.length,1)<0.15; });
+  const HALLUCINATION = sentences.length ? halluSents.length/sentences.length : 0;
+  const FAITHFULNESS = hasKb ? (1-HALLUCINATION)*GROUNDING : 1;
+  const precTerms = rToks.filter(t=>qToks.includes(t)||cSet.has(t)).length;
+  const PRECISION = rToks.length ? precTerms/rToks.length : 0;
+  const RECALL = COMPLETENESS;
+  const F1 = (PRECISION+RECALL)>0 ? 2*PRECISION*RECALL/(PRECISION+RECALL) : 0;
+  const RELEVANCE = ROUGE_1*0.4+COMPLETENESS*0.4+ROUGE_L*0.2;
+  const ACCURACY = ROUGE_L*0.25+COMPLETENESS*0.25+FAITHFULNESS*0.25+RELEVANCE*0.25;
+  const DIVERSITY = rToks.length ? new Set(rToks).size/rToks.length : 0;
+  const biasTerms=['always','never','definitely','certainly','absolutely','guaranteed','impossible'];
+  const BIAS = Math.min(biasTerms.filter(t=>response.toLowerCase().includes(t)).length/Math.max(sentences.length,1),1);
+  const idealLen=Math.max(qToks.length*3,20);
+  const CONCISENESS = Math.max(0,1-Math.max(0,rWords.length-idealLen*2)/(idealLen*4));
+  const CONTEXT_UTIL = hasKb&&cToks.length ? Math.min(groundedTerms/Math.max(cToks.length*0.1,1),1) : (hasKb?0:1);
+  const ASR = (rWords.length>=5&&RELEVANCE>0.05) ? 1 : 0;
+  const KB_COVERAGE = hasKb&&cToks.length ? new Set([...cToks].filter(t=>rSet.has(t))).size/Math.max(new Set(cToks).size,1) : null;
+  const QUERY_COMPLEXITY = Math.min((qToks.length/10)*0.5+(new Set(qToks).size/Math.max(qToks.length,1))*0.5,1);
+  let coh=0; for(let i=1;i<sentences.length;i++){const p=new Set(tokenize(sentences[i-1])),c=tokenize(sentences[i]);coh+=c.filter(t=>p.has(t)).length/Math.max(c.length,1);}
+  const COHERENCE = sentences.length>1 ? coh/(sentences.length-1) : 1;
+  const specTerms=(response.match(/\b\d+[\.,\d]*\b|[A-Z][a-z]+\s[A-Z][a-z]+|\d{1,2}\/\d{1,2}\/\d{2,4}/g)||[]);
+  const SPECIFICITY = Math.min(specTerms.length/Math.max(sentences.length,1),1);
+  const OVERALL = ACCURACY*0.20+FAITHFULNESS*0.15+RELEVANCE*0.15+F1*0.10+GROUNDING*0.10+(1-HALLUCINATION)*0.10+COHERENCE*0.05+CONCISENESS*0.05+SPECIFICITY*0.05+ASR*0.05;
+
+  return {
+    query:query.slice(0,80), timestamp:new Date().toISOString(),
+    // Core
+    overall:pct(OVERALL), accuracy:pct(ACCURACY), faithfulness:pct(FAITHFULNESS), relevance:pct(RELEVANCE),
+    // ROUGE
+    rouge_l:pct(ROUGE_L), rouge_1:pct(ROUGE_1), rouge_2:pct(ROUGE_2),
+    // Precision/Recall/F1
+    precision:pct(PRECISION), recall:pct(RECALL), f1:pct(F1), completeness:pct(COMPLETENESS),
+    // KB
+    grounding:pct(GROUNDING), hallucination:pct(HALLUCINATION), context_util:pct(CONTEXT_UTIL),
+    kb_coverage:KB_COVERAGE!==null?pct(KB_COVERAGE):'N/A',
+    // Quality
+    coherence:pct(COHERENCE), specificity:pct(SPECIFICITY), diversity:pct(DIVERSITY),
+    conciseness:pct(CONCISENESS), bias:pct(BIAS),
+    // Performance
+    tps:parseFloat(TPS.toFixed(1)), latency_s:parseFloat(LATENCY.toFixed(2)),
+    resp_length:rWords.length, query_complexity:pct(QUERY_COMPLEXITY), asr:ASR===1?'Pass':'Fail',
+  };
+}
+
+async function testQuery() {
+  if (!testEngine) { toast('Load the model first','err'); return; }
+  const q = document.getElementById('consoleIn').value.trim(); if (!q) return;
+  document.getElementById('consoleIn').value='';
+  const out = document.getElementById('consoleOut');
+  out.innerHTML += `\n<span style="color:var(--a2)">YOU:</span> ${esc(q)}\n<span style="color:var(--accent)">SLM:</span> `;
+
+  const basePrompt = buildPrompt() || 'You are a helpful AI assistant.';
+  const hasKb = kbChunks.length > 0;
+  const {context,sources,noMatch} = retrieveContext(q, kbChunks, params.topK);
+  const finalPrompt = buildGroundedPrompt(basePrompt, context, hasKb);
+
+  const t0 = performance.now();
+  let tokCount = 0;
+
+  try {
+    const stream = await testEngine.chat.completions.create({
+      messages:[{role:'system',content:finalPrompt},{role:'user',content:q}],
+      temperature:params.temp, max_tokens:params.maxTok, stream:true,
+    });
+    let resp='';
+    for await (const chunk of stream) {
+      const delta=chunk.choices[0]?.delta?.content||'';
+      resp+=delta; tokCount+=delta.split(/\s+/).filter(Boolean).length;
+      out.scrollTop=out.scrollHeight;
+    }
+    const latencyMs = performance.now()-t0;
+    out.innerHTML += resp.replace(/\n/g,'<br>');
+    if(hasKb&&sources.length&&!noMatch){
+      out.innerHTML+=`\n<span style="color:var(--muted);font-size:9px">📚 Sources: ${sources.join(', ')}</span>`;
+    }
+    out.innerHTML+='\n\n';
+
+    // Compute and store metrics
+    const m = compute25Metrics(q, resp, context, hasKb, latencyMs, tokCount);
+    testMetrics.push(m);
+    renderMetricsDashboard();
+
+  } catch(e) { out.innerHTML += `<span style="color:var(--danger)">Error: ${e.message}</span>\n\n`; }
+  out.scrollTop=out.scrollHeight;
+}
+window.testQuery = testQuery;
+
+function clearConsole() {
+  document.getElementById('consoleOut').innerHTML='<span style="color:var(--muted)">// console cleared.</span>';
+  testMetrics=[];
+  renderMetricsDashboard();
+}
+window.clearConsole = clearConsole;
+
+// ── Metrics Dashboard (in Step 6) ──
+function renderMetricsDashboard() {
+  const el = document.getElementById('metricsDashboard');
+  if (!el) return;
+  if (!testMetrics.length) {
+    el.innerHTML='<div style="font-size:10px;color:var(--muted);text-align:center;padding:16px">Run test queries to see metrics here.</div>';
+    return;
+  }
+  // Average across all test queries
+  const avg = {};
+  const numKeys = Object.keys(testMetrics[0]).filter(k=>typeof testMetrics[0][k]==='number'&&k!=='latency_s'&&k!=='tps'&&k!=='resp_length');
+  numKeys.forEach(k=>{ avg[k]=(testMetrics.reduce((s,m)=>s+(m[k]||0),0)/testMetrics.length).toFixed(1); });
+  avg.tps   = (testMetrics.reduce((s,m)=>s+m.tps,0)/testMetrics.length).toFixed(1);
+  avg.latency_s = (testMetrics.reduce((s,m)=>s+m.latency_s,0)/testMetrics.length).toFixed(2);
+  avg.resp_length = Math.round(testMetrics.reduce((s,m)=>s+m.resp_length,0)/testMetrics.length);
+  const passRate = Math.round(testMetrics.filter(m=>m.asr==='Pass').length/testMetrics.length*100);
+
+  const METRIC_GROUPS = [
+    { label:'🎯 Core Quality', metrics:['overall','accuracy','faithfulness','relevance'], color:'var(--a2)' },
+    { label:'📊 ROUGE Scores', metrics:['rouge_l','rouge_1','rouge_2'], color:'var(--a3)' },
+    { label:'⚖️ Precision / Recall', metrics:['precision','recall','f1','completeness'], color:'var(--accent)' },
+    { label:'📚 Knowledge Base', metrics:['grounding','hallucination','context_util','kb_coverage'], color:'#4285f4' },
+    { label:'✍️ Response Quality', metrics:['coherence','specificity','diversity','conciseness','bias'], color:'#ff6a00' },
+    { label:'⚡ Performance', metrics:['tps','latency_s','resp_length','query_complexity'], color:'var(--muted)' },
+  ];
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700">Metrics across ${testMetrics.length} test quer${testMetrics.length===1?'y':'ies'} · ASR: ${passRate}% Pass</div>
+      <button onclick="exportMetricsDashboard()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(0,229,160,.3);background:rgba(0,229,160,.08);color:var(--a2);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;cursor:pointer">⬇ Export Dashboard</button>
+    </div>
+    ${METRIC_GROUPS.map(g=>`
+      <div style="margin-bottom:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">${g.label}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px">
+          ${g.metrics.map(k=>{
+            const v=avg[k];
+            const isSpecial=k==='tps'||k==='latency_s'||k==='resp_length';
+            const isInverse=k==='hallucination'||k==='bias'||k==='latency_s';
+            const numVal=parseFloat(v)||0;
+            const score=isSpecial?null:(isInverse?100-numVal:numVal);
+            const barColor=score===null?g.color:score>=70?'var(--a2)':score>=40?'var(--a3)':'var(--danger)';
+            const unit=k==='tps'?' tok/s':k==='latency_s'?'s':k==='resp_length'?' words':'%';
+            return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k.replace(/_/g,' ')}</div>
+              <div style="font-size:16px;font-weight:800;color:${barColor};font-family:'JetBrains Mono',monospace">${v}${isSpecial?unit:'%'}</div>
+              ${score!==null?`<div style="height:2px;background:var(--border);border-radius:1px;margin-top:5px;overflow:hidden"><div style="height:100%;width:${Math.min(score,100)}%;background:${barColor};border-radius:1px;transition:width .4s"></div></div>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('')}`;
+}
+window.renderMetricsDashboard = renderMetricsDashboard;
+
+// ── Export Dashboard as proper visual HTML ──
+function exportMetricsDashboard() {
+  if (!testMetrics.length) { toast('Run at least one test query first','err'); return; }
+
+  const profileName = document.getElementById('pName')?.value?.trim() || 'SLM Profile';
+  const category    = document.getElementById('pCategory')?.value?.trim() || 'General';
+  const allModels   = [...MODELS.fast,...MODELS.mid,...MODELS.large];
+  const modelInfo   = allModels.find(m=>m.key===selectedModel);
+  const modelName   = modelInfo?.name || selectedModel || 'Unknown';
+  const kbFileCount = kbFiles.length;
+  const kbChunkCount= kbChunks.length;
+  const exCount     = examples.length;
+  const n           = testMetrics.length;
+
+  // Compute averages
+  const avg = {};
+  const numKeys = Object.keys(testMetrics[0]).filter(k => typeof testMetrics[0][k] === 'number');
+  numKeys.forEach(k => { avg[k] = testMetrics.reduce((s,m)=>s+(m[k]||0),0) / n; });
+  const passRate = Math.round(testMetrics.filter(m=>m.asr==='Pass').length / n * 100);
+  const p = v => Math.round(v*10)/10;  // 1 decimal place
+
+  // Group definitions
+  const GROUPS = [
+    {
+      title: 'Core Quality',
+      icon:  '🎯',
+      color: '#00e5a0',
+      items: [
+        { label:'Overall Score',    value:p(avg.overall||0),    unit:'%', desc:'Weighted composite of all 25 metrics', inverse:false },
+        { label:'Accuracy',         value:p(avg.accuracy||0),   unit:'%', desc:'ROUGE × Completeness × Faithfulness', inverse:false },
+        { label:'Faithfulness',     value:p(avg.faithfulness||0),unit:'%',desc:'Grounding × (1 − Hallucination)',     inverse:false },
+        { label:'Relevance',        value:p(avg.relevance||0),  unit:'%', desc:'How well response matches the query', inverse:false },
+      ]
+    },
+    {
+      title: 'ROUGE Scores',
+      icon:  '📊',
+      color: '#f5a623',
+      items: [
+        { label:'ROUGE-L',  value:p(avg.rouge_l||0), unit:'%', desc:'Longest Common Subsequence recall',  inverse:false },
+        { label:'ROUGE-1',  value:p(avg.rouge_1||0), unit:'%', desc:'Unigram recall vs query',            inverse:false },
+        { label:'ROUGE-2',  value:p(avg.rouge_2||0), unit:'%', desc:'Bigram overlap score',               inverse:false },
+      ]
+    },
+    {
+      title: 'Precision & Recall',
+      icon:  '⚖️',
+      color: '#7c6dfa',
+      items: [
+        { label:'Precision',     value:p(avg.precision||0),    unit:'%', desc:'Response terms in query/context', inverse:false },
+        { label:'Recall',        value:p(avg.recall||0),       unit:'%', desc:'Query terms covered in response', inverse:false },
+        { label:'F1 Score',      value:p(avg.f1||0),           unit:'%', desc:'Harmonic mean of P & R',          inverse:false },
+        { label:'Completeness',  value:p(avg.completeness||0), unit:'%', desc:'Query coverage in response',      inverse:false },
+      ]
+    },
+    {
+      title: 'Knowledge Base',
+      icon:  '📚',
+      color: '#4285f4',
+      items: [
+        { label:'Grounding',      value:p(avg.grounding||0),    unit:'%', desc:'Response anchored in KB context',   inverse:false },
+        { label:'Hallucination',  value:p(avg.hallucination||0),unit:'%', desc:'Unsupported sentences (lower=better)',inverse:true },
+        { label:'Context Util',   value:p(avg.context_util||0), unit:'%', desc:'How much of KB context was used',   inverse:false },
+        { label:'KB Coverage',    value:p(avg.kb_coverage||0),  unit:'%', desc:'KB terms referenced in response',   inverse:false },
+      ]
+    },
+    {
+      title: 'Response Quality',
+      icon:  '✍️',
+      color: '#ff6a00',
+      items: [
+        { label:'Coherence',    value:p(avg.coherence||0),   unit:'%', desc:'Sentence-to-sentence continuity', inverse:false },
+        { label:'Specificity',  value:p(avg.specificity||0), unit:'%', desc:'Numbers & named entities present', inverse:false },
+        { label:'Diversity',    value:p(avg.diversity||0),   unit:'%', desc:'Vocabulary richness',              inverse:false },
+        { label:'Conciseness',  value:p(avg.conciseness||0), unit:'%', desc:'Response length appropriateness',  inverse:false },
+        { label:'Bias Score',   value:p(avg.bias||0),        unit:'%', desc:'Overconfident language (lower=better)',inverse:true },
+      ]
+    },
+    {
+      title: 'Performance',
+      icon:  '⚡',
+      color: '#a0aec0',
+      items: [
+        { label:'Avg TPS',          value:p(avg.tps||0),          unit:' tok/s', desc:'Tokens generated per second',      inverse:false, noBar:true },
+        { label:'Avg Latency',      value:p(avg.latency_s||0),    unit:'s',      desc:'Response generation time',         inverse:true,  noBar:true },
+        { label:'Avg Resp Length',  value:Math.round(avg.resp_length||0), unit:' words',desc:'Mean words per response',  inverse:false, noBar:true },
+        { label:'Query Complexity', value:p(avg.query_complexity||0),unit:'%',   desc:'Input query sophistication',       inverse:false },
+      ]
+    },
+  ];
+
+  function scoreColor(value, inverse) {
+    const v = inverse ? 100 - value : value;
+    return v >= 70 ? '#00e5a0' : v >= 40 ? '#f5a623' : '#ff4e6a';
+  }
+
+  // Per-query table rows
+  const queryRows = testMetrics.map((m,i) => `
+    <tr>
+      <td style="color:#718096;font-family:monospace">${i+1}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.query}">${m.query}</td>
+      <td style="color:${scoreColor(m.overall,false)};font-family:monospace;font-weight:700">${m.overall}%</td>
+      <td style="color:${scoreColor(m.accuracy,false)};font-family:monospace">${m.accuracy}%</td>
+      <td style="color:${scoreColor(m.faithfulness,false)};font-family:monospace">${m.faithfulness}%</td>
+      <td style="color:${scoreColor(m.hallucination,true)};font-family:monospace">${m.hallucination}%</td>
+      <td style="color:${scoreColor(m.grounding,false)};font-family:monospace">${m.grounding}%</td>
+      <td style="color:#a0aec0;font-family:monospace">${m.tps} t/s</td>
+      <td style="color:${m.asr==='Pass'?'#00e5a0':'#ff4e6a'};font-family:monospace;font-weight:700">${m.asr}</td>
+    </tr>`).join('');
+
+  const groupCards = GROUPS.map(g => `
+    <div class="group-card">
+      <div class="group-title"><span>${g.icon}</span><span>${g.title}</span></div>
+      <div class="metric-list">
+        ${g.items.map(item => {
+          const numVal = parseFloat(item.value) || 0;
+          const barPct = item.noBar ? 0 : Math.min(item.inverse ? Math.max(0,100-numVal) : numVal, 100);
+          const col = scoreColor(numVal, item.inverse);
+          return `<div class="metric-row">
+            <div class="metric-left">
+              <div class="metric-label">${item.label}</div>
+              <div class="metric-desc">${item.desc}</div>
+            </div>
+            <div class="metric-right">
+              <div class="metric-value" style="color:${col}">${item.value}${item.unit}</div>
+              ${!item.noBar ? `<div class="bar-bg"><div class="bar-fg" style="width:${barPct}%;background:${col}"></div></div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+
+  const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>SLM Forge Dashboard — ' + profileName + '</title>\n<style>\n' +
+  '  *{margin:0;padding:0;box-sizing:border-box}\n' +
+  '  body{font-family:"Segoe UI",system-ui,sans-serif;background:#07090c;color:#dde3ee;min-height:100vh;padding:32px 40px}\n' +
+  '  a{color:#00e5a0}\n' +
+  '  /* Header */\n' +
+  '  .logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}\n' +
+  '  .logo-box{width:36px;height:36px;background:linear-gradient(135deg,#00e5a0,#7c6dfa);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}\n' +
+  '  .logo-text{font-size:18px;font-weight:800}\n' +
+  '  .badge{padding:2px 9px;border-radius:4px;background:rgba(124,109,250,.15);border:1px solid rgba(124,109,250,.3);color:#7c6dfa;font-size:10px;font-weight:700;font-family:monospace;letter-spacing:.5px}\n' +
+  '  h1{font-size:28px;font-weight:800;margin-bottom:4px}\n' +
+  '  .subtitle{font-size:13px;color:#718096;margin-bottom:28px}\n' +
+  '  /* Hero stats */\n' +
+  '  .hero{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:32px}\n' +
+  '  .hero-card{background:#0f1318;border:1px solid #1e2530;border-radius:10px;padding:16px;position:relative;overflow:hidden}\n' +
+  '  .hero-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,#00e5a0)}\n' +
+  '  .hero-n{font-size:26px;font-weight:800;font-family:monospace;color:var(--c,#00e5a0)}\n' +
+  '  .hero-l{font-size:10px;color:#718096;margin-top:4px;text-transform:uppercase;letter-spacing:.8px}\n' +
+  '  /* Groups grid */\n' +
+  '  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:32px}\n' +
+  '  .group-card{background:#0f1318;border:1px solid #1e2530;border-radius:12px;overflow:hidden}\n' +
+  '  .group-title{display:flex;align-items:center;gap:8px;padding:13px 16px;background:#161b22;border-bottom:1px solid #1e2530;font-size:13px;font-weight:700}\n' +
+  '  .metric-list{padding:12px 14px;display:flex;flex-direction:column;gap:10px}\n' +
+  '  .metric-row{display:flex;align-items:center;gap:12px}\n' +
+  '  .metric-left{flex:1;min-width:0}\n' +
+  '  .metric-label{font-size:12px;font-weight:700;margin-bottom:2px}\n' +
+  '  .metric-desc{font-size:10px;color:#718096;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n' +
+  '  .metric-right{flex-shrink:0;text-align:right;min-width:80px}\n' +
+  '  .metric-value{font-family:monospace;font-size:15px;font-weight:800;margin-bottom:4px}\n' +
+  '  .bar-bg{height:4px;background:#1e2530;border-radius:2px;width:80px;overflow:hidden}\n' +
+  '  .bar-fg{height:100%;border-radius:2px;transition:width .4s}\n' +
+  '  /* Query table */\n' +
+  '  .section-title{font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}\n' +
+  '  .table-wrap{background:#0f1318;border:1px solid #1e2530;border-radius:12px;overflow:hidden;margin-bottom:32px}\n' +
+  '  table{width:100%;border-collapse:collapse;font-size:12px}\n' +
+  '  th{text-align:left;padding:10px 14px;background:#161b22;border-bottom:1px solid #1e2530;font-size:9px;color:#718096;text-transform:uppercase;letter-spacing:.8px;font-weight:700}\n' +
+  '  td{padding:9px 14px;border-top:1px solid #1e2530}\n' +
+  '  tr:hover td{background:#161b22}\n' +
+  '  /* Profile info */\n' +
+  '  .profile-info{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:32px}\n' +
+  '  .info-item{background:#0f1318;border:1px solid #1e2530;border-radius:8px;padding:12px}\n' +
+  '  .info-label{font-size:9px;color:#718096;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-family:monospace}\n' +
+  '  .info-value{font-size:13px;font-weight:700}\n' +
+  '  /* Footer */\n' +
+  '  .footer{text-align:center;font-size:11px;color:#4a5568;padding:20px;border-top:1px solid #1e2530}\n' +
+  '</style>\n</head>\n<body>\n' +
+
+  '<div class="logo"><div class="logo-box">⚡</div><div class="logo-text">SLM Forge</div><span class="badge">METRICS DASHBOARD</span></div>\n' +
+  '<h1>' + profileName + '</h1>\n' +
+  '<div class="subtitle">Evaluation Report · ' + category + ' · Generated ' + new Date().toLocaleString() + '</div>\n' +
+
+  '<div class="hero">\n' +
+  '  <div class="hero-card" style="--c:#00e5a0"><div class="hero-n">' + p(avg.overall||0) + '%</div><div class="hero-l">Overall Score</div></div>\n' +
+  '  <div class="hero-card" style="--c:#00e5a0"><div class="hero-n">' + p(avg.accuracy||0) + '%</div><div class="hero-l">Accuracy</div></div>\n' +
+  '  <div class="hero-card" style="--c:#00e5a0"><div class="hero-n">' + p(avg.faithfulness||0) + '%</div><div class="hero-l">Faithfulness</div></div>\n' +
+  '  <div class="hero-card" style="--c:#ff4e6a"><div class="hero-n">' + p(avg.hallucination||0) + '%</div><div class="hero-l">Hallucination</div></div>\n' +
+  '  <div class="hero-card" style="--c:#f5a623"><div class="hero-n">' + p(avg.tps||0) + '</div><div class="hero-l">Avg TPS</div></div>\n' +
+  '  <div class="hero-card" style="--c:#7c6dfa"><div class="hero-n">' + passRate + '%</div><div class="hero-l">Answer Success</div></div>\n' +
+  '  <div class="hero-card" style="--c:#4285f4"><div class="hero-n">' + n + '</div><div class="hero-l">Test Queries</div></div>\n' +
+  '  <div class="hero-card" style="--c:#a0aec0"><div class="hero-n">' + p(avg.latency_s||0) + 's</div><div class="hero-l">Avg Latency</div></div>\n' +
+  '</div>\n' +
+
+  '<div class="section-title">📋 Profile Configuration</div>\n' +
+  '<div class="profile-info">\n' +
+  '  <div class="info-item"><div class="info-label">Profile Name</div><div class="info-value">' + profileName + '</div></div>\n' +
+  '  <div class="info-item"><div class="info-label">Model</div><div class="info-value">' + modelName + '</div></div>\n' +
+  '  <div class="info-item"><div class="info-label">Category</div><div class="info-value">' + category + '</div></div>\n' +
+  '  <div class="info-item"><div class="info-label">Knowledge Base</div><div class="info-value">' + kbFileCount + ' files · ' + kbChunkCount + ' chunks</div></div>\n' +
+  '  <div class="info-item"><div class="info-label">Few-Shot Examples</div><div class="info-value">' + exCount + ' examples</div></div>\n' +
+  '  <div class="info-item"><div class="info-label">Report Date</div><div class="info-value">' + new Date().toLocaleDateString() + '</div></div>\n' +
+  '</div>\n' +
+
+  '<div class="section-title">📊 Metric Groups</div>\n' +
+  '<div class="groups">' + groupCards + '</div>\n' +
+
+  '<div class="section-title">🔍 Per-Query Results</div>\n' +
+  '<div class="table-wrap"><table>\n' +
+  '<thead><tr><th>#</th><th>Query</th><th>Overall</th><th>Accuracy</th><th>Faithfulness</th><th>Hallucination</th><th>Grounding</th><th>TPS</th><th>ASR</th></tr></thead>\n' +
+  '<tbody>' + queryRows + '</tbody>\n' +
+  '</table></div>\n' +
+
+  '<div class="footer">SLM Forge · Developer Studio · Metrics Report · ' + new Date().toISOString() + '</div>\n' +
+  '</body>\n</html>';
+
+  // Download
+  try {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = (profileName.replace(/[^a-zA-Z0-9]/g,'-') || 'slm') + '-dashboard-' + new Date().toISOString().slice(0,10) + '.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+    toast('Dashboard exported ✓', 'ok');
+  } catch(err) {
+    toast('Export failed: ' + err.message, 'err');
+  }
+}
+window.exportMetricsDashboard = exportMetricsDashboard;
+
+// ── Profiles CRUD ──
+function loadFromStorage() {
+  try { const s = localStorage.getItem('slmforge_studio_profiles'); if(s) profiles=JSON.parse(s); } catch(e){}
+}
+function saveToStorage() {
+  try { localStorage.setItem('slmforge_studio_profiles', JSON.stringify(profiles)); } catch(e){}
+}
+
+function newProfile() {
+  const id = 'p_'+Date.now();
+  profiles.push({ id, name:'New SLM Profile', desc:'', category:'', icon:'🤖', task:'custom', role:'', criteria:'', format:'freeform', scale:'none', examples:[], modelKey:'llama3b', params:{...params}, kbFiles:[], kbChunks:[], status:'draft', createdAt:new Date().toISOString() });
+  saveToStorage(); renderProfileList(); switchToProfile(id);
+}
+window.newProfile = newProfile;
+
+function switchToProfile(id) {
+  const p = profiles.find(x=>x.id===id); if (!p) return;
+  activeId = id;
+  // Populate wizard fields
+  document.getElementById('pName').value     = p.name||'';
+  document.getElementById('pDesc').value     = p.desc||'';
+  document.getElementById('pCategory').value = p.category||'';
+  document.getElementById('pIcon').value     = p.icon||'🤖';
+  document.getElementById('pRole').value     = p.role||'';
+  document.getElementById('pFormat').value   = p.format||'freeform';
+  document.getElementById('pScale').value    = p.scale||'none';
+  document.getElementById('pCriteria').value = p.criteria||'';
+  selectedModel   = p.modelKey||'llama3b';
+  examples        = [...(p.examples||[])];
+  kbFiles         = [...(p.kbFiles||[])];
+  kbChunks        = [...(p.kbChunks||[])];
+  selectedPersona = p.task||null;
+  renderModels(); renderPersonas(); renderExamples(); renderKbList(); updateKbStats(); refreshPreview();
+  document.getElementById('mainEmpty').style.display='none';
+  document.getElementById('wizardWrap').style.display='flex';
+  document.getElementById('wizardWrap').style.flexDirection='column';
+  document.getElementById('wizardWrap').style.height='100%';
+  goStep(1);
+  renderProfileList();
+}
+
+function saveProfile() {
+  if (!activeId) return;
+  const p = profiles.find(x=>x.id===activeId); if (!p) return;
+  p.name      = document.getElementById('pName').value.trim() || 'Unnamed SLM';
+  p.desc      = document.getElementById('pDesc').value.trim();
+  p.category  = document.getElementById('pCategory').value.trim();
+  p.icon      = document.getElementById('pIcon').value.trim() || '🤖';
+  p.role      = document.getElementById('pRole').value.trim();
+  p.criteria  = document.getElementById('pCriteria').value.trim();
+  p.format    = document.getElementById('pFormat').value;
+  p.scale     = document.getElementById('pScale').value;
+  p.modelKey  = selectedModel;
+  p.examples  = [...examples];
+  p.kbFiles   = [...kbFiles];
+  p.kbChunks  = [...kbChunks];
+  p.task      = selectedPersona||'custom';
+  p.params    = {...params};
+  p.systemPrompt = buildPrompt();
+  p.updatedAt = new Date().toISOString();
+  saveToStorage(); renderProfileList(); toast('Saved ✓','ok');
+}
+window.saveProfile = saveProfile;
+
+async function publishProfile() {
+  if (!activeId) return;
+
+  // Always save first to ensure kbChunks, examples etc are current
+  saveProfile();
+
+  const p = profiles.find(x=>x.id===activeId);
+  if (!p) return;
+
+  // Guard: warn if no system prompt
+  if (!p.systemPrompt && !p.role) {
+    toast('Add a role description in Step 3 before publishing','err');
+    return;
+  }
+
+  showOverlay('Publishing to Orchestrator…');
+
+  // Build the full system prompt fresh (in case it wasn't saved)
+  const systemPrompt = p.systemPrompt || buildGroundedPrompt(
+    buildPrompt(),
+    '', // no context at publish time — context injected at query time
+    false
+  );
+
+  // Prepare KB chunks — store all of them (capped at 500 for sheet size)
+  const kbChunksToSend = (p.kbChunks || []).slice(0, 500).map(c => ({
+    text: c.text,
+    src:  c.src || 'document',
+  }));
+
+  const payload = {
+    action:          'publishProfile',
+    id:              p.id,
+    name:            p.name       || 'Unnamed SLM',
+    desc:            p.desc       || '',
+    category:        p.category   || 'General',
+    task:            p.task       || 'custom',
+    role:            p.role       || '',
+    criteria:        p.criteria   || '',
+    format:          p.format     || 'freeform',
+    scale:           p.scale      || 'none',
+    examples:        p.examples   || [],
+    kbChunks:        kbChunksToSend,
+    modelKey:        p.modelKey   || 'llama3b',
+    systemPrompt:    systemPrompt,
+    developerEmail:  studioUser?.email || 'developer@slmforge',
+    icon:            p.icon       || '🤖',
+    version:         (p.version||0) + 1,
+  };
+
+  try {
+    // Try with CORS first (works when GAS is deployed with "Anyone" access)
+    let res = null;
+    try {
+      const r = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (r.ok) res = await r.json();
+    } catch(corsErr) {
+      // Fall back to no-cors (fire-and-forget) if CORS blocked
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    // Update local profile record
+    p.status      = 'published';
+    p.publishedAt = new Date().toISOString();
+    p.version     = payload.version;
+    p.systemPrompt= systemPrompt;
+
+    // Also save to localStorage so Forge can read it directly
+    saveToStorage();
+
+    // Save full profile (including kbChunks) to localStorage under a key
+    // that Forge/Orchestrator can read directly — bypasses GAS size limits
+    try {
+      const allPub = JSON.parse(localStorage.getItem('slmforge_published_profiles') || '[]');
+      const idx = allPub.findIndex(x => x.id === p.id);
+      const fullRecord = { ...p, systemPrompt, publishedAt: p.publishedAt };
+      if (idx >= 0) allPub[idx] = fullRecord;
+      else allPub.push(fullRecord);
+      localStorage.setItem('slmforge_published_profiles', JSON.stringify(allPub));
+    } catch(e) {}
+
+    renderProfileList();
+    document.getElementById('publishSuccess').style.display = 'block';
+    updatePubSummary();
+
+    const kbMsg = kbChunksToSend.length
+      ? ' · ' + kbChunksToSend.length + ' KB chunks included'
+      : ' · No KB (end users will use full model knowledge)';
+    toast('Published ✓' + kbMsg, 'ok');
+
+  } catch(e) {
+    toast('Publish error: ' + e.message, 'err');
+    console.error('[Studio] publishProfile error:', e);
+  }
+  hideOverlay();
+}
+window.publishProfile = publishProfile;
+
+function updatePubSummary() {
+  const p = profiles.find(x=>x.id===activeId); if (!p) return;
+  const allModels = [...MODELS.fast,...MODELS.mid,...MODELS.large];
+  const m = allModels.find(x=>x.key===p.modelKey);
+  document.getElementById('pubName').textContent    = p.name||'—';
+  document.getElementById('pubCat').textContent     = p.category||'—';
+  document.getElementById('pubModel').textContent   = m?.name||p.modelKey||'—';
+  document.getElementById('pubPersona').textContent = p.task||'custom';
+  document.getElementById('pubKb').textContent      = (p.kbFiles?.length||0)+' files, '+(p.kbChunks?.length||0)+' chunks';
+  document.getElementById('pubEx').textContent      = (p.examples?.length||0)+' examples';
+}
+
+function exportProfile() {
+  if (!activeId) return;
+  saveProfile();
+  const p = profiles.find(x=>x.id===activeId); if (!p) return;
+  const blob = new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=(p.name||'profile').replace(/\s+/g,'-')+'.slmtune'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+window.exportProfile = exportProfile;
+
+async function importProfile(input) {
+  const f=input.files[0]; if(!f) return; input.value='';
+  try {
+    const p=JSON.parse(await f.text());
+    if(!p||typeof p!=='object'){toast('Invalid file','err');return;}
+    p.id='p_'+Date.now(); p.status='draft';
+    profiles.push(p); saveToStorage(); renderProfileList(); switchToProfile(p.id);
+    toast('Imported ✓','ok');
+  } catch(e){toast('Import failed: '+e.message,'err');}
+}
+window.importProfile = importProfile;
+
+function deleteProfile(id, evt) {
+  evt && evt.stopPropagation();
+  const p = profiles.find(x=>x.id===id);
+  if (!p) return;
+  const label = p.name || 'this profile';
+  if (!confirm(`Delete "${label}"?\n\nThis removes it from Studio. If already published to Orchestrator, use the Orchestrator to remove it from the registry.`)) return;
+  profiles = profiles.filter(x=>x.id!==id);
+  if (activeId === id) {
+    activeId = null;
+    document.getElementById('mainEmpty').style.display='block';
+    document.getElementById('wizardWrap').style.display='none';
+  }
+  saveToStorage();
+  renderProfileList();
+  toast('Profile deleted','ok');
+}
+window.deleteProfile = deleteProfile;
+
+function renderProfileList() {
+  const el = document.getElementById('profileList');
+  const total=profiles.length, pub=profiles.filter(p=>p.status==='published').length;
+  document.getElementById('lpTotal').textContent=total;
+  document.getElementById('lpPub').textContent=pub;
+  if(!total){el.innerHTML='<div style="font-size:10px;color:var(--muted);padding:6px">No profiles yet.</div>';return;}
+  el.innerHTML=profiles.map(p=>`
+    <div class="profile-card ${p.id===activeId?'active':''} ${p.status==='published'?'pub':''}" onclick="switchToProfile('${p.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
+        <div style="min-width:0;flex:1">
+          <div class="pc-name">${p.icon||'🤖'} ${p.name||'Unnamed'}</div>
+          <div class="pc-meta">${[...MODELS.fast,...MODELS.mid,...MODELS.large].find(m=>m.key===p.modelKey)?.name||p.modelKey||'No model'}</div>
+          <div class="pc-status ${p.status||'draft'}">${p.status==='published'?'● Live':'○ Draft'}</div>
+        </div>
+        <button onclick="deleteProfile('${p.id}',event)"
+          style="flex-shrink:0;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,78,106,.2);background:transparent;color:var(--danger);font-size:10px;cursor:pointer;opacity:.6;transition:.15s"
+          onmouseover="this.style.opacity='1';this.style.background='rgba(255,78,106,.08)'"
+          onmouseout="this.style.opacity='.6';this.style.background='transparent'"
+          title="Delete profile">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Wizard steps ──
+function goStep(n) {
+  currentStep=n;
+  document.querySelectorAll('.step').forEach((el,i)=>{
+    el.classList.remove('active','done');
+    if(i+1===n) el.classList.add('active');
+    else if(i+1<n) el.classList.add('done');
+  });
+  document.querySelectorAll('.step-panel').forEach(el=>el.classList.remove('active'));
+  const panel=document.getElementById('panel-'+n);
+  if(panel) panel.classList.add('active');
+  if(n===7) updatePubSummary();
+}
+window.goStep = goStep;
+
+// ── UI helpers ──
+function showOverlay(t) { document.getElementById('oTxt').textContent=t; document.getElementById('overlay').classList.remove('hidden'); }
+function hideOverlay()  { document.getElementById('overlay').classList.add('hidden'); }
+
+let toastTimer;
+function toast(msg,type='ok') {
+  clearTimeout(toastTimer);
+  document.querySelector('.toast')?.remove();
+  const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg;
+  document.body.appendChild(t); toastTimer=setTimeout(()=>t.remove(),3000);
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+
+// ── DB adapter (same config as Forge/Orchestrator) ──────
+const DB_CONFIG = {
+  adapter: 'gsheets',
+  gasUrl: 'https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec',
+  // supabase: adapter:'supabase', supabaseUrl:'...', supabaseKey:'...'
+  // airtable: adapter:'airtable', airtableToken:'...', airtableBase:'...'
+  // rest:     adapter:'rest', restBase:'...', restKey:'...'
+  // local:    adapter:'local'  (offline/dev mode)
+};
+const SUPER_ADMINS = [
+  { email:'venkateshvelamuri5@gmail.com', name:'Venkatesh Velamuri', passHash:'QWRtaW5AU0xNRm9yZ2UyMDI1' },
+  { email:'admin@slmforge.com',           name:'SLM Forge Admin',    passHash:'U0xNRm9yZ2VAQWRtaW4yMDI1' },
+];
+function checkSuperAdmin(email,pass){ const e=email.toLowerCase().trim(),h=btoa(pass); const f=SUPER_ADMINS.find(a=>a.email===e&&a.passHash===h); return f?{success:true,name:f.name,role:'admin',appAccess:['forge','studio','orchestrator']}:null; }
+function isSuperAdminEmail(email){ return SUPER_ADMINS.some(a=>a.email===email.toLowerCase().trim()); }
+class GASDb { constructor(u){this.u=u;} async get(p){try{const r=await fetch(this.u+'?'+new URLSearchParams(p),{mode:'cors'});if(r.ok)return r.json();}catch(e){} return null;} async post(p){try{const r=await fetch(this.u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});if(r.ok)return r.json();}catch(e){try{await fetch(this.u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});}catch(e2){}} return null;} }
+const gasDb = new GASDb(DB_CONFIG.gasUrl);
+
+// ── Studio Auth ──
+let studioUser = null;
+
+function loadStudioSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('slmf_studio_user')||'null');
+    if (!s || Date.now()-(s.at||0) > 8*3600000) { localStorage.removeItem('slmf_studio_user'); return false; }
+    studioUser = s; return true;
+  } catch(e) { return false; }
+}
+function saveStudioSession(u) { studioUser={...u,at:Date.now()}; localStorage.setItem('slmf_studio_user',JSON.stringify(studioUser)); }
+
+async function studioLogin() {
+  const email = document.getElementById('studioEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('studioPass').value;
+  const errEl = document.getElementById('studioLoginErr');
+  const btn   = document.getElementById('studioLoginBtn');
+  errEl.style.display='none';
+  if (!email||!email.includes('@')) { errEl.textContent='Valid email required.'; errEl.style.display='block'; return; }
+  if (!pass||pass.length<6) { errEl.textContent='Password required (min 6 chars).'; errEl.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='Signing in…';
+  try {
+    // 1. Super admin list — all entries work, no DB needed
+    const sa = checkSuperAdmin(email, pass);
+    if (sa) {
+      saveStudioSession({email, name:sa.name, role:'admin', appAccess:sa.appAccess});
+      document.getElementById('studioLoginModal').classList.add('hidden');
+      document.getElementById('devPill').textContent = sa.name.split(' ')[0] + ' · admin';
+      bootStudio(); return;
+    }
+    if (isSuperAdminEmail(email)) {
+      errEl.textContent='Incorrect password for admin account.'; errEl.style.display='block'; return;
+    }
+    // 2. DB login for developers
+    const res = await gasDb.get({action:'login', email, password:btoa(pass), app:'studio'});
+    if (res?.success) {
+      const ok = res.role==='admin' || res.role==='developer' || (res.appAccess||[]).includes('studio');
+      if (!ok) { errEl.textContent='No Studio access. Contact your admin.'; errEl.style.display='block'; return; }
+      saveStudioSession({email, name:res.name||email.split('@')[0], role:res.role||'developer', appAccess:res.appAccess||[]});
+      document.getElementById('studioLoginModal').classList.add('hidden');
+      document.getElementById('devPill').textContent=(studioUser.name||email).split(' ')[0]+' · '+(studioUser.role||'developer');
+      bootStudio();
+    } else if (!res) {
+      errEl.textContent='Cannot reach server. Check your internet connection.'; errEl.style.display='block';
+    } else {
+      errEl.textContent=res.error||'Access denied.'; errEl.style.display='block';
+    }
+  } finally { btn.disabled=false; btn.textContent='Sign In to Studio →'; }
+}
+
+function bootStudio() {
+  loadFromStorage();
+  renderProfileList();
+  renderModels();
+  renderPersonas();
+  if(profiles.length) switchToProfile(profiles[0].id);
+}
+
+// ── BOOT ──
+if (loadStudioSession()) {
+  document.getElementById('studioLoginModal').classList.add('hidden');
+  document.getElementById('devPill').textContent = (studioUser.name||studioUser.email).split(' ')[0]+' · '+(studioUser.role||'developer');
+  bootStudio();
+} else {
+  document.getElementById('studioLoginModal').classList.remove('hidden');
+}
+</script>
+
+<!-- Studio Login Modal -->
+<div class="s-login-back" id="studioLoginModal">
+  <div class="s-login-box">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:20px">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">⚡</div>
+      <div style="font-size:15px;font-weight:800">SLM Forge — Studio</div>
+      <div class="logo-badge" style="margin-left:2px">DEVELOPER</div>
+    </div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:5px">Developer Access</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:20px">Studio is restricted to licensed developers. Sign in with your developer credentials.</div>
+    <div class="s-login-field">
+      <label class="s-login-label">Email <span style="color:var(--danger)">*</span></label>
+      <input class="s-login-input" id="studioEmail" type="email" placeholder="developer@company.com" autocomplete="email">
+    </div>
+    <div class="s-login-field">
+      <label class="s-login-label">Password <span style="color:var(--danger)">*</span></label>
+      <input class="s-login-input" id="studioPass" type="password" placeholder="Your password"
+        onkeydown="if(event.key==='Enter')studioLogin()">
+    </div>
+    <div class="s-login-err" id="studioLoginErr"></div>
+    <button class="s-login-btn" id="studioLoginBtn" onclick="studioLogin()">Sign In to Studio →</button>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6">
+      🔒 Developer licenses are managed by <strong>venkateshvelamuri5@gmail.com</strong>.<br>Contact admin to request Studio access.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
