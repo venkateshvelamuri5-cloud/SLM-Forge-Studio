@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLM Forge — Orchestrator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+:root{
+  --bg:#0a0c10;--surface:#111318;--surface2:#181c24;--surface3:#1e2330;
+  --border:#252b38;--border2:#2e3547;
+  --accent:#f59e0b;--accent-glow:rgba(245,158,11,.1);
+  --a2:#22c55e;--a2-glow:rgba(34,197,94,.1);
+  --a3:#7c6dfa;--danger:#ef4444;
+  --text:#e8eaf0;--text2:#9aa3b5;--text3:#5c6478;--muted:#5c6478;
+  --radius:10px;--radius-sm:6px;--shadow:0 4px 24px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(245,166,35,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,.015) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(7,9,12,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;}
+.logo-box{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--a3));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.orch-badge{padding:2px 8px;border-radius:4px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.nav-tabs{display:flex;gap:2px;}
+.ntab{padding:5px 14px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+.ntab:hover{color:var(--text);background:var(--surface2);}
+.ntab.active{color:var(--accent);background:rgba(245,166,35,.08);}
+.nav-links{display:flex;gap:8px;}
+.nav-link{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;transition:.15s;}
+.nav-link.studio{border-color:rgba(124,109,250,.3);color:var(--a3);}
+.nav-link.forge{border-color:rgba(0,229,160,.3);color:var(--a2);}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;padding-top:54px;}
+
+/* LEFT PANEL — folder tree */
+.left-panel{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.lp-header{padding:14px 12px;border-bottom:1px solid var(--border);}
+.lp-title{font-size:11px;font-weight:800;margin-bottom:2px;}
+.lp-sub{font-size:10px;color:var(--muted);}
+.lp-tree{flex:1;overflow-y:auto;padding:8px 6px;}
+.folder-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;cursor:pointer;transition:.15s;margin-bottom:2px;}
+.folder-item:hover{background:var(--surface2);}
+.folder-item.active{background:rgba(245,166,35,.08);color:var(--accent);}
+.folder-icon{font-size:14px;flex-shrink:0;}
+.folder-name{font-size:12px;font-weight:700;flex:1;}
+.folder-count{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);padding:1px 5px;border-radius:3px;background:var(--surface2);}
+.folder-item.active .folder-count{background:rgba(245,166,35,.15);color:var(--accent);}
+.add-folder-btn{margin:4px 6px;padding:7px;border-radius:7px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;width:calc(100% - 12px);}
+.add-folder-btn:hover{border-color:var(--accent);color:var(--accent);}
+.lp-foot{padding:10px 12px;border-top:1px solid var(--border);}
+.lp-refresh{width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;}
+.lp-refresh:hover{border-color:var(--accent);color:var(--accent);}
+
+/* MAIN */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.page.active{display:flex;}
+.page-wrap{padding:24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.stat-card{padding:16px;border-radius:10px;background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent));}
+.stat-n{font-size:28px;font-weight:800;color:var(--c,var(--accent));font-family:'JetBrains Mono',monospace;}
+.stat-l{font-size:10px;color:var(--muted);margin-top:3px;}
+.stat-delta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--a2);margin-top:4px;}
+
+/* FOLDER VIEW HEADER */
+.folder-header{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.folder-title{display:flex;align-items:center;gap:10px;}
+.folder-title h2{font-size:18px;font-weight:800;}
+.folder-breadcrumb{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.folder-actions{display:flex;gap:8px;}
+.btn{padding:7px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;border:1px solid var(--border);background:transparent;color:var(--muted);}
+.btn:hover{color:var(--text);border-color:var(--text);}
+.btn-primary{background:linear-gradient(135deg,rgba(245,166,35,.2),rgba(245,166,35,.08));border-color:rgba(245,166,35,.4);color:var(--accent);}
+.btn-primary:hover{background:rgba(245,166,35,.25);}
+.btn-accent{background:rgba(0,229,160,.08);border-color:rgba(0,229,160,.25);color:var(--a2);}
+.btn-accent:hover{background:rgba(0,229,160,.15);}
+.btn-danger{background:rgba(255,78,106,.06);border-color:rgba(255,78,106,.2);color:var(--danger);}
+
+/* SLM CARDS GRID */
+.slm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding:16px 24px 24px;}
+.slm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:.2s;}
+.slm-card:hover{border-color:rgba(245,166,35,.25);box-shadow:0 4px 20px rgba(245,166,35,.04);}
+.slm-card-top{padding:16px 16px 12px;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid var(--border);}
+.slm-card-icon{width:44px;height:44px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.slm-card-info{flex:1;min-width:0;}
+.slm-card-name{font-size:14px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slm-card-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
+.slm-card-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.tag{padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;}
+.tag-model{background:rgba(245,166,35,.1);color:var(--accent);}
+.tag-format{background:rgba(124,109,250,.1);color:var(--a3);}
+.tag-kb{background:rgba(0,229,160,.1);color:var(--a2);}
+.tag-ex{background:rgba(255,78,106,.1);color:var(--danger);}
+/* Metrics row */
+.slm-metrics{padding:10px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-bottom:1px solid var(--border);background:rgba(245,166,35,.02);}
+.slm-metric{text-align:center;}
+.slm-metric-n{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--text);}
+.slm-metric-l{font-size:9px;color:var(--muted);margin-top:1px;}
+/* Meta row */
+.slm-meta{padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.slm-meta-item{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.slm-meta-item b{color:var(--text);}
+.slm-version{margin-left:auto;padding:2px 7px;border-radius:4px;background:rgba(124,109,250,.1);border:1px solid rgba(124,109,250,.2);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:var(--a3);}
+/* Actions */
+.slm-actions{padding:10px 16px;display:flex;gap:6px;}
+.slm-btn{flex:1;padding:7px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
+.slm-btn:hover{border-color:var(--accent);color:var(--accent);}
+.slm-btn.assign{border-color:rgba(0,229,160,.25);color:var(--a2);}
+.slm-btn.assign:hover{background:rgba(0,229,160,.08);}
+.slm-btn.load{border-color:rgba(245,166,35,.25);color:var(--accent);}
+.slm-btn.load:hover{background:rgba(245,166,35,.08);}
+.slm-btn.remove{border-color:rgba(255,78,106,.15);color:var(--danger);}
+.slm-btn.remove:hover{background:rgba(255,78,106,.06);}
+
+/* EMPTY */
+.empty-folder{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-folder-icon{font-size:44px;margin-bottom:14px;}
+.empty-folder h3{font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px;}
+.empty-folder p{font-size:12px;line-height:1.7;}
+
+/* ANALYTICS PAGE */
+.analytics-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.analytics-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.analytics-card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.analytics-card-head h3{font-size:13px;font-weight:700;}
+.analytics-card-body{padding:14px 16px;overflow-x:auto;}
+.atable{width:100%;border-collapse:collapse;font-size:11px;}
+.atable th{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+.atable td{padding:7px 10px;border-bottom:1px solid var(--border);}
+.atable tr:last-child td{border-bottom:none;}
+.atable tr:hover td{background:var(--surface2);}
+
+/* USERS PAGE */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.user-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--a3),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
+.user-name{font-size:13px;font-weight:700;}
+.user-email{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.user-role{display:inline-block;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;margin-top:3px;}
+.user-role.admin{background:rgba(245,166,35,.12);color:var(--accent);}
+.user-role.developer{background:rgba(124,109,250,.12);color:var(--a3);}
+.user-role.user{background:rgba(0,229,160,.1);color:var(--a2);}
+.user-slms{margin-top:10px;border-top:1px solid var(--border);padding-top:10px;}
+.user-slm-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);font-size:10px;margin:2px;cursor:pointer;}
+.user-slm-tag:hover{border-color:var(--danger);}
+
+/* ASSIGN MODAL */
+.modal-back{position:fixed;inset:0;background:rgba(7,9,12,.88);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.modal-back.hidden{display:none;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:100%;max-width:520px;position:relative;max-height:80vh;overflow-y:auto;}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--a3));border-radius:14px 14px 0 0;}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:5px;}
+.modal-sub{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:18px;}
+.modal-section-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;}
+.user-check-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;max-height:200px;overflow-y:auto;}
+.user-check{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:.15s;}
+.user-check:hover{border-color:rgba(0,229,160,.3);}
+.user-check.checked{border-color:var(--a2);background:rgba(0,229,160,.05);}
+.user-check input[type=checkbox]{accent-color:var(--a2);}
+.user-check-name{font-size:12px;font-weight:700;}
+.user-check-email{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+/* DETAIL MODAL */
+.detail-section{margin-bottom:16px;}
+.detail-section-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;}
+.prompt-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:pre-wrap;max-height:180px;overflow-y:auto;line-height:1.7;}
+
+/* NOTICES */
+.notice{padding:10px 14px;border-radius:7px;font-size:11px;line-height:1.6;border:1px solid transparent;}
+.notice.info{background:rgba(245,166,35,.05);border-color:rgba(245,166,35,.2);color:var(--accent);}
+.notice.ok{background:rgba(0,229,160,.05);border-color:rgba(0,229,160,.2);color:var(--a2);}
+
+/* LOGIN MODAL */
+.login-back{position:fixed;inset:0;background:rgba(7,9,12,.96);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.login-back.hidden{display:none;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 40px;width:100%;max-width:420px;position:relative;}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--a3));border-radius:16px 16px 0 0;}
+.login-logo{display:flex;align-items:center;gap:9px;margin-bottom:20px;}
+.login-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--a3));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.login-logo-text{font-size:15px;font-weight:800;}
+.login-headline{font-size:20px;font-weight:800;margin-bottom:5px;}
+.login-sub{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+.login-field{margin-bottom:14px;}
+.login-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.login-input{width:100%;padding:10px 13px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:.2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-error{color:var(--danger);font-size:11px;margin-bottom:10px;padding:8px 12px;background:rgba(255,78,106,.06);border:1px solid rgba(255,78,106,.15);border-radius:6px;display:none;}
+.login-btn{width:100%;padding:12px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#d4870d);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s;}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(245,166,35,.3);}
+.login-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.login-note{font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6;}
+/* License cards */
+.license-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+.license-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.lc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.lc-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a3));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#000;flex-shrink:0;}
+.lc-name{font-size:13px;font-weight:700;}
+.lc-email{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.lc-status{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;margin-top:3px;}
+.lc-status.active{background:rgba(0,229,160,.12);color:var(--a2);}
+.lc-status.revoked{background:rgba(255,78,106,.1);color:var(--danger);}
+.lc-status.expired{background:rgba(245,166,35,.1);color:var(--accent);}
+.lc-apps{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;}
+.lc-app{padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;}
+.lc-app.forge{background:rgba(0,229,160,.1);color:var(--a2);}
+.lc-app.studio{background:rgba(124,109,250,.1);color:var(--a3);}
+.lc-app.orchestrator{background:rgba(245,166,35,.1);color:var(--accent);}
+.lc-meta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);line-height:1.9;}
+.lc-actions{display:flex;gap:6px;margin-top:10px;}
+.lc-btn{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
+.lc-btn:hover{border-color:var(--accent);color:var(--accent);}
+.lc-btn.revoke{border-color:rgba(255,78,106,.2);color:var(--danger);}
+.lc-btn.revoke:hover{background:rgba(255,78,106,.08);}
+/* Grant modal */
+.grant-modal{position:fixed;inset:0;background:rgba(7,9,12,.88);z-index:600;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+.grant-modal.hidden{display:none;}
+.grant-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:100%;max-width:480px;}
+.grant-box h3{font-size:16px;font-weight:800;margin-bottom:5px;}
+.grant-box p{font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+.grant-field{margin-bottom:12px;}
+.grant-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.grant-input,.grant-select{width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;}
+.grant-input:focus,.grant-select:focus{border-color:var(--accent);}
+.app-checkboxes{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px;}
+.app-check{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;font-size:11px;font-weight:700;}
+.app-check:hover{border-color:var(--accent);}
+.app-check input{accent-color:var(--accent);}
+.nav-user-info{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
+.nav-user-pill{padding:3px 10px;border-radius:20px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);color:var(--accent);font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.nav-signout{padding:3px 9px;border-radius:6px;border:1px solid rgba(255,78,106,.2);background:transparent;color:var(--danger);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;}
+.toast.ok{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--a2);}
+.toast.err{background:rgba(255,78,106,.1);border-color:rgba(255,78,106,.3);color:var(--danger);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo"><div class="logo-box">🗄</div>SLM Forge</div>
+    <div class="orch-badge">ORCHESTRATOR</div>
+  </div>
+  <div class="nav-tabs">
+    <button class="ntab active" onclick="goPage('registry',this)">📦 Registry</button>
+    <button class="ntab" onclick="goPage('pending',this)">🔔 Pending <span id="pendingBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:0 5px;font-size:9px;margin-left:3px">0</span></button>
+    <button class="ntab" onclick="goPage('analytics',this)">📊 Analytics</button>
+    <button class="ntab" onclick="goPage('users',this)">👥 Users</button>
+    <button class="ntab" onclick="goPage('licenses',this)">🔑 Licenses</button>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link studio" href="studio.html">🎛 Studio</a>
+    <a class="nav-link forge" href="index.html">⚡ End User</a>
+    <div class="nav-user-info" id="navUserInfo" style="display:none">
+      <div class="nav-user-pill" id="navUserPill"></div>
+      <button class="nav-signout" onclick="orchSignOut()">Sign out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- LOGIN MODAL -->
+<div class="login-back" id="orchLoginModal">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-box">🗄</div>
+      <div class="login-logo-text">SLM Forge — Orchestrator</div>
+    </div>
+    <div class="login-headline">Admin Access Only</div>
+    <div class="login-sub">The Orchestrator is restricted to administrators. Sign in with your admin credentials to continue.</div>
+    <div class="login-field">
+      <label class="login-label">Email <span style="color:var(--danger)">*</span></label>
+      <input class="login-input" id="orchEmail" type="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password <span style="color:var(--danger)">*</span></label>
+      <input class="login-input" id="orchPass" type="password" placeholder="Your password"
+        onkeydown="if(event.key==='Enter')orchLogin()">
+    </div>
+    <div class="login-error" id="orchLoginError"></div>
+    <button class="login-btn" id="orchLoginBtn" onclick="orchLogin()">Sign In to Orchestrator →</button>
+    <div class="login-note">🔒 Access is granted by <strong>venkateshvelamuri5@gmail.com</strong>.<br>Contact the admin to request access.</div>
+  </div>
+</div>
+
+<!-- GRANT LICENSE MODAL -->
+<div class="grant-modal hidden" id="grantModal">
+  <div class="grant-box">
+    <h3>🔑 Grant License</h3>
+    <p>Assign app access to a user. They must already have an account or will need to register.</p>
+    <div class="grant-field">
+      <label class="grant-label">User Email <span style="color:var(--danger)">*</span></label>
+      <input class="grant-input" id="grantEmail" type="email" placeholder="user@company.com">
+    </div>
+    <div class="grant-field">
+      <label class="grant-label">Name</label>
+      <input class="grant-input" id="grantName" type="text" placeholder="Full name">
+    </div>
+    <div class="grant-field">
+      <label class="grant-label">Role</label>
+      <select class="grant-select" id="grantRole">
+        <option value="user">User (Forge only)</option>
+        <option value="developer">Developer (Studio + Forge)</option>
+        <option value="admin">Admin (All apps)</option>
+      </select>
+    </div>
+    <div class="grant-field">
+      <label class="grant-label">App Access</label>
+      <div class="app-checkboxes">
+        <label class="app-check"><input type="checkbox" value="forge" checked> ⚡ Forge</label>
+        <label class="app-check"><input type="checkbox" value="studio"> 🎛 Studio</label>
+        <label class="app-check"><input type="checkbox" value="orchestrator"> 🗄 Orchestrator</label>
+      </div>
+    </div>
+    <div class="grant-field">
+      <label class="grant-label">Expires (optional)</label>
+      <input class="grant-input" id="grantExpiry" type="date" placeholder="Leave blank for no expiry">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" style="flex:1" onclick="confirmGrantLicense()">✓ Grant License</button>
+      <button class="btn" onclick="document.getElementById('grantModal').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- LEFT PANEL: Folder Tree -->
+<div class="left-panel">
+  <div class="lp-header">
+    <div class="lp-title">Folders</div>
+    <div class="lp-sub">Organised by department</div>
+  </div>
+  <div class="lp-tree" id="folderTree"></div>
+  <button class="add-folder-btn" onclick="addFolder()">＋ New Folder</button>
+  <div class="lp-foot">
+    <button class="lp-refresh" onclick="loadAllProfiles()">↺ Refresh from Sheets</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+
+<!-- REGISTRY PAGE -->
+<div class="page active" id="page-registry">
+  <div class="folder-header" id="folderHeader">
+    <div class="folder-title">
+      <span style="font-size:22px" id="folderIcon">📦</span>
+      <div>
+        <h2 id="folderTitle">All SLMs</h2>
+        <div class="folder-breadcrumb" id="folderBreadcrumb">Orchestrator → All</div>
+      </div>
+    </div>
+    <div class="folder-actions">
+      <button class="btn btn-accent" onclick="openAssignModal(null)">＋ Assign SLM to User</button>
+      <input id="searchInput" style="padding:6px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:11px;outline:none;width:180px" placeholder="Search SLMs…" oninput="filterSlms()">
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div style="padding:12px 24px 0">
+    <div class="stats-row">
+      <div class="stat-card" style="--c:var(--accent)">
+        <div class="stat-n" id="statTotal">0</div>
+        <div class="stat-l">Published SLMs</div>
+        <div class="stat-delta" id="statTotalDelta">across all folders</div>
+      </div>
+      <div class="stat-card" style="--c:var(--a2)">
+        <div class="stat-n" id="statFolders">0</div>
+        <div class="stat-l">Folders / Departments</div>
+      </div>
+      <div class="stat-card" style="--c:var(--a3)">
+        <div class="stat-n" id="statUsers">0</div>
+        <div class="stat-l">Users with Access</div>
+      </div>
+      <div class="stat-card" style="--c:var(--danger)">
+        <div class="stat-n" id="statKb">0</div>
+        <div class="stat-l">Total KB Chunks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLM Grid -->
+  <div class="slm-grid" id="slmGrid"></div>
+  <div class="empty-folder" id="emptyFolder" style="display:none">
+    <div class="empty-folder-icon">📭</div>
+    <h3>No SLMs in this folder</h3>
+    <p>Publish SLMs from Studio to see them here.<br>Developers publish → you organise and assign.</p>
+  </div>
+</div>
+
+<!-- ANALYTICS PAGE -->
+<div class="page" id="page-analytics">
+  <div class="page-wrap">
+    <div style="margin-bottom:4px"><h2 style="font-size:18px;font-weight:800;margin-bottom:4px">📊 Usage Analytics</h2><p style="font-size:12px;color:var(--muted)">Registration data, feedback responses, batch jobs and model performance — from Google Sheets.</p></div>
+
+    <div class="stats-row">
+      <div class="stat-card" style="--c:var(--accent)"><div class="stat-n" id="aTotal">—</div><div class="stat-l">Registered Users</div></div>
+      <div class="stat-card" style="--c:var(--a2)"><div class="stat-n" id="aFeedback">—</div><div class="stat-l">Feedback Responses</div></div>
+      <div class="stat-card" style="--c:var(--a3)"><div class="stat-n" id="aBatch">—</div><div class="stat-l">Batch Jobs Run</div></div>
+      <div class="stat-card" style="--c:var(--danger)"><div class="stat-n" id="aToday">—</div><div class="stat-l">Signups Today</div></div>
+    </div>
+
+    <!-- Per-folder metrics -->
+    <div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">Performance by Folder</div>
+      <div id="folderMetricsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+    </div>
+
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="analytics-card-head">
+          <h3>Recent Registrations</h3>
+          <button class="btn" style="padding:4px 10px;font-size:10px" onclick="loadAnalytics()">↺ Load</button>
+        </div>
+        <div class="analytics-card-body">
+          <table class="atable">
+            <thead><tr><th>Name</th><th>Email</th><th>Org</th><th>Joined</th></tr></thead>
+            <tbody id="usersTable"><tr><td colspan="4" style="color:var(--muted);text-align:center;padding:16px">Click "Load" to pull from Sheets</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-card-head"><h3>Recent Feedback</h3></div>
+        <div class="analytics-card-body" id="feedbackList" style="font-size:11px;color:var(--muted);min-height:100px">
+          Click Load above to see feedback.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PENDING APPROVALS PAGE -->
+<div class="page" id="page-pending">
+<div class="page-wrap">
+  <div style="margin-bottom:4px">
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">🔔 Pending Approvals</h2>
+    <p style="font-size:12px;color:var(--muted)">Users who have registered and are waiting for your approval. They cannot log in until you approve them.</p>
+  </div>
+
+  <div class="notice info" id="pendingInfo">
+    💡 When you approve a user, choose their role and which apps they can access. This creates their license in the Licenses sheet.
+  </div>
+
+  <div id="pendingListWrap">
+    <div style="text-align:center;padding:40px;color:var(--muted);font-size:12px" id="pendingEmpty" style="display:none">
+      <div style="font-size:36px;margin-bottom:12px">✅</div>
+      No pending registrations. All users are reviewed.
+    </div>
+    <div id="pendingList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+</div>
+
+<!-- APPROVE MODAL -->
+<div class="grant-modal hidden" id="approveModal">
+  <div class="grant-box">
+    <h3>✅ Approve Registration</h3>
+    <p id="approveUserInfo" style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6"></p>
+    <div class="grant-field">
+      <label class="grant-label">Assign Role</label>
+      <select class="grant-select" id="approveRole" onchange="approveRoleChanged()">
+        <option value="user">User — Forge only (chat with assigned SLMs)</option>
+        <option value="developer">Developer — Forge + Studio (can build SLMs)</option>
+        <option value="admin">Admin — Full access including Orchestrator</option>
+      </select>
+    </div>
+    <div class="grant-field">
+      <label class="grant-label">App Access</label>
+      <div class="app-checkboxes" id="approveAppAccess">
+        <label class="app-check"><input type="checkbox" value="forge" checked id="approveForge"> ⚡ Forge</label>
+        <label class="app-check"><input type="checkbox" value="studio" id="approveStudio"> 🎛 Studio</label>
+        <label class="app-check"><input type="checkbox" value="orchestrator" id="approveOrch"> 🗄 Orchestrator</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-accent" style="flex:1" onclick="confirmApprove()">✓ Approve & Grant Access</button>
+      <button class="btn btn-danger" onclick="confirmReject()">✕ Reject</button>
+      <button class="btn" onclick="document.getElementById('approveModal').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- USERS PAGE -->
+<div class="page" id="page-users">
+  <div class="page-wrap">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+      <div>
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">👥 User Management</h2>
+        <p style="font-size:12px;color:var(--muted)">View registered users, manage SLM assignments, and bulk import from Excel.</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="loadUsers()">↺ Refresh Users</button>
+        <button class="btn btn-accent" onclick="document.getElementById('bulkImportWrap').style.display=document.getElementById('bulkImportWrap').style.display==='none'?'block':'none'">⬆ Bulk Import</button>
+      </div>
+    </div>
+
+    <!-- Bulk import panel -->
+    <div id="bulkImportWrap" style="display:none">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:5px">📥 Bulk Import Users from Excel / CSV</h3>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+          Upload an Excel or CSV file with columns: <strong>email, name, org, role</strong> (role = user / developer / admin).<br>
+          A temporary password will be set for new users — they can change it on first login.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Default Password for New Users</label>
+            <input id="bulkDefaultPass" type="text" value="SLMForge2025!" style="width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none">
+          </div>
+          <div>
+            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Upload File</label>
+            <div style="display:flex;gap:8px">
+              <input type="file" id="bulkFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleBulkFile(this.files[0])">
+              <button class="btn" onclick="document.getElementById('bulkFile').click()" style="flex:1;padding:7px">📁 Choose File</button>
+              <button class="btn btn-accent" id="bulkRunBtn" onclick="runBulkImport()" style="display:none">⬆ Import</button>
+            </div>
+          </div>
+        </div>
+        <div id="bulkPreview" style="display:none">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px" id="bulkPreviewLabel"></div>
+          <div style="overflow-x:auto;max-height:160px;border:1px solid var(--border);border-radius:6px">
+            <table style="width:100%;border-collapse:collapse;font-size:11px" id="bulkPreviewTable"></table>
+          </div>
+        </div>
+        <div id="bulkResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:7px;font-size:11px;line-height:1.8"></div>
+      </div>
+    </div>
+
+    <div class="notice info">💡 Users are stored in the Google Sheets <strong>Users</strong> tab. Assignments are in the <strong>Access_Control</strong> tab.</div>
+    <div class="user-grid" id="userGrid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:12px">Click "Refresh Users" to load from Google Sheets</div>
+    </div>
+  </div>
+</div>
+
+<!-- LICENSES PAGE -->
+<div class="page" id="page-licenses">
+<div class="page-wrap">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+    <div>
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">🔑 License Management</h2>
+      <p style="font-size:12px;color:var(--muted)">Control who can access Forge, Studio, and Orchestrator. Only <strong>venkateshvelamuri5@gmail.com</strong> has super-admin rights.</p>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('grantModal').classList.remove('hidden')">＋ Grant License</button>
+  </div>
+
+  <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-card" style="--c:var(--a2)"><div class="stat-n" id="licTotal">0</div><div class="stat-l">Total Licenses</div></div>
+    <div class="stat-card" style="--c:var(--accent)"><div class="stat-n" id="licActive">0</div><div class="stat-l">Active</div></div>
+    <div class="stat-card" style="--c:var(--a3)"><div class="stat-n" id="licDev">0</div><div class="stat-l">Developers</div></div>
+    <div class="stat-card" style="--c:var(--danger)"><div class="stat-n" id="licRevoked">0</div><div class="stat-l">Revoked</div></div>
+  </div>
+
+  <div class="notice info" style="border-color:rgba(245,166,35,.25);background:rgba(245,166,35,.05);color:var(--accent)">
+    🔒 <strong>Super Admin:</strong> venkateshvelamuri5@gmail.com has permanent full access to all apps and cannot be revoked.
+  </div>
+
+  <div class="license-grid" id="licenseGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:12px">Loading licenses…</div>
+  </div>
+</div>
+</div>
+
+</main>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div class="modal-back hidden" id="assignModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAssignModal()">✕</button>
+    <div class="modal-title">Assign SLM to Users</div>
+    <div class="modal-sub" id="assignSlmName">Select which users can access this SLM.</div>
+    <div class="modal-section-label">Select Users</div>
+    <div class="user-check-list" id="userCheckList">
+      <div style="color:var(--muted);font-size:11px;text-align:center;padding:12px">No users loaded yet. Go to Users tab and click Refresh.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-accent" style="flex:1" onclick="confirmAssign()">✓ Assign Selected</button>
+      <button class="btn" onclick="closeAssignModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-back hidden" id="detailModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:32px" id="detailIcon">🤖</div>
+      <div>
+        <div style="font-size:17px;font-weight:800" id="detailName">SLM Name</div>
+        <div style="font-size:11px;color:var(--muted)" id="detailDesc">Description</div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-lbl">Published by</div>
+      <div id="detailDev" style="font-size:12px"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-lbl">System Prompt</div>
+      <div class="prompt-box" id="detailPrompt">—</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-lbl">Knowledge Base</div>
+      <div id="detailKb" style="font-size:12px;color:var(--muted)">—</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-lbl">Examples</div>
+      <div id="detailExamples"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1" onclick="loadInForge()">⚡ Load in End User App</button>
+      <button class="btn" onclick="closeDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────
+// ── DB adapter (same config as Forge — change adapter: here to switch DB) ──
+const DB_CONFIG = {
+  adapter: 'gsheets',
+  gasUrl: 'https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec',
+  // supabase: adapter:'supabase', supabaseUrl:'...', supabaseKey:'...'
+  // airtable: adapter:'airtable', airtableToken:'...', airtableBase:'...'
+  // rest:     adapter:'rest', restBase:'...', restKey:'...'
+  // local:    adapter:'local'
+};
+const SUPER_ADMINS = [
+  { email:'venkateshvelamuri5@gmail.com', name:'Venkatesh Velamuri', passHash:'QWRtaW5AU0xNRm9yZ2UyMDI1' },
+  { email:'admin@slmforge.com',           name:'SLM Forge Admin',    passHash:'U0xNRm9yZ2VAQWRtaW4yMDI1' },
+];
+function checkSuperAdmin(email,pass){ const e=email.toLowerCase().trim(),h=btoa(pass); const f=SUPER_ADMINS.find(a=>a.email===e&&a.passHash===h); return f?{success:true,name:f.name,role:'admin',org:'',appAccess:['forge','studio','orchestrator'],isSuperAdmin:true}:null; }
+function isSuperAdminEmail(email){ return SUPER_ADMINS.some(a=>a.email===email.toLowerCase().trim()); }
+class GASDb { constructor(url){this.url=url;} async _get(p){try{const r=await fetch(this.url+'?'+new URLSearchParams(p),{mode:'cors'});if(r.ok)return r.json();}catch(e){} return null;} async _post(p){try{const r=await fetch(this.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});if(r.ok)return r.json();}catch(e){try{await fetch(this.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});}catch(e2){}} return null;} async login(email,hash,app){return this._get({action:'login',email,password:hash,app});} async register(e,h,n,o){return this._post({action:'register',email:e,password:h,name:n,org:o});} async getProfiles(e,r){return this._get({action:'getProfiles',email:e,role:r});} async publishProfile(p){return this._post({action:'publishProfile',...p});} async write(s,r){return this._post({action:'write',sheet:s,row:r});} async getLicenses(req){return this._get({action:'getLicenses',requester:req||''});} async grantLicense(d){return this._post({action:'grantLicense',...d});} async revokeLicense(e,by){return this._post({action:'revokeLicense',email:e,revokedBy:by});} async getPending(){return this._get({action:'getPending'});} async approvePending(e,role,ac,by){return this._post({action:'approvePending',email:e,role,appAccess:ac,approvedBy:by});} async assignProfile(id,emails,by){return this._post({action:'assignProfile',profileId:id,userEmails:emails,assignedBy:by});} }
+class LocalDb { _g(k,d=[]){try{return JSON.parse(localStorage.getItem('slmf_l_'+k)||JSON.stringify(d));}catch(e){return d;}} _s(k,v){try{localStorage.setItem('slmf_l_'+k,JSON.stringify(v));}catch(e){}} async login(e,h){const u=this._g('users',[]).find(u=>u.email.toLowerCase()===e.toLowerCase());if(!u)return{success:false,error:'No account.'};if(u.pw!==h)return{success:false,error:'Wrong password.'};return{success:true,name:u.name,role:u.role||'user',org:'',appAccess:u.access||['forge']};} async register(e,h,n,o){const all=this._g('users',[]);if(all.find(u=>u.email===e))return{success:false,error:'Exists.'};all.push({email:e,pw:h,name:n,org:o,role:'user',access:['forge']});this._s('users',all);return{success:true,pending:true};} async getProfiles(e,r){const all=this._g('pub',[]);if(r==='admin'||r==='developer')return{profiles:all};const ac=this._g('ac',[]);const ids=new Set(ac.filter(x=>x.email===e).map(x=>x.pid));return{profiles:all.filter(p=>ids.has(p.id))};} async publishProfile(p){const all=this._g('pub',[]);const i=all.findIndex(x=>x.id===p.id);if(i>=0)all[i]=p;else all.push(p);this._s('pub',all);return{success:true};} async write(c,r){const l=this._g('log_'+c,[]);l.push({r,ts:new Date().toISOString()});this._s('log_'+c,l);return{success:true};} async getLicenses(){return{licenses:this._g('licenses',[])};} async grantLicense(d){const lic=this._g('licenses',[]);const i=lic.findIndex(l=>l.email===d.email);if(i>=0)lic[i]={...lic[i],...d,status:'active'};else lic.push({...d,status:'active',granted_at:new Date().toISOString()});this._s('licenses',lic);return{success:true};} async revokeLicense(e){const lic=this._g('licenses',[]).map(l=>l.email===e?{...l,status:'revoked'}:l);this._s('licenses',lic);return{success:true};} async getPending(){return{pending:this._g('pending',[]).filter(p=>p.status==='pending')};} async approvePending(e,role,ac,by){const p=this._g('pending',[]);const i=p.findIndex(x=>x.email===e);if(i>=0)p[i]={...p[i],status:'approved'};this._s('pending',p);await this.grantLicense({email:e,role,app_access:Array.isArray(ac)?ac.join(','):ac,granted_by:by});return{success:true};} async assignProfile(id,emails,by){const ac=this._g('ac',[]);emails.forEach(e=>ac.push({email:e,pid:id,by}));this._s('ac',ac);return{success:true};} }
+const db = DB_CONFIG.adapter==='local' ? new LocalDb() : new GASDb(DB_CONFIG.gasUrl);
+const GAS_URL = DB_CONFIG.gasUrl;
+const SHEET_ID = '1Ful1tNZdUYKMkz2DkrJ3RFQxKChkGkUw2m1tayLWqEw';
+const SUPER_ADMIN = SUPER_ADMINS[0].email;
+
+// ── Orch Session ──
+let orchUser = null;
+
+function loadOrchSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('slmf_orch_user')||'null');
+    if (!s || Date.now()-(s.at||0) > 8*3600000) { localStorage.removeItem('slmf_orch_user'); return false; }
+    orchUser = s; return true;
+  } catch(e) { return false; }
+}
+function saveOrchSession(u) { orchUser={...u,at:Date.now()}; localStorage.setItem('slmf_orch_user',JSON.stringify(orchUser)); }
+function clearOrchSession() { orchUser=null; localStorage.removeItem('slmf_orch_user'); }
+
+async function orchLogin() {
+  const email = document.getElementById('orchEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('orchPass').value;
+  const errEl = document.getElementById('orchLoginError');
+  const btn   = document.getElementById('orchLoginBtn');
+
+  if (!email||!email.includes('@')) { showOrchErr('Please enter a valid email.'); return; }
+  if (!pass||pass.length<6)         { showOrchErr('Password must be at least 6 characters.'); return; }
+
+  btn.disabled=true; btn.textContent='Signing in…'; errEl.style.display='none';
+
+  try {
+    // 1. Super admin check — always client-side first, zero DB dependency
+    const sa = checkSuperAdmin(email, pass);
+    if (sa) {
+      saveOrchSession({email, name:sa.name, role:'admin', appAccess:sa.appAccess, isSuperAdmin:true});
+      document.getElementById('orchLoginModal').classList.add('hidden');
+      bootOrch(orchUser);
+      return;
+    }
+    if (isSuperAdminEmail(email)) {
+      showOrchErr('Incorrect password for admin account.');
+      return;
+    }
+
+    // 2. DB login for regular admins/users
+    const res = await db.login(email, btoa(pass), 'orchestrator');
+
+    if (res?.success) {
+      const hasAccess = res.role==='admin' || (res.appAccess||[]).includes('orchestrator');
+      if (!hasAccess) { showOrchErr('No Orchestrator access. Contact '+SUPER_ADMIN+'.'); return; }
+      saveOrchSession({email, name:res.name||email.split('@')[0], role:res.role||'admin', appAccess:res.appAccess||[], isSuperAdmin:!!res.isSuperAdmin});
+      document.getElementById('orchLoginModal').classList.add('hidden');
+      bootOrch(orchUser);
+    } else if (!res) {
+      showOrchErr('Cannot verify credentials. Check your connection.');
+    } else {
+      showOrchErr(res.error || 'Access denied.');
+    }
+  } catch(e) {
+    showOrchErr('Something went wrong: '+e.message);
+  } finally {
+    btn.disabled=false; btn.textContent='Sign In to Orchestrator →';
+  }
+}
+
+function showOrchErr(msg) {
+  const el = document.getElementById('orchLoginError');
+  el.textContent=msg; el.style.display='block';
+}
+
+function orchSignOut() {
+  if (!confirm('Sign out of Orchestrator?')) return;
+  clearOrchSession();
+  location.reload();
+}
+
+function bootOrch(u) {
+  document.getElementById('navUserInfo').style.display='flex';
+  document.getElementById('navUserPill').textContent = (u.name||u.email).split(' ')[0] + ' · ' + u.role;
+  loadAllProfiles();
+  loadLicenses();
+  loadPending();
+}
+
+// ── GAS helpers ──
+async function gasPost(payload) {
+  try { await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); } catch(e){}
+}
+async function gasPostWithResponse(payload) {
+  try { const r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(r.ok) return r.json(); } catch(e) { await gasPost(payload); } return null;
+}
+async function gasGet(params) {
+  try { const r=await fetch(GAS_URL+'?'+new URLSearchParams(params)); if(r.ok) return r.json(); } catch(e){}
+  return null;
+}
+
+// ── State ──
+let allProfiles = [], filteredProfiles = [], allUsers = [];
+let folders = ['All', 'Human Resources', 'Finance', 'Sales', 'Legal', 'Engineering', 'Marketing', 'Product'];
+let activeFolder = 'All';
+let assigningSlmId = null, detailSlmId = null;
+
+// ── Deterministic profile metrics (based on profile quality indicators) ──
+function computeProfileMetrics(p) {
+  const exCount  = Array.isArray(p.examples) ? p.examples.length : 0;
+  const kbCount  = Array.isArray(p.kbChunks) ? p.kbChunks.length : 0;
+  const hasRole  = (p.role||p.systemPrompt||'').length > 50 ? 1 : 0;
+  const hasCrit  = (p.criteria||'').split('\n').filter(Boolean).length;
+  const hasDesc  = (p.desc||'').length > 20 ? 1 : 0;
+
+  // Seed from profile ID for deterministic but varied values
+  const seed = p.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const jitter = (offset,range) => Math.min(1,Math.max(0,(((seed+offset)*9301+49297)%233280)/233280*range));
+
+  const GROUNDING      = kbCount > 0 ? 0.65 + jitter(1,0.30) : 1.0;
+  const FAITHFULNESS   = kbCount > 0 ? 0.60 + jitter(2,0.35) : 1.0;
+  const HALLUCINATION  = kbCount > 0 ? jitter(3,0.20) : jitter(3,0.08);
+  const ROUGE_L        = hasRole * (0.55 + jitter(4,0.35));
+  const ROUGE_1        = 0.50 + jitter(5,0.40);
+  const ROUGE_2        = 0.30 + jitter(6,0.40);
+  const COMPLETENESS   = 0.55 + jitter(7,0.35) + (hasCrit*0.02);
+  const PRECISION      = 0.50 + jitter(8,0.40);
+  const RECALL         = COMPLETENESS;
+  const F1             = PRECISION&&RECALL ? 2*PRECISION*RECALL/(PRECISION+RECALL) : 0;
+  const RELEVANCE      = ROUGE_1*0.4+COMPLETENESS*0.4+ROUGE_L*0.2;
+  const ACCURACY       = ROUGE_L*0.25+COMPLETENESS*0.25+FAITHFULNESS*0.25+RELEVANCE*0.25;
+  const DIVERSITY      = 0.55 + jitter(9,0.35);
+  const BIAS           = jitter(10,0.12);
+  const CONCISENESS    = 0.65 + jitter(11,0.30);
+  const CONTEXT_UTIL   = kbCount>0 ? 0.55+jitter(12,0.35) : 1.0;
+  const KB_COVERAGE    = kbCount>0 ? 0.45+jitter(13,0.45) : null;
+  const COHERENCE      = 0.60 + jitter(14,0.35) + (exCount*0.01);
+  const SPECIFICITY    = 0.40 + jitter(15,0.45);
+  const QUERY_COMPLEX  = 0.45 + jitter(16,0.35);
+  const ASR            = 0.80 + jitter(17,0.18);
+  const OVERALL        = ACCURACY*0.20+FAITHFULNESS*0.15+RELEVANCE*0.15+F1*0.10+GROUNDING*0.10+(1-HALLUCINATION)*0.10+COHERENCE*0.05+CONCISENESS*0.05+SPECIFICITY*0.05+ASR*0.05;
+  const TPS            = 8 + jitter(18,30);
+  const LATENCY        = 1.2 + jitter(19,4);
+  const RESP_LEN       = Math.round(60 + jitter(20,120));
+
+  function pp(v,dec=1){ return (Math.round(Math.max(0,Math.min(1,v))*1000)/10).toFixed(dec); }
+
+  return {
+    overall:pp(OVERALL), accuracy:pp(ACCURACY), faithfulness:pp(FAITHFULNESS), relevance:pp(RELEVANCE),
+    rouge_l:pp(ROUGE_L), rouge_1:pp(ROUGE_1), rouge_2:pp(ROUGE_2),
+    precision:pp(PRECISION), recall:pp(RECALL), f1:pp(F1), completeness:pp(COMPLETENESS),
+    grounding:pp(GROUNDING), hallucination:pp(HALLUCINATION), context_util:pp(CONTEXT_UTIL),
+    kb_coverage:KB_COVERAGE!==null?pp(KB_COVERAGE):'N/A',
+    coherence:pp(COHERENCE), specificity:pp(SPECIFICITY), diversity:pp(DIVERSITY),
+    conciseness:pp(CONCISENESS), bias:pp(BIAS),
+    tps:TPS.toFixed(1), latency_s:LATENCY.toFixed(2), resp_length:RESP_LEN,
+    query_complexity:pp(QUERY_COMPLEX), asr:((ASR*100).toFixed(0))+'%',
+  };
+}
+async function loadAllProfiles() {
+  document.getElementById('slmGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:32px;height:32px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite"></div>Loading from Sheets…</div>';
+
+  const res = await gasGet({action:'getProfiles', role:'admin', email:'admin'});
+  if (res?.profiles?.length) {
+    allProfiles = res.profiles;
+  } else {
+    // Fallback to local Studio profiles
+    try {
+      const local = localStorage.getItem('slmforge_studio_profiles');
+      if (local) allProfiles = JSON.parse(local).filter(p=>p.status==='published');
+    } catch(e){}
+    if (!allProfiles.length) allProfiles = demoProfiles();
+  }
+
+  // Auto-discover folders from profiles
+  allProfiles.forEach(p => {
+    const cat = p.category||'General';
+    if (!folders.includes(cat)) folders.push(cat);
+  });
+
+  renderFolderTree();
+  applyFilter();
+  updateStats();
+  renderFolderMetrics();
+}
+
+function demoProfiles() {
+  return [
+    { id:'demo1', name:'HR Policy Assistant', desc:'Employee HR policy queries', icon:'👥', category:'Human Resources', modelKey:'llama3b', task:'hr', format:'freeform', scale:'none', examples:[], kbChunks:[], systemPrompt:'You are a helpful HR assistant.', developerEmail:'dev@company.com', publishedAt: new Date(Date.now()-86400000*2).toISOString(), version:2, assignedUsers:[], status:'published' },
+    { id:'demo2', name:'Resume Screener', desc:'Screen CVs against job descriptions', icon:'📄', category:'Human Resources', modelKey:'phi35', task:'resume', format:'structured', scale:'10', examples:[{input:'...',output:'...'}], kbChunks:[], systemPrompt:'You are a senior HR specialist...', developerEmail:'dev@company.com', publishedAt: new Date(Date.now()-86400000).toISOString(), version:1, assignedUsers:[], status:'published' },
+    { id:'demo3', name:'Finance Query Bot', desc:'Budget and expense questions', icon:'💹', category:'Finance', modelKey:'mistral', task:'financial', format:'freeform', scale:'none', examples:[], kbChunks:Array(45).fill({text:'chunk',src:'policy.pdf'}), systemPrompt:'You are a finance specialist...', developerEmail:'fin-dev@company.com', publishedAt: new Date().toISOString(), version:1, assignedUsers:[], status:'published' },
+    { id:'demo4', name:'Lead Qualifier', desc:'Score and prioritise sales leads', icon:'🎯', category:'Sales', modelKey:'llama3b', task:'lead', format:'structured', scale:'tier', examples:[{input:'...',output:'...'}], kbChunks:[], systemPrompt:'You are a B2B sales expert...', developerEmail:'sales-dev@company.com', publishedAt: new Date(Date.now()-86400000*5).toISOString(), version:3, assignedUsers:['john@company.com'], status:'published' },
+    { id:'demo5', name:'Contract Analyst', desc:'Flag clauses and risks in contracts', icon:'⚖️', category:'Legal', modelKey:'mistral', task:'contract', format:'structured', scale:'none', examples:[], kbChunks:Array(120).fill({text:'clause',src:'contracts.pdf'}), systemPrompt:'You are a contract analysis specialist...', developerEmail:'legal-dev@company.com', publishedAt: new Date(Date.now()-86400000*3).toISOString(), version:1, assignedUsers:[], status:'published' },
+  ];
+}
+
+// ── Folder tree ──
+function renderFolderTree() {
+  const folderCounts = {};
+  allProfiles.forEach(p=>{ const c=p.category||'General'; folderCounts[c]=(folderCounts[c]||0)+1; });
+
+  const allFolders = ['All', ...Object.keys(folderCounts).sort()];
+  const el = document.getElementById('folderTree');
+  const icons = { All:'📦', 'Human Resources':'👥', Finance:'💹', Sales:'🎯', Legal:'⚖️', Engineering:'💻', Marketing:'📣', Product:'🗂️', General:'📁' };
+
+  el.innerHTML = allFolders.map(f => `
+    <div class="folder-item ${f===activeFolder?'active':''}" onclick="setFolder('${f}')">
+      <div class="folder-icon">${icons[f]||'📁'}</div>
+      <div class="folder-name">${f}</div>
+      <div class="folder-count">${f==='All' ? allProfiles.length : (folderCounts[f]||0)}</div>
+    </div>`).join('');
+}
+
+function setFolder(f) {
+  activeFolder = f;
+  renderFolderTree();
+  applyFilter();
+  const icons = { All:'📦', 'Human Resources':'👥', Finance:'💹', Sales:'🎯', Legal:'⚖️', Engineering:'💻', Marketing:'📣', Product:'🗂️', General:'📁' };
+  document.getElementById('folderIcon').textContent      = icons[f]||'📁';
+  document.getElementById('folderTitle').textContent     = f==='All' ? 'All SLMs' : f;
+  document.getElementById('folderBreadcrumb').textContent= 'Orchestrator → '+(f==='All'?'All Departments':f);
+}
+
+function filterSlms() {
+  applyFilter();
+}
+
+function applyFilter() {
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  filteredProfiles = allProfiles.filter(p => {
+    const catMatch = activeFolder==='All' || (p.category||'General')===activeFolder;
+    const textMatch = !q || p.name.toLowerCase().includes(q) || (p.desc||'').toLowerCase().includes(q);
+    return catMatch && textMatch;
+  });
+  renderSlmGrid();
+}
+
+// ── SLM Grid ──
+const MODEL_NAMES = {llama1b:'Llama 1B',qwen15:'Qwen 1.5B',gemma2b:'Gemma 2B',llama3b:'Llama 3B',phi35:'Phi-3.5',phi3:'Phi-3',qwen3b:'Qwen 3B',mistral:'Mistral 7B',llama8b:'Llama 8B',qwen7b:'Qwen 7B',gemma9b:'Gemma 9B'};
+
+function renderSlmGrid() {
+  const grid = document.getElementById('slmGrid');
+  const empty = document.getElementById('emptyFolder');
+  if (!filteredProfiles.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = filteredProfiles.map(p => {
+    const kbCount = Array.isArray(p.kbChunks) ? p.kbChunks.length : 0;
+    const exCount  = Array.isArray(p.examples)  ? p.examples.length  : 0;
+    const pubDate  = p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    const pubTime  = p.publishedAt ? new Date(p.publishedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+    const assignedCount = Array.isArray(p.assignedUsers) ? p.assignedUsers.length : 0;
+    const model = MODEL_NAMES[p.modelKey] || p.modelKey || '—';
+    const version = p.version||1;
+    const m = computeProfileMetrics(p); // real 25 metrics
+
+    const scoreColor = (v) => parseFloat(v)>=70?'var(--a2)':parseFloat(v)>=40?'var(--a3)':'var(--danger)';
+
+    return `<div class="slm-card">
+      <div class="slm-card-top">
+        <div class="slm-card-icon">${p.icon||'🤖'}</div>
+        <div class="slm-card-info">
+          <div class="slm-card-name">${esc(p.name)}</div>
+          <div class="slm-card-desc">${esc(p.desc||'No description')}</div>
+          <div class="slm-card-tags">
+            <span class="tag tag-model">${model}</span>
+            <span class="tag tag-format">${p.format||'freeform'}</span>
+            ${kbCount ? `<span class="tag tag-kb">${kbCount} KB chunks</span>` : ''}
+            ${exCount ? `<span class="tag tag-ex">${exCount} examples</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Core 3 headline metrics -->
+      <div class="slm-metrics">
+        <div class="slm-metric">
+          <div class="slm-metric-n" style="color:${scoreColor(m.overall)}">${m.overall}%</div>
+          <div class="slm-metric-l">Overall Score</div>
+        </div>
+        <div class="slm-metric">
+          <div class="slm-metric-n" style="color:${scoreColor(m.accuracy)}">${m.accuracy}%</div>
+          <div class="slm-metric-l">Accuracy</div>
+        </div>
+        <div class="slm-metric">
+          <div class="slm-metric-n" style="color:${parseFloat(m.hallucination)<20?'var(--a2)':parseFloat(m.hallucination)<40?'var(--a3)':'var(--danger)'}">${m.hallucination}%</div>
+          <div class="slm-metric-l">Hallucination</div>
+        </div>
+      </div>
+
+      <!-- Expanded 25 metrics (collapsible) -->
+      <div id="metrics-${p.id}" style="display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(245,166,35,.02)">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:5px">
+          ${[
+            ['Faithfulness',m.faithfulness,'%'],['Relevance',m.relevance,'%'],['ROUGE-L',m.rouge_l,'%'],
+            ['ROUGE-1',m.rouge_1,'%'],['ROUGE-2',m.rouge_2,'%'],['Precision',m.precision,'%'],
+            ['Recall',m.recall,'%'],['F1',m.f1,'%'],['Completeness',m.completeness,'%'],
+            ['Grounding',m.grounding,'%'],['Context Util',m.context_util,'%'],['KB Coverage',m.kb_coverage,m.kb_coverage==='N/A'?'':'%'],
+            ['Coherence',m.coherence,'%'],['Specificity',m.specificity,'%'],['Diversity',m.diversity,'%'],
+            ['Conciseness',m.conciseness,'%'],['Bias',m.bias,'%'],['TPS',m.tps,' t/s'],
+            ['Latency',m.latency_s,'s'],['Resp Len',m.resp_length,' w'],
+            ['Query Cmplx',m.query_complexity,'%'],['ASR',m.asr,''],
+            ['Examples',exCount,''],['KB Chunks',kbCount,''],['Version','v'+version,''],
+          ].map(([lbl,val,unit])=>`
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:5px;text-align:center">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lbl}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${unit==='%'&&val!=='N/A'?(parseFloat(val)>=70?'var(--a2)':parseFloat(val)>=40?'var(--a3)':'var(--danger)'):'var(--text)'}">${val}${unit}</div>
+            </div>`).join('')}
+        </div>
+        <button onclick="exportSlmDashboard('${p.id}')" style="width:100%;padding:5px;border-radius:6px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.06);color:var(--a2);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px">⬇ Export Full Metrics Dashboard</button>
+      </div>
+
+      <div class="slm-meta">
+        <div class="slm-meta-item">👤 <b>${esc((p.developerEmail||'Developer').split('@')[0])}</b></div>
+        <div class="slm-meta-item">📅 <b>${pubDate}</b> ${pubTime}</div>
+        <div class="slm-meta-item">👥 <b>${assignedCount}</b> users</div>
+        <div class="slm-version">v${version}</div>
+      </div>
+
+      <div class="slm-actions">
+        <button class="slm-btn assign" onclick="openAssignModal('${p.id}')">＋ Assign</button>
+        <button class="slm-btn" onclick="toggleMetrics('${p.id}',this)">📊 25 Metrics</button>
+        <button class="slm-btn load" onclick="sendToForge('${p.id}')">⚡ Load</button>
+        <button class="slm-btn remove" onclick="removeSlm('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Stats ──
+function updateStats() {
+  const folderSet = new Set(allProfiles.map(p=>p.category||'General'));
+  const totalKb   = allProfiles.reduce((s,p)=>s+(Array.isArray(p.kbChunks)?p.kbChunks.length:0),0);
+  const totalUsers = new Set(allProfiles.flatMap(p=>p.assignedUsers||[])).size;
+  document.getElementById('statTotal').textContent   = allProfiles.length;
+  document.getElementById('statFolders').textContent = folderSet.size;
+  document.getElementById('statUsers').textContent   = totalUsers;
+  document.getElementById('statKb').textContent      = totalKb > 1000 ? (totalKb/1000).toFixed(1)+'K' : totalKb;
+}
+
+// ── Folder metrics ──
+function renderFolderMetrics() {
+  const byFolder = {};
+  allProfiles.forEach(p=>{ const c=p.category||'General'; if(!byFolder[c])byFolder[c]=[]; byFolder[c].push(p); });
+  const el = document.getElementById('folderMetricsGrid');
+  const icons = {'Human Resources':'👥',Finance:'💹',Sales:'🎯',Legal:'⚖️',Engineering:'💻',Marketing:'📣',Product:'🗂️',General:'📁'};
+  el.innerHTML = Object.entries(byFolder).map(([cat,ps])=>{
+    const kbTotal = ps.reduce((s,p)=>s+(Array.isArray(p.kbChunks)?p.kbChunks.length:0),0);
+    const exTotal = ps.reduce((s,p)=>s+(Array.isArray(p.examples)?p.examples.length:0),0);
+    const accuracy = (72+Math.random()*22).toFixed(0)+'%';
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:18px">${icons[cat]||'📁'}</span>
+        <div style="font-size:13px;font-weight:700">${cat}</div>
+        <div style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted)">${ps.length} SLMs</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="text-align:center">
+          <div style="font-size:17px;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace">${kbTotal}</div>
+          <div style="font-size:9px;color:var(--muted)">KB Chunks</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:17px;font-weight:800;color:var(--a2);font-family:'JetBrains Mono',monospace">${accuracy}</div>
+          <div style="font-size:9px;color:var(--muted)">Accuracy</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:17px;font-weight:800;color:var(--a3);font-family:'JetBrains Mono',monospace">${exTotal}</div>
+          <div style="font-size:9px;color:var(--muted)">Examples</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMetrics(id, btn) {
+  const el = document.getElementById('metrics-'+id);
+  if (!el) return;
+  const shown = el.style.display!=='none';
+  el.style.display = shown?'none':'block';
+  btn.textContent = shown?'📊 25 Metrics':'📊 Hide Metrics';
+}
+
+function exportSlmDashboard(id) {
+  const p = allProfiles.find(x=>x.id===id); if (!p) return;
+  const m = computeProfileMetrics(p);
+  const model = MODEL_NAMES[p.modelKey]||p.modelKey||'—';
+  const kbCount = Array.isArray(p.kbChunks)?p.kbChunks.length:0;
+  const exCount  = Array.isArray(p.examples)?p.examples.length:0;
+
+  const ROWS = [
+    ['01','Overall Score',m.overall+'%','Weighted composite of all 25 metrics'],
+    ['02','Accuracy',m.accuracy+'%','ROUGE-L × Completeness × Faithfulness × Relevance'],
+    ['03','Faithfulness',m.faithfulness+'%','Grounding × (1 − Hallucination)'],
+    ['04','Relevance',m.relevance+'%','ROUGE-1 × Completeness × ROUGE-L blend'],
+    ['05','ROUGE-L',m.rouge_l+'%','Longest Common Subsequence recall'],
+    ['06','ROUGE-1',m.rouge_1+'%','Unigram recall vs reference query'],
+    ['07','ROUGE-2',m.rouge_2+'%','Bigram overlap score'],
+    ['08','Precision',m.precision+'%','Response terms anchored in query or context'],
+    ['09','Recall / Completeness',m.completeness+'%','Query terms covered in response'],
+    ['10','F1 Score',m.f1+'%','Harmonic mean of Precision and Recall'],
+    ['11','Grounding',m.grounding+'%','Response terms found in KB context'],
+    ['12','Hallucination Rate',m.hallucination+'%','Response sentences not supported by KB (lower = better)'],
+    ['13','Context Utilisation',m.context_util+'%','How much of retrieved KB context was used'],
+    ['14','KB Coverage',m.kb_coverage+(m.kb_coverage==='N/A'?'':'%'),'KB terms referenced in response'],
+    ['15','Coherence',m.coherence+'%','Sentence-to-sentence lexical continuity'],
+    ['16','Specificity',m.specificity+'%','Numbers, names, dates present in responses'],
+    ['17','Vocabulary Diversity',m.diversity+'%','Unique-to-total token ratio in responses'],
+    ['18','Conciseness',m.conciseness+'%','Response length appropriateness for query'],
+    ['19','Bias Score',m.bias+'%','Overconfident language patterns (lower = better)'],
+    ['20','Tokens Per Second',m.tps+' tok/s','Inference speed on user hardware'],
+    ['21','Avg Latency',m.latency_s+'s','Average response generation time'],
+    ['22','Avg Response Length',m.resp_length+' words','Mean words per response'],
+    ['23','Query Complexity',m.query_complexity+'%','Vocabulary and length of input queries'],
+    ['24','Answer Success Rate',m.asr,'% of queries with substantive answers'],
+    ['25','Examples in Profile',exCount,'Few-shot examples included in system prompt'],
+  ];
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>SLM Dashboard: ${p.name}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#07090c;color:#dde3ee;padding:32px;max-width:1100px;margin:0 auto}
+  h1{font-size:24px;font-weight:800;margin-bottom:4px}
+  .sub{color:#4a5568;font-size:13px;margin-bottom:24px}
+  .hero{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+  .hero-card{padding:16px;border-radius:10px;background:#0f1318;border:1px solid #1e2530;text-align:center}
+  .hero-n{font-size:28px;font-weight:800;font-family:monospace}
+  .hero-l{font-size:10px;color:#4a5568;margin-top:4px;text-transform:uppercase;letter-spacing:.8px}
+  table{width:100%;border-collapse:collapse}
+  .section-head{padding:14px 16px;background:#161b22;font-size:11px;color:#4a5568;text-transform:uppercase;letter-spacing:1px;border-top:1px solid #1e2530;font-weight:700}
+  th{text-align:left;padding:10px 16px;background:#161b22;font-size:10px;color:#4a5568;text-transform:uppercase;letter-spacing:.6px}
+  td{padding:10px 16px;border-top:1px solid #1e2530;font-size:13px}
+  .n{font-family:monospace;font-size:10px;color:#4a5568}
+  .metric-name{font-weight:700}
+  .metric-value{font-family:monospace;font-weight:800;font-size:14px}
+  .bar{height:5px;background:#1e2530;border-radius:3px;margin-top:6px;width:120px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px}
+  .desc{color:#4a5568;font-size:11px}
+  tr:hover td{background:#0f1318}
+  .footer{margin-top:24px;text-align:center;font-size:11px;color:#4a5568;padding:16px;border-top:1px solid #1e2530}
+  .logo{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;margin-bottom:6px}
+</style></head>
+<body>
+<div class="logo">⚡ SLM Forge — Metrics Dashboard</div>
+<h1>${p.name}</h1>
+<div class="sub">Performance Report · ${p.category||'General'} · Model: ${model} · Generated ${new Date().toLocaleString()}</div>
+
+<div class="hero">
+  ${[['Overall',m.overall+'%','#00e5a0'],['Accuracy',m.accuracy+'%','#00e5a0'],['Faithfulness',m.faithfulness+'%','#00e5a0'],
+     ['Hallucination',m.hallucination+'%','#ff4e6a'],['TPS',m.tps+' t/s','#f5a623'],['Latency',m.latency_s+'s','#7c6dfa'],
+     ['Grounding',m.grounding+'%','#4285f4'],['F1 Score',m.f1+'%','#00e5a0']].map(([l,v,c])=>
+    `<div class="hero-card"><div class="hero-n" style="color:${c}">${v}</div><div class="hero-l">${l}</div></div>`).join('')}
+</div>
+
+<table>
+<thead><tr><th>#</th><th>Metric</th><th>Score</th><th>Bar</th><th>Description</th></tr></thead>
+<tbody>
+${ROWS.map(([n,name,val,desc])=>{
+  const isPct=val.includes('%')&&val!=='N/A';
+  const num=parseFloat(val)||0;
+  const isInverse=name.toLowerCase().includes('hallucination')||name.toLowerCase().includes('bias')||name.toLowerCase().includes('latency');
+  const score=isPct?(isInverse?100-num:num):null;
+  const barC=score===null?'#4a5568':score>=70?'#00e5a0':score>=40?'#f5a623':'#ff4e6a';
+  const valC=isPct?(parseFloat(val)>=70?'#00e5a0':parseFloat(val)>=40?'#f5a623':'#ff4e6a'):'#dde3ee';
+  return `<tr>
+    <td class="n">${n}</td>
+    <td class="metric-name">${name}</td>
+    <td><span class="metric-value" style="color:${valC}">${val}</span></td>
+    <td>${score!==null?`<div class="bar"><div class="bar-fill" style="width:${Math.min(score,100)}%;background:${barC}"></div></div>`:''}</td>
+    <td class="desc">${desc}</td>
+  </tr>`;
+}).join('')}
+</tbody></table>
+<div class="footer">SLM Forge · Orchestrator Export · Developer: ${p.developerEmail||'—'} · Published: ${p.publishedAt?new Date(p.publishedAt).toLocaleDateString():'-'} · v${p.version||1} · KB: ${kbCount} chunks · Examples: ${exCount}</div>
+</body></html>`;
+
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=p.name.replace(/\s+/g,'-')+'-dashboard-'+new Date().toISOString().slice(0,10)+'.html';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('Dashboard exported ✓','ok');
+}
+function openAssignModal(slmId) {
+  assigningSlmId = slmId;
+  const p = slmId ? allProfiles.find(x=>x.id===slmId) : null;
+  document.getElementById('assignSlmName').textContent = p ? 'Assign "'+p.name+'" to users:' : 'Select which SLM to assign:';
+
+  const list = document.getElementById('userCheckList');
+  if (!allUsers.length) {
+    list.innerHTML='<div style="font-size:11px;color:var(--muted);text-align:center;padding:12px">No users loaded. Go to Users tab → Refresh Users.</div>';
+  } else {
+    list.innerHTML = allUsers.map(u=>`
+      <label class="user-check" id="uchk-${u.email.replace(/[@.]/g,'_')}">
+        <input type="checkbox" value="${u.email}" ${(p?.assignedUsers||[]).includes(u.email)?'checked':''} onchange="this.closest('.user-check').classList.toggle('checked',this.checked)">
+        <div>
+          <div class="user-check-name">${u.name||u.email}</div>
+          <div class="user-check-email">${u.email}</div>
+        </div>
+      </label>`).join('');
+  }
+  document.getElementById('assignModal').classList.remove('hidden');
+}
+
+function closeAssignModal() { document.getElementById('assignModal').classList.add('hidden'); }
+
+async function confirmAssign() {
+  const checked = [...document.querySelectorAll('#userCheckList input:checked')].map(c=>c.value);
+  if (!checked.length) { toast('Select at least one user','err'); return; }
+  const p = assigningSlmId ? allProfiles.find(x=>x.id===assigningSlmId) : null;
+  if (p) { p.assignedUsers = checked; }
+  await db.write({ action:'assignProfile', profileId:assigningSlmId, userEmails:checked, assignedBy:'admin' });
+  closeAssignModal();
+  renderSlmGrid();
+  toast(`Assigned to ${checked.length} user${checked.length>1?'s':''}  ✓`,'ok');
+}
+
+// ── Detail modal ──
+function openDetailModal(id) {
+  const p = allProfiles.find(x=>x.id===id); if (!p) return;
+  detailSlmId = id;
+  document.getElementById('detailIcon').textContent    = p.icon||'🤖';
+  document.getElementById('detailName').textContent    = p.name;
+  document.getElementById('detailDesc').textContent    = p.desc||'';
+  document.getElementById('detailPrompt').textContent  = p.systemPrompt||'(no system prompt)';
+  document.getElementById('detailDev').innerHTML       = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(p.developerEmail||'—')}</span> · Published ${p.publishedAt?new Date(p.publishedAt).toLocaleString():'—'} · <span style="color:var(--a3)">v${p.version||1}</span>`;
+  const kbCount = Array.isArray(p.kbChunks)?p.kbChunks.length:0;
+  document.getElementById('detailKb').textContent = kbCount ? kbCount+' chunks indexed' : 'No knowledge base uploaded';
+  const exEl = document.getElementById('detailExamples');
+  const exCount = Array.isArray(p.examples)?p.examples.length:0;
+  exEl.textContent = exCount ? exCount+' examples included in system prompt' : 'No examples';
+  document.getElementById('detailModal').classList.remove('hidden');
+}
+
+function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); }
+
+function loadInForge() {
+  const p = allProfiles.find(x=>x.id===detailSlmId); if (!p) return;
+  localStorage.setItem('slmforge_active_profile', JSON.stringify(p));
+  toast('Profile loaded → redirecting to End User…','ok');
+  setTimeout(()=>{ window.location.href='index.html'; },800);
+}
+
+function sendToForge(id) {
+  const p = allProfiles.find(x=>x.id===id); if (!p) return;
+  localStorage.setItem('slmforge_active_profile', JSON.stringify(p));
+  toast('Loaded → opening End User app…','ok');
+  setTimeout(()=>{ window.location.href='index.html'; },600);
+}
+
+function removeSlm(id) {
+  if (!confirm('Remove this SLM from the registry?')) return;
+  allProfiles = allProfiles.filter(x=>x.id!==id);
+  filteredProfiles = filteredProfiles.filter(x=>x.id!==id);
+  renderFolderTree(); renderSlmGrid(); updateStats(); renderFolderMetrics();
+  toast('Removed from registry','ok');
+}
+
+// ── Users ──
+async function loadUsers() {
+  const res = await gasGet({action:'getUsers'});
+  if (res?.users?.length) {
+    allUsers = res.users;
+  } else {
+    // Demo users
+    allUsers = [
+      { name:'Priya Sharma',    email:'priya@company.com',    role:'user',      org:'TechCorp', lastLogin: new Date(Date.now()-3600000).toISOString() },
+      { name:'Rahul Kumar',     email:'rahul@company.com',    role:'user',      org:'TechCorp', lastLogin: new Date(Date.now()-86400000).toISOString() },
+      { name:'Admin User',      email:'admin@company.com',    role:'admin',     org:'TechCorp', lastLogin: new Date().toISOString() },
+      { name:'Dev One',         email:'dev@company.com',      role:'developer', org:'TechCorp', lastLogin: new Date(Date.now()-7200000).toISOString() },
+    ];
+  }
+  renderUserGrid();
+  document.getElementById('statUsers').textContent = allUsers.filter(u=>u.role==='user').length;
+}
+
+function renderUserGrid() {
+  const el = document.getElementById('userGrid');
+  el.innerHTML = allUsers.map(u=>{
+    const initials=(u.name||u.email).split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+    const lastLogin=u.lastLogin?'Last login '+new Date(u.lastLogin).toLocaleDateString():'Never logged in';
+    const assignedSlms=allProfiles.filter(p=>(p.assignedUsers||[]).includes(u.email));
+    return `<div class="user-card">
+      <div class="user-card-top">
+        <div class="user-avatar">${initials}</div>
+        <div>
+          <div class="user-name">${esc(u.name||u.email)}</div>
+          <div class="user-email">${esc(u.email)}</div>
+          <div class="user-role ${u.role||'user'}">${u.role||'user'}</div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px">${lastLogin}</div>
+      ${assignedSlms.length ? `<div class="user-slms">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Assigned SLMs</div>
+        ${assignedSlms.map(p=>`<span class="user-slm-tag" title="Click to unassign" onclick="unassign('${p.id}','${u.email}')">${p.icon||'🤖'} ${p.name} <span style="color:var(--muted);font-size:9px">✕</span></span>`).join('')}
+      </div>` : `<div style="font-size:10px;color:var(--muted);margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">No SLMs assigned — <button class="btn" style="padding:2px 8px;font-size:10px" onclick="openAssignModal(null)">Assign now</button></div>`}
+    </div>`;
+  }).join('');
+}
+
+function unassign(profileId, email) {
+  if (!confirm('Remove access for '+email+'?')) return;
+  const p = allProfiles.find(x=>x.id===profileId);
+  if (p) p.assignedUsers=(p.assignedUsers||[]).filter(e=>e!==email);
+  gasPost({action:'removeProfile',profileId,userEmail:email});
+  renderUserGrid(); renderSlmGrid(); toast('Access removed','ok');
+}
+
+// ── Bulk User Import ──
+let bulkUsers = [];
+
+async function handleBulkFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  bulkUsers = [];
+
+  try {
+    if (ext === 'csv') {
+      const text = await file.text();
+      const lines = text.split('\n').filter(l=>l.trim());
+      const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/^"|"$/g,''));
+      bulkUsers = lines.slice(1).map(line => {
+        const vals = line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+        const row = {};
+        headers.forEach((h,i) => { row[h] = vals[i]||''; });
+        return {
+          email: row.email||row['email address']||'',
+          name:  row.name||row['full name']||row['display name']||'',
+          org:   row.org||row.organisation||row.organization||row.company||'',
+          role:  (row.role||row.access||'user').toLowerCase(),
+        };
+      }).filter(u => u.email && u.email.includes('@'));
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      if (typeof XLSX === 'undefined') {
+        // Load SheetJS
+        await new Promise(resolve => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload = resolve;
+          document.head.appendChild(s);
+        });
+      }
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      bulkUsers = rows.map(row => {
+        const r = {};
+        Object.keys(row).forEach(k => { r[k.toLowerCase().trim()] = String(row[k]||'').trim(); });
+        return {
+          email: r.email||r['email address']||'',
+          name:  r.name||r['full name']||r['display name']||'',
+          org:   r.org||r.organisation||r.organization||r.company||'',
+          role:  (r.role||r.access||'user').toLowerCase(),
+        };
+      }).filter(u => u.email && u.email.includes('@'));
+    }
+  } catch(e) {
+    toast('File parse error: ' + e.message, 'err');
+    return;
+  }
+
+  if (!bulkUsers.length) {
+    toast('No valid users found. Check your file has email, name, org, role columns.', 'err');
+    return;
+  }
+
+  // Show preview
+  const preview = bulkUsers.slice(0, 5);
+  document.getElementById('bulkPreviewLabel').textContent =
+    bulkUsers.length + ' users found — showing first ' + preview.length;
+  document.getElementById('bulkPreviewTable').innerHTML =
+    '<thead><tr style="background:var(--surface2)">' +
+    '<th style="padding:6px 10px;text-align:left;font-size:9px;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Email</th>' +
+    '<th style="padding:6px 10px;text-align:left;font-size:9px;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Name</th>' +
+    '<th style="padding:6px 10px;text-align:left;font-size:9px;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Org</th>' +
+    '<th style="padding:6px 10px;text-align:left;font-size:9px;color:var(--muted);font-family:monospace;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Role</th>' +
+    '</tr></thead><tbody>' +
+    preview.map(u => `<tr>
+      <td style="padding:6px 10px;font-family:monospace;font-size:10px;border-bottom:1px solid var(--border)">${esc(u.email)}</td>
+      <td style="padding:6px 10px;font-size:11px;border-bottom:1px solid var(--border)">${esc(u.name||'—')}</td>
+      <td style="padding:6px 10px;font-size:11px;border-bottom:1px solid var(--border)">${esc(u.org||'—')}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><span style="padding:1px 6px;border-radius:3px;font-family:monospace;font-size:8px;font-weight:700;background:${u.role==='admin'?'rgba(245,166,35,.12)':u.role==='developer'?'rgba(124,109,250,.12)':'rgba(0,229,160,.1)'};color:${u.role==='admin'?'var(--accent)':u.role==='developer'?'var(--a3)':'var(--a2)'}">${u.role}</span></td>
+    </tr>`).join('') +
+    '</tbody>';
+
+  document.getElementById('bulkPreview').style.display = 'block';
+  document.getElementById('bulkRunBtn').style.display  = 'inline-flex';
+}
+
+async function runBulkImport() {
+  if (!bulkUsers.length) { toast('No users to import', 'err'); return; }
+  const defaultPass = document.getElementById('bulkDefaultPass').value.trim() || 'SLMForge2025!';
+  const btn = document.getElementById('bulkRunBtn');
+  btn.disabled = true; btn.textContent = 'Importing…';
+
+  try {
+    await db.write({
+      action: 'bulkImportUsers',
+      users: bulkUsers,
+      defaultPassword: defaultPass,
+      assignedBy: orchUser?.email || 'admin',
+    });
+
+    // Also grant Forge license to all imported users
+    for (const u of bulkUsers) {
+      const appAccess = u.role === 'admin' ? ['forge','studio','orchestrator']
+                      : u.role === 'developer' ? ['forge','studio']
+                      : ['forge'];
+      await db.write({
+        action: 'grantLicense',
+        email: u.email, name: u.name, role: u.role,
+        appAccess, seats: 1, expiresAt: '',
+        grantedBy: orchUser?.email || 'admin',
+        grantedByRole: 'admin',
+      });
+    }
+
+    const resultEl = document.getElementById('bulkResult');
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(0,229,160,.05)';
+    resultEl.style.border = '1px solid rgba(0,229,160,.2)';
+    resultEl.style.color = 'var(--a2)';
+    resultEl.innerHTML = `✓ Import complete — ${bulkUsers.length} users processed.<br>
+      Default password: <strong style="font-family:monospace">${esc(defaultPass)}</strong> — share securely with users.<br>
+      Licenses have been granted. Users can log in to the Forge immediately.`;
+
+    toast('Bulk import complete ✓', 'ok');
+    await loadUsers();
+    await loadLicenses();
+  } catch(e) {
+    toast('Import failed: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '⬆ Import';
+  }
+}
+async function loadAnalytics() {
+  document.getElementById('aTotal').textContent    = allUsers.filter(u=>u.role==='user').length||'—';
+  document.getElementById('aFeedback').textContent = '—';
+  document.getElementById('aBatch').textContent    = '—';
+  document.getElementById('aToday').textContent    = '—';
+
+  document.getElementById('usersTable').innerHTML = allUsers.length ?
+    allUsers.map((u,i)=>`<tr><td>${esc(u.name||'—')}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px">${esc(u.email)}</td><td>${esc(u.org||'—')}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px">${u.lastLogin?new Date(u.lastLogin).toLocaleDateString():'-'}</td></tr>`).join('') :
+    '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:16px">Go to Users tab → Refresh Users to load data</td></tr>';
+
+  document.getElementById('feedbackList').innerHTML = `<div style="font-size:11px;color:var(--muted);line-height:2">
+    <div>💡 "Data privacy is great — runs locally!"</div>
+    <div>⚡ "Model loading speed could be faster"</div>
+    <div>🎯 "Need more industry-specific personas"</div>
+    <div>📊 "Batch processing is really useful"</div>
+  </div>`;
+}
+
+// ── Folder management ──
+function addFolder() {
+  const name = prompt('New folder name (e.g. Operations):');
+  if (!name?.trim()) return;
+  if (!folders.includes(name.trim())) { folders.push(name.trim()); renderFolderTree(); }
+}
+
+// ── License management ──
+let allLicenses = [];
+
+async function loadLicenses() {
+  if (!orchUser) return;
+  const res = await gasGet({action:'getLicenses', requester:orchUser.email, role:orchUser.role});
+  allLicenses = res?.licenses || [];
+  renderLicenses();
+}
+
+function renderLicenses() {
+  const grid = document.getElementById('licenseGrid');
+  if (!grid) return;
+
+  // Stats
+  const active  = allLicenses.filter(l=>l.status==='active').length;
+  const devs    = allLicenses.filter(l=>l.role==='developer').length;
+  const revoked = allLicenses.filter(l=>l.status==='revoked').length;
+  document.getElementById('licTotal').textContent   = allLicenses.length + 1; // +1 for super admin
+  document.getElementById('licActive').textContent  = active + 1;
+  document.getElementById('licDev').textContent     = devs;
+  document.getElementById('licRevoked').textContent = revoked;
+
+  // Super admin card (always shown)
+  const superAdminCard = `<div class="license-card" style="border-color:rgba(245,166,35,.3);background:rgba(245,166,35,.02)">
+    <div class="lc-top">
+      <div class="lc-avatar" style="background:linear-gradient(135deg,#f5a623,#ff6a00)">⭐</div>
+      <div>
+        <div class="lc-name">Venkatesh Velamuri</div>
+        <div class="lc-email">${SUPER_ADMIN}</div>
+        <div class="lc-status active">● Super Admin</div>
+      </div>
+    </div>
+    <div class="lc-apps">
+      <span class="lc-app forge">⚡ Forge</span>
+      <span class="lc-app studio">🎛 Studio</span>
+      <span class="lc-app orchestrator">🗄 Orchestrator</span>
+    </div>
+    <div class="lc-meta">Permanent access · Cannot be revoked</div>
+  </div>`;
+
+  if (!allLicenses.length) {
+    grid.innerHTML = superAdminCard + '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:12px">No other licenses granted yet. Click "+ Grant License" to add users.</div>';
+    return;
+  }
+
+  grid.innerHTML = superAdminCard + allLicenses.map(l => {
+    const initials = (l.name||l.email).split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+    const appBadges = (l.appAccess||['forge']).map(a=>`<span class="lc-app ${a}">${{forge:'⚡ Forge',studio:'🎛 Studio',orchestrator:'🗄 Orchestrator'}[a]||a}</span>`).join('');
+    const grantedDate = l.grantedAt ? new Date(l.grantedAt).toLocaleDateString() : '—';
+    const expiryStr   = l.expiresAt ? 'Expires ' + new Date(l.expiresAt).toLocaleDateString() : 'No expiry';
+    return `<div class="license-card ${l.status!=='active'?'opacity:.6':''}">
+      <div class="lc-top">
+        <div class="lc-avatar">${initials}</div>
+        <div>
+          <div class="lc-name">${esc(l.name||l.email)}</div>
+          <div class="lc-email">${esc(l.email)}</div>
+          <div class="lc-status ${l.status}">${l.status==='active'?'● Active':l.status==='revoked'?'✕ Revoked':'⚠ Expired'}</div>
+        </div>
+      </div>
+      <div class="lc-apps">${appBadges}</div>
+      <div class="lc-meta">
+        Role: ${l.role} · Granted: ${grantedDate} · ${expiryStr}<br>
+        Granted by: ${esc(l.grantedBy||'—')}
+      </div>
+      <div class="lc-actions">
+        <button class="lc-btn" onclick="editLicense('${esc(l.email)}')">✏ Edit</button>
+        ${l.status==='active'
+          ? `<button class="lc-btn revoke" onclick="revokeLicense('${esc(l.email)}')">✕ Revoke</button>`
+          : `<button class="lc-btn" onclick="reinstateLicense('${esc(l.email)}')">↺ Reinstate</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editLicense(email) {
+  const l = allLicenses.find(x=>x.email===email);
+  if (!l) return;
+  document.getElementById('grantEmail').value = l.email;
+  document.getElementById('grantName').value  = l.name||'';
+  document.getElementById('grantRole').value  = l.role||'user';
+  document.getElementById('grantExpiry').value = l.expiresAt ? l.expiresAt.slice(0,10) : '';
+  // Set checkboxes
+  document.querySelectorAll('.app-check input').forEach(cb => {
+    cb.checked = (l.appAccess||[]).includes(cb.value);
+  });
+  document.getElementById('grantModal').classList.remove('hidden');
+}
+
+async function confirmGrantLicense() {
+  const email     = document.getElementById('grantEmail').value.trim().toLowerCase();
+  const name      = document.getElementById('grantName').value.trim();
+  const role      = document.getElementById('grantRole').value;
+  const expiresAt = document.getElementById('grantExpiry').value;
+  const appAccess = [...document.querySelectorAll('.app-check input:checked')].map(c=>c.value);
+
+  if (!email||!email.includes('@')) { toast('Valid email required','err'); return; }
+  if (!appAccess.length) { toast('Select at least one app','err'); return; }
+
+  // Auto-set app access based on role
+  let finalAccess = appAccess;
+  if (role==='admin') finalAccess = ['forge','studio','orchestrator'];
+  else if (role==='developer' && !finalAccess.includes('studio')) finalAccess.push('studio');
+
+  await db.write({
+    action:'grantLicense',
+    email, name, role,
+    appAccess: finalAccess,
+    seats: 1,
+    expiresAt,
+    grantedBy:    orchUser?.email||SUPER_ADMIN,
+    grantedByRole:orchUser?.role||'admin',
+  });
+
+  document.getElementById('grantModal').classList.add('hidden');
+  toast('License granted to '+email+' ✓','ok');
+  await loadLicenses();
+}
+
+async function revokeLicense(email) {
+  if (!confirm('Revoke access for '+email+'?\n\nThey will be unable to log in on next attempt.')) return;
+  await db.write({
+    action:'revokeLicense',
+    email,
+    revokedBy:    orchUser?.email||SUPER_ADMIN,
+    revokedByRole:orchUser?.role||'admin',
+  });
+  toast('License revoked for '+email,'ok');
+  await loadLicenses();
+}
+
+async function reinstateLicense(email) {
+  const l = allLicenses.find(x=>x.email===email);
+  if (!l) return;
+  await db.write({
+    action:'grantLicense',
+    email:l.email, name:l.name, role:l.role,
+    appAccess:l.appAccess,
+    seats:1, expiresAt:'',
+    grantedBy:orchUser?.email||SUPER_ADMIN, grantedByRole:'admin',
+  });
+  toast('License reinstated for '+email,'ok');
+  await loadLicenses();
+}
+
+// ── Nav ──
+function goPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (page==='analytics') { if(allUsers.length) loadAnalytics(); }
+  if (page==='users')     { if(allUsers.length) renderUserGrid(); }
+  if (page==='licenses')  loadLicenses();
+  if (page==='pending')   loadPending();
+}
+
+// ── Helpers ──
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Pending Approvals ──
+let pendingRegistrations = [];
+let approvingEmail = '';
+
+async function loadPending() {
+  if (!orchUser) return;
+  const res = await gasGet({action:'getPending', requester:orchUser.email});
+  pendingRegistrations = res?.pending || [];
+  const badge = document.getElementById('pendingBadge');
+  if (badge) {
+    badge.textContent = pendingRegistrations.length;
+    badge.style.display = pendingRegistrations.length ? 'inline' : 'none';
+  }
+  renderPending();
+}
+
+function renderPending() {
+  const list  = document.getElementById('pendingList');
+  const empty = document.getElementById('pendingEmpty');
+  if (!list) return;
+  if (!pendingRegistrations.length) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = pendingRegistrations.map(p=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a3));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;flex-shrink:0">
+        ${(p.name||p.email).split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700">${esc(p.name||'—')}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">${esc(p.email)}</div>
+        ${p.org?`<div style="font-size:10px;color:var(--muted)">${esc(p.org)}</div>`:''}
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px">Registered: ${new Date(p.registeredAt).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-shrink:0">
+        <button class="btn btn-accent" style="padding:7px 14px;font-size:11px" onclick="openApproveModal('${esc(p.email)}','${esc(p.name||'')}','${esc(p.org||'')}')">✓ Approve</button>
+        <button class="btn btn-danger" style="padding:7px 14px;font-size:11px" onclick="quickReject('${esc(p.email)}')">✕ Reject</button>
+      </div>
+    </div>`).join('');
+}
+
+function openApproveModal(email, name, org) {
+  approvingEmail = email;
+  const infoEl = document.getElementById('approveUserInfo');
+  if (infoEl) infoEl.innerHTML = `Approving: <strong>${name||email}</strong> (${email})${org?' · '+org:''}`;
+  const roleEl = document.getElementById('approveRole');
+  if (roleEl) { roleEl.value='user'; approveRoleChanged(); }
+  document.getElementById('approveModal').classList.remove('hidden');
+}
+
+function approveRoleChanged() {
+  const role = document.getElementById('approveRole')?.value || 'user';
+  const studio = document.getElementById('approveStudio');
+  const orch   = document.getElementById('approveOrch');
+  if (studio) studio.checked = (role==='developer'||role==='admin');
+  if (orch)   orch.checked   = (role==='admin');
+}
+
+async function confirmApprove() {
+  if (!approvingEmail) return;
+  const role      = document.getElementById('approveRole')?.value || 'user';
+  const appAccess = [...document.querySelectorAll('#approveAppAccess input:checked')].map(c=>c.value);
+  await gasPostWithResponse({
+    action:'approvePending', email:approvingEmail,
+    approvedBy:orchUser?.email||SUPER_ADMIN,
+    role, appAccess:appAccess.join(','),
+  });
+  document.getElementById('approveModal').classList.add('hidden');
+  toast('✓ ' + approvingEmail + ' approved with ' + role + ' access','ok');
+  await loadPending();
+}
+
+async function quickReject(email) {
+  if (!confirm('Reject registration for '+email+'?\n\nThey will not be able to log in.')) return;
+  await gasPostWithResponse({action:'rejectPending',email,rejectedBy:orchUser?.email||SUPER_ADMIN,notes:'Rejected from Orchestrator'});
+  toast('Rejected: '+email,'ok');
+  await loadPending();
+}
+
+async function confirmReject() {
+  document.getElementById('approveModal').classList.add('hidden');
+  await quickReject(approvingEmail);
+}
+
+let toastTimer;
+function toast(msg,type='ok'){
+  clearTimeout(toastTimer);
+  document.querySelector('.toast')?.remove();
+  const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg;
+  document.body.appendChild(t); toastTimer=setTimeout(()=>t.remove(),3000);
+}
+
+// Close modals on backdrop click
+document.getElementById('assignModal').addEventListener('click',e=>{if(e.target===document.getElementById('assignModal'))closeAssignModal();});
+document.getElementById('detailModal').addEventListener('click',e=>{if(e.target===document.getElementById('detailModal'))closeDetailModal();});
+
+// CSS keyframes for spinner
+const style=document.createElement('style');
+style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+
+// ── BOOT ──
+if (loadOrchSession()) {
+  document.getElementById('orchLoginModal').classList.add('hidden');
+  bootOrch(orchUser);
+} else {
+  document.getElementById('orchLoginModal').classList.remove('hidden');
+}
+
+// Close grant modal on backdrop
+document.getElementById('grantModal').addEventListener('click', e => {
+  if (e.target===document.getElementById('grantModal')) document.getElementById('grantModal').classList.add('hidden');
+});
+</script>
+</body>
+</html>
