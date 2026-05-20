@@ -4,47 +4,63 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SLM Forge — Studio</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f8ef7'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='Arial' fill='white'%3E⚡%3C/text%3E%3C/svg%3E"/>
 <script type="importmap">{"imports":{"@mlc-ai/web-llm":"https://esm.run/@mlc-ai/web-llm","@xenova/transformers":"https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"}}</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 :root{
-  --bg:#0a0c10;
-  --surface:#111318;
-  --surface2:#181c24;
-  --surface3:#1e2330;
-  --border:#252b38;
-  --border2:#2e3547;
-  --accent:#7c6dfa;
-  --accent-hover:#9585fb;
-  --accent-glow:rgba(124,109,250,.12);
-  --a2:#22c55e;
-  --a2-glow:rgba(34,197,94,.1);
-  --a3:#f59e0b;
-  --danger:#ef4444;
-  --text:#e8eaf0;
-  --text2:#9aa3b5;
-  --text3:#5c6478;
-  --radius:10px;
-  --radius-sm:6px;
-  --shadow:0 4px 24px rgba(0,0,0,.4);
+  /* ── Logmark palette ── */
+  --bg:         #f5f3ed;      /* cream — main page background */
+  --surface:    #ffffff;      /* white — cards, panels */
+  --surface2:   #faf9f6;      /* paper — hover states */
+  --surface3:   #f0ede5;      /* slightly deeper cream */
+  --border:     #e2e0d8;      /* rule — dividers */
+  --border2:    #ccc9be;      /* stronger border */
+
+  /* Brand accents */
+  --accent:     #4a5c4e;      /* sage — primary interactive */
+  --accent-hover:#3a4a3e;     /* sage dark */
+  --accent-glow:rgba(74,92,78,.10);
+  --a2:         #3c4a5c;      /* slate — secondary accent */
+  --a2-glow:    rgba(60,74,92,.10);
+  --a3:         #8c6d3f;      /* amber — warnings / highlights */
+  --danger:     #9b3a3a;      /* muted red */
+
+  /* Text */
+  --text:       #1a1a18;      /* ink — primary text */
+  --text1:      #1a1a18;
+  --text2:      #3d3d38;      /* ink2 — secondary text */
+  --text3:      #7a7a72;      /* ink3 — muted text */
+  --muted:      #7a7a72;
+
+  /* Status */
+  --green:      #4a5c4e;      /* sage for success */
+  --green-glow: rgba(74,92,78,.12);
+  --amber:      #8c6d3f;
+  --red:        #9b3a3a;
+
+  /* Layout */
+  --radius:     4px;
+  --radius-sm:  2px;
+  --shadow:     0 2px 16px rgba(26,26,24,.08);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;}
+body{background:var(--bg);color:var(--text);font-family:'Epilogue',sans-serif;font-size:13px;line-height:1.5;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,109,250,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(124,109,250,.018) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
 
 /* NAV */
-nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(7,9,12,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(250,249,246,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
 .logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;}
 .logo-box{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
-.studio-badge{padding:2px 8px;border-radius:4px;background:rgba(124,109,250,.15);border:1px solid rgba(124,109,250,.3);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.studio-badge{padding:2px 8px;border-radius:4px;background:rgba(74,92,78,.12);border:1px solid rgba(74,92,78,.25);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;}
 .nav-links{display:flex;gap:8px;}
-.nav-link{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;transition:.15s;}
+.nav-link{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;transition:.15s;}
 .nav-link:hover{color:var(--text);}
-.nav-link.orch{border-color:rgba(245,166,35,.3);color:var(--a3);}
+.nav-link.orch{border-color:rgba(140,109,63,.25);color:var(--a3);}
 .nav-link.forge{border-color:rgba(0,229,160,.3);color:var(--a2);}
 .dev-user{display:flex;align-items:center;gap:8px;}
-.dev-pill{padding:3px 10px;border-radius:20px;background:rgba(124,109,250,.1);border:1px solid rgba(124,109,250,.25);color:var(--accent);font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.dev-pill{padding:3px 10px;border-radius:20px;background:rgba(74,92,78,.08);border:1px solid rgba(74,92,78,.20);color:var(--accent);font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
 
 /* LAYOUT */
 .app{display:flex;height:100vh;padding-top:54px;}
@@ -56,17 +72,17 @@ nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:cen
 .lp-sub{font-size:10px;color:var(--muted);}
 .lp-list{flex:1;overflow-y:auto;padding:8px;}
 .profile-card{padding:10px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:5px;cursor:pointer;transition:.15s;}
-.profile-card:hover{border-color:rgba(124,109,250,.35);}
-.profile-card.active{border-color:var(--accent);background:rgba(124,109,250,.06);}
+.profile-card:hover{border-color:rgba(74,92,78,.30);}
+.profile-card.active{border-color:var(--accent);background:rgba(74,92,78,.05);}
 .profile-card.pub{border-left:3px solid var(--a2);}
 .pc-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
-.pc-meta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
-.pc-status{display:inline-block;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;margin-top:4px;}
+.pc-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+.pc-status{display:inline-block;padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;margin-top:4px;}
 .pc-status.draft{background:rgba(74,85,104,.2);color:var(--muted);}
 .pc-status.published{background:rgba(0,229,160,.12);color:var(--a2);}
 .new-btn{width:calc(100% - 16px);margin:6px 8px;padding:8px;border-radius:7px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:5px;}
 .new-btn:hover{border-color:var(--accent);color:var(--accent);}
-.lp-foot{padding:10px 12px;border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.lp-foot{padding:10px 12px;border-top:1px solid var(--border);font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
 .lp-stat b{color:var(--a2);}
 
 /* MAIN */
@@ -77,7 +93,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .wizard-steps{display:flex;align-items:center;gap:0;padding:0 24px;height:52px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;overflow-x:auto;}
 .step{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:7px;cursor:pointer;transition:.15s;white-space:nowrap;border:1px solid transparent;}
 .step:hover{background:var(--surface2);}
-.step.active{background:rgba(124,109,250,.1);border-color:rgba(124,109,250,.25);}
+.step.active{background:rgba(74,92,78,.08);border-color:rgba(74,92,78,.20);}
 .step.done{opacity:.7;}
 .step-num{width:20px;height:20px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--muted);flex-shrink:0;transition:.15s;}
 .step.active .step-num{background:var(--accent);color:#fff;}
@@ -96,7 +112,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .step-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
 .step-card h3{font-size:13px;font-weight:700;margin-bottom:4px;}
 .step-card>p{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
-.field-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.field-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
 .field-input{width:100%;padding:9px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;transition:.2s;resize:vertical;}
 .field-input:focus{border-color:var(--accent);}
 .field-select{width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;cursor:pointer;}
@@ -105,34 +121,34 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 /* Model grid */
 .model-grid{display:flex;flex-direction:column;gap:6px;}
 .model-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;}
-.model-item:hover{border-color:rgba(124,109,250,.3);}
+.model-item:hover{border-color:rgba(74,92,78,.25);}
 .model-item.sel{border-color:var(--accent);background:rgba(124,109,250,.07);}
 .model-speed{font-size:13px;flex-shrink:0;width:52px;}
 .model-info{flex:1;}
 .model-name{font-size:12px;font-weight:700;margin-bottom:2px;}
-.model-desc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.model-desc{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
 .model-badges{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
-.model-badge{padding:1px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:'JetBrains Mono',monospace;}
-.model-ram{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);}
-.model-section-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.model-badge{padding:1px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:'DM Mono',monospace;}
+.model-ram{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);}
+.model-section-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
 
 /* Params */
 .params-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
-.param-item label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;}
+.param-item label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;}
 .param-row{display:flex;align-items:center;gap:8px;}
 .param-row input[type=range]{flex:1;accent-color:var(--accent);}
-.param-val{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);min-width:36px;text-align:right;}
+.param-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);min-width:36px;text-align:right;}
 
 /* Template chips */
-.persona-cat{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.persona-cat{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--border);}
 .persona-cat:first-child{margin-top:0;}
 .persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:4px;}
 .persona-chip{padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;text-align:center;}
-.persona-chip:hover{border-color:rgba(124,109,250,.35);}
-.persona-chip.active{border-color:var(--accent);background:rgba(124,109,250,.08);}
+.persona-chip:hover{border-color:rgba(74,92,78,.30);}
+.persona-chip.active{border-color:var(--accent);background:rgba(60,74,92,.08);}
 .persona-chip-icon{font-size:18px;margin-bottom:4px;display:block;}
 .persona-chip-name{font-size:10px;font-weight:700;}
-.persona-chip-desc{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.persona-chip-desc{font-size:8px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
 
 /* KB */
 .kb-drop{border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:.25s;}
@@ -141,13 +157,13 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .kb-drop p{color:var(--muted);font-size:11px;}
 .kb-file-list{display:flex;flex-direction:column;gap:5px;margin-top:12px;}
 .kb-file{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:var(--bg);border:1px solid var(--border);font-size:11px;}
-.kb-file-name{flex:1;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kb-file-name{flex:1;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kb-file-info{font-size:9px;color:var(--muted);}
 .kb-file-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;transition:.15s;}
 .kb-file-del:hover{color:var(--danger);}
 .kb-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
 .kb-stat{padding:10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);text-align:center;}
-.kb-stat-n{font-size:18px;font-weight:800;color:var(--a2);font-family:'JetBrains Mono',monospace;}
+.kb-stat-n{font-size:18px;font-weight:800;color:var(--a2);font-family:'DM Mono',monospace;}
 .kb-stat-l{font-size:9px;color:var(--muted);margin-top:2px;}
 
 /* Examples */
@@ -155,36 +171,36 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .ex-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px;position:relative;}
 .ex-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
 .ex-del:hover{color:var(--danger);}
-.ex-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.ex-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
 .ex-text{font-size:11px;line-height:1.5;max-height:56px;overflow:hidden;}
 .add-ex{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;}
 
 /* Preview box */
-.preview-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:pre-wrap;line-height:1.7;max-height:220px;overflow-y:auto;}
+.preview-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:pre-wrap;line-height:1.7;max-height:220px;overflow-y:auto;}
 
 /* Test console */
 .console-wrap{background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 .console-head{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
-.console-head span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
-.console-out{padding:14px;min-height:140px;max-height:260px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7;}
+.console-head span{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.console-out{padding:14px;min-height:140px;max-height:260px;overflow-y:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7;}
 .console-in{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);}
-.console-input{flex:1;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;}
+.console-input{flex:1;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;}
 .console-input:focus{border-color:var(--accent);}
 .console-send{padding:8px 16px;border-radius:6px;background:var(--accent);border:none;color:#fff;font-weight:800;font-size:11px;cursor:pointer;font-family:'Syne',sans-serif;}
 
 /* Publish card */
-.pub-card{background:linear-gradient(135deg,rgba(124,109,250,.08),rgba(0,229,160,.04));border:1px solid rgba(124,109,250,.2);border-radius:12px;padding:22px;}
+.pub-card{background:linear-gradient(135deg,rgba(60,74,92,.08),rgba(0,229,160,.04));border:1px solid rgba(124,109,250,.2);border-radius:12px;padding:22px;}
 .pub-card h3{font-size:16px;font-weight:800;margin-bottom:6px;}
 .pub-card p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:18px;}
 .pub-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
 .pub-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;}
-.pub-item-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.8px;text-transform:uppercase;}
+.pub-item-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.8px;text-transform:uppercase;}
 .pub-item-value{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* Buttons */
 .btn{padding:9px 20px;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;border:1px solid var(--border);}
 .btn-primary{background:linear-gradient(135deg,var(--accent),#5a4fd8);border-color:var(--accent);color:#fff;}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,109,250,.3);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(74,92,78,.25);}
 .btn-success{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--a2);}
 .btn-success:hover{background:rgba(0,229,160,.18);}
 .btn-ghost{background:transparent;color:var(--muted);}
@@ -194,7 +210,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
 /* Notices */
 .notice{padding:10px 14px;border-radius:7px;font-size:11px;line-height:1.6;border:1px solid transparent;}
-.notice.info{background:rgba(124,109,250,.06);border-color:rgba(124,109,250,.2);color:var(--accent);}
+.notice.info{background:rgba(74,92,78,.05);border-color:rgba(124,109,250,.2);color:var(--accent);}
 .notice.ok{background:rgba(0,229,160,.05);border-color:rgba(0,229,160,.2);color:var(--a2);}
 .notice.warn{background:rgba(245,166,35,.05);border-color:rgba(245,166,35,.2);color:var(--a3);}
 
@@ -397,15 +413,15 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
             <div class="param-item">
               <label>RAG Top-K <span style="font-size:8px;color:var(--muted)">(context chunks)</span></label>
               <div class="param-row">
-                <input type="range" min="1" max="8" value="4" id="pTopK" oninput="document.getElementById('pTopKV').textContent=this.value;params.topK=+this.value">
-                <span class="param-val" id="pTopKV">4</span>
+                <input type="range" min="1" max="10" value="6" id="pTopK" oninput="document.getElementById('pTopKV').textContent=this.value;params.topK=+this.value">
+                <span class="param-val" id="pTopKV">6</span>
               </div>
             </div>
             <div class="param-item">
               <label>Chunk Size (words) <span style="font-size:8px;color:var(--muted)">(for docs)</span></label>
               <div class="param-row">
-                <input type="range" min="100" max="600" step="50" value="300" id="pChunk" oninput="document.getElementById('pChunkV').textContent=this.value;params.chunk=+this.value">
-                <span class="param-val" id="pChunkV">300</span>
+                <input type="range" min="50" max="600" step="50" value="200" id="pChunk" oninput="document.getElementById('pChunkV').textContent=this.value;params.chunk=+this.value">
+                <span class="param-val" id="pChunkV">200</span>
               </div>
             </div>
           </div>
@@ -551,12 +567,15 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
         <div class="step-card">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <div style="font-size:12px;font-weight:700">Model Status:</div>
-            <div id="testStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Not loaded</div>
+            <div id="testStatus" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">Not loaded</div>
           </div>
-          <button class="btn btn-success" id="loadModelBtn" onclick="loadTestModel()">⬇ Load Model for Testing</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-success" id="loadModelBtn" onclick="loadTestModel()">⬇ Load Model for Testing</button>
+            <button class="btn" id="fineTuneBtn" onclick="openFineTuneModal()" style="background:rgba(74,92,78,.08);border:1px solid rgba(74,92,78,.25);color:#4a5c4e;font-size:11px">🔧 Fine-Tune Existing Model</button>
+          </div>
           <div id="loadProg" style="display:none;margin-top:12px">
             <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:5px"><div style="height:100%;background:linear-gradient(90deg,var(--accent),var(--a2));transition:width .3s;border-radius:2px" id="loadProgFill"></div></div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--a3)" id="loadProgTxt">Loading…</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--a3)" id="loadProgTxt">Loading…</div>
           </div>
         </div>
 
@@ -699,12 +718,12 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8Lkz
 
 // ── State ──
 let profiles = [], activeId = null, currentStep = 1;
-let params = { temp:0.2, maxTok:512, topK:4, chunk:300 };
+let params = { temp:0.2, maxTok:512, topK:6, chunk:200 };
 let fastMode = false;
 
 // ── Fast Mode ──────────────────────────────────────────────
-const FAST_PARAMS  = { temp:0.1, maxTok:200, topK:2, chunk:150 };
-const NORMAL_PARAMS = { temp:0.2, maxTok:512, topK:4, chunk:300 };
+const FAST_PARAMS  = { temp:0.1, maxTok:200, topK:3, chunk:150 };
+const NORMAL_PARAMS = { temp:0.2, maxTok:512, topK:6, chunk:200 };
 
 function toggleFastMode() {
   fastMode = !fastMode;
@@ -767,14 +786,14 @@ const MODELS = {
     { key:'hermes3b',  name:'Hermes 3 3B',   speed:'⚡⚡', badge:'NousResearch',badgeClr:'rgba(180,100,255,.1)',badgeTxt:'#b464ff', ramGB:2.3, desc:'~2.3 GB · strong instruction following', id:'Hermes-3-Llama-3.2-3B-q4f16_1-MLC' },
     { key:'qwen3b',    name:'Qwen2.5 3B',    speed:'⚡⚡', badge:'Alibaba',     badgeClr:'rgba(255,106,0,.1)',  badgeTxt:'#ff6a00', ramGB:2.0, desc:'~2.0 GB · strong multilingual', id:'Qwen2.5-3B-Instruct-q4f16_1-MLC' },
     { key:'stablelm',  name:'StableLM 2 1.6B',speed:'⚡⚡', badge:'Stability',  badgeClr:'rgba(100,200,100,.1)',badgeTxt:'#64c864', ramGB:2.1, desc:'~2.1 GB · Stability AI · balanced', id:'stablelm-2-zephyr-1_6b-q4f16_1-MLC' },
-    { key:'ministral', name:'Ministral 3B',  speed:'⚡⚡', badge:'Mistral',     badgeClr:'rgba(124,109,250,.1)',badgeTxt:'var(--accent)', ramGB:2.9, desc:'~2.9 GB · Mistral compact · fast reasoning', id:'Ministral-3-3B-Instruct-2512-BF16-q4f16_1-MLC' },
+    { key:'ministral', name:'Ministral 3B',  speed:'⚡⚡', badge:'Mistral',     badgeClr:'rgba(74,92,78,.08)',badgeTxt:'var(--accent)', ramGB:2.9, desc:'~2.9 GB · Mistral compact · fast reasoning', id:'Ministral-3-3B-Instruct-2512-BF16-q4f16_1-MLC' },
     { key:'phi35',     name:'Phi-3.5 Mini',  speed:'⚡⚡', badge:'Microsoft',   badgeClr:'rgba(0,120,212,.1)', badgeTxt:'#0078d4', ramGB:2.4, desc:'~2.4 GB · best quality/size · smart', id:'Phi-3.5-mini-instruct-q4f16_1-MLC' },
     { key:'phi3',      name:'Phi-3 Mini 4K', speed:'⚡⚡', badge:'Microsoft',   badgeClr:'rgba(0,120,212,.1)', badgeTxt:'#0078d4', ramGB:2.5, desc:'~2.5 GB · 4K context · long docs', id:'Phi-3-mini-4k-instruct-q4f16_1-MLC' },
     { key:'qwen3_4b',  name:'Qwen3 4B',      speed:'⚡⚡', badge:'Alibaba',     badgeClr:'rgba(255,106,0,.1)',  badgeTxt:'#ff6a00', ramGB:3.4, desc:'~3.4 GB · Qwen3 · hybrid thinking', id:'Qwen3-4B-q4f16_1-MLC' },
     { key:'phi4mini',  name:'Phi-4 Mini',    speed:'⚡⚡', badge:'Microsoft',   badgeClr:'rgba(0,120,212,.1)', badgeTxt:'#0078d4', ramGB:3.4, desc:'~3.4 GB · latest Phi · strong reasoning', id:'Phi-4-mini-instruct-q4f16_1-MLC' },
   ],
   large: [
-    { key:'mistral',   name:'Mistral 7B v0.3',    speed:'⚡', badge:'Mistral',  badgeClr:'rgba(124,109,250,.1)', badgeTxt:'var(--accent)', ramGB:4.1, desc:'~4.1 GB · highest quality · complex tasks', id:'Mistral-7B-Instruct-v0.3-q4f16_1-MLC' },
+    { key:'mistral',   name:'Mistral 7B v0.3',    speed:'⚡', badge:'Mistral',  badgeClr:'rgba(74,92,78,.08)', badgeTxt:'var(--accent)', ramGB:4.1, desc:'~4.1 GB · highest quality · complex tasks', id:'Mistral-7B-Instruct-v0.3-q4f16_1-MLC' },
     { key:'llama8b',   name:'Llama 3.1 8B',        speed:'⚡', badge:'Meta',    badgeClr:'rgba(0,229,160,.1)',   badgeTxt:'var(--a2)',   ramGB:4.9, desc:'~4.9 GB · Meta flagship · top quality', id:'Llama-3.1-8B-Instruct-q4f16_1-MLC' },
     { key:'qwen7b',    name:'Qwen2.5 7B',           speed:'⚡', badge:'Alibaba', badgeClr:'rgba(255,106,0,.1)',   badgeTxt:'#ff6a00',    ramGB:4.5, desc:'~4.5 GB · enterprise multilingual', id:'Qwen2.5-7B-Instruct-q4f16_1-MLC' },
     { key:'deepseekr1_7b', name:'DeepSeek-R1 7B',  speed:'⚡', badge:'DeepSeek',badgeClr:'rgba(0,180,255,.1)',   badgeTxt:'#00b4ff',    ramGB:5.1, desc:'~5.1 GB · reasoning model · step-by-step', id:'DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC' },
@@ -1109,8 +1128,8 @@ function chunkText(text, wpc) {
 
       if (currentWords + wc > effectiveBudget && current.length) {
         flushChunk();
-        // Carry last sentence for overlap context
-        const carry = current.slice(-1);
+        // Carry last 2 sentences as overlap context (≈30% overlap) for boundary questions
+        const carry = current.slice(-2);
         current      = [...carry, sentence];
         currentWords = carry.reduce((s,c) => s + c.split(/\s+/).filter(Boolean).length, 0) + wc;
       } else {
@@ -1391,7 +1410,7 @@ function compute25Metrics(query, response, context, hasKb, latencyMs, tokenCount
     precision:pct(PRECISION), recall:pct(RECALL), f1:pct(F1), completeness:pct(COMPLETENESS),
     // KB
     grounding:pct(GROUNDING), hallucination:pct(HALLUCINATION), context_util:pct(CONTEXT_UTIL),
-    kb_coverage:KB_COVERAGE!==null?pct(KB_COVERAGE):'N/A',
+    kb_coverage:KB_COVERAGE!==null?pct(KB_COVERAGE):null,
     // Quality
     coherence:pct(COHERENCE), specificity:pct(SPECIFICITY), diversity:pct(DIVERSITY),
     conciseness:pct(CONCISENESS), bias:pct(BIAS),
@@ -1459,13 +1478,16 @@ function renderMetricsDashboard() {
     el.innerHTML='<div style="font-size:10px;color:var(--muted);text-align:center;padding:16px">Run test queries to see metrics here.</div>';
     return;
   }
-  // Average across all test queries
+  // Average across all test queries — handle null kb_coverage and typed metrics
   const avg = {};
-  const numKeys = Object.keys(testMetrics[0]).filter(k=>typeof testMetrics[0][k]==='number'&&k!=='latency_s'&&k!=='tps'&&k!=='resp_length');
+  const SKIP_KEYS = new Set(['latency_s','tps','resp_length','kb_coverage']);
+  const numKeys = Object.keys(testMetrics[0]).filter(k=>typeof testMetrics[0][k]==='number' && !SKIP_KEYS.has(k));
   numKeys.forEach(k=>{ avg[k]=(testMetrics.reduce((s,m)=>s+(m[k]||0),0)/testMetrics.length).toFixed(1); });
-  avg.tps   = (testMetrics.reduce((s,m)=>s+m.tps,0)/testMetrics.length).toFixed(1);
-  avg.latency_s = (testMetrics.reduce((s,m)=>s+m.latency_s,0)/testMetrics.length).toFixed(2);
-  avg.resp_length = Math.round(testMetrics.reduce((s,m)=>s+m.resp_length,0)/testMetrics.length);
+  avg.tps        = (testMetrics.reduce((s,m)=>s+(m.tps||0),0)/testMetrics.length).toFixed(1);
+  avg.latency_s  = (testMetrics.reduce((s,m)=>s+(m.latency_s||0),0)/testMetrics.length).toFixed(2);
+  avg.resp_length= Math.round(testMetrics.reduce((s,m)=>s+(m.resp_length||0),0)/testMetrics.length);
+  const kbRows   = testMetrics.filter(m=>m.kb_coverage!==null && m.kb_coverage!==undefined);
+  avg.kb_coverage= kbRows.length ? (kbRows.reduce((s,m)=>s+(m.kb_coverage||0),0)/kbRows.length).toFixed(1) : null;
   const passRate = Math.round(testMetrics.filter(m=>m.asr==='Pass').length/testMetrics.length*100);
 
   const METRIC_GROUPS = [
@@ -1480,24 +1502,27 @@ function renderMetricsDashboard() {
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="font-size:11px;font-weight:700">Metrics across ${testMetrics.length} test quer${testMetrics.length===1?'y':'ies'} · ASR: ${passRate}% Pass</div>
-      <button onclick="exportMetricsDashboard()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(0,229,160,.3);background:rgba(0,229,160,.08);color:var(--a2);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;cursor:pointer">⬇ Export Dashboard</button>
+      <div style="display:flex;gap:6px"><button onclick="exportDetailedReport()" style="padding:5px 10px;border-radius:6px;border:1px solid rgba(0,229,160,.3);background:rgba(0,229,160,.08);color:var(--a2);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;cursor:pointer">📋 Detailed Report</button><button onclick="exportLeadershipReport()" style="padding:5px 10px;border-radius:6px;border:1px solid rgba(74,92,78,.25);background:rgba(60,74,92,.08);color:#4a5c4e;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;cursor:pointer">👔 Leadership Report</button></div>
     </div>
     ${METRIC_GROUPS.map(g=>`
       <div style="margin-bottom:12px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">${g.label}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">${g.label}</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px">
           ${g.metrics.map(k=>{
             const v=avg[k];
+            const isNA = v===null||v===undefined;
             const isSpecial=k==='tps'||k==='latency_s'||k==='resp_length';
             const isInverse=k==='hallucination'||k==='bias'||k==='latency_s';
             const numVal=parseFloat(v)||0;
-            const score=isSpecial?null:(isInverse?100-numVal:numVal);
-            const barColor=score===null?g.color:score>=70?'var(--a2)':score>=40?'var(--a3)':'var(--danger)';
+            const score=isNA?null:isSpecial?null:(isInverse?100-numVal:numVal);
+            const barColor=isNA?'var(--muted)':score===null?g.color:score>=70?'var(--a2)':score>=40?'var(--a3)':'var(--danger)';
             const unit=k==='tps'?' tok/s':k==='latency_s'?'s':k==='resp_length'?' words':'%';
+            const displayVal=isNA?'N/A':v;
+            const displayUnit=isNA?'':(isSpecial?unit:'%');
             return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px">
-              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k.replace(/_/g,' ')}</div>
-              <div style="font-size:16px;font-weight:800;color:${barColor};font-family:'JetBrains Mono',monospace">${v}${isSpecial?unit:'%'}</div>
-              ${score!==null?`<div style="height:2px;background:var(--border);border-radius:1px;margin-top:5px;overflow:hidden"><div style="height:100%;width:${Math.min(score,100)}%;background:${barColor};border-radius:1px;transition:width .4s"></div></div>`:''}
+              <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k.replace(/_/g,' ')}</div>
+              <div style="font-size:16px;font-weight:800;color:${barColor};font-family:'DM Mono',monospace">${displayVal}${displayUnit}</div>
+              ${(!isNA&&score!==null)?`<div style="height:2px;background:var(--border);border-radius:1px;margin-top:5px;overflow:hidden"><div style="height:100%;width:${Math.min(score,100)}%;background:${barColor};border-radius:1px;transition:width .4s"></div></div>`:''}
             </div>`;
           }).join('')}
         </div>
@@ -1521,8 +1546,10 @@ function exportMetricsDashboard() {
 
   // Compute averages
   const avg = {};
-  const numKeys = Object.keys(testMetrics[0]).filter(k => typeof testMetrics[0][k] === 'number');
+  const numKeys = Object.keys(testMetrics[0]).filter(k => typeof testMetrics[0][k] === 'number' && k !== 'kb_coverage');
   numKeys.forEach(k => { avg[k] = testMetrics.reduce((s,m)=>s+(m[k]||0),0) / n; });
+  const kbRowsExp = testMetrics.filter(m=>m.kb_coverage!==null && m.kb_coverage!==undefined);
+  avg.kb_coverage = kbRowsExp.length ? kbRowsExp.reduce((s,m)=>s+(m.kb_coverage||0),0)/kbRowsExp.length : null;
   const passRate = Math.round(testMetrics.filter(m=>m.asr==='Pass').length / n * 100);
   const p = v => Math.round(v*10)/10;  // 1 decimal place
 
@@ -1552,7 +1579,7 @@ function exportMetricsDashboard() {
     {
       title: 'Precision & Recall',
       icon:  '⚖️',
-      color: '#7c6dfa',
+      color: '#4a5c4e',
       items: [
         { label:'Precision',     value:p(avg.precision||0),    unit:'%', desc:'Response terms in query/context', inverse:false },
         { label:'Recall',        value:p(avg.recall||0),       unit:'%', desc:'Query terms covered in response', inverse:false },
@@ -1643,9 +1670,9 @@ function exportMetricsDashboard() {
   '  a{color:#00e5a0}\n' +
   '  /* Header */\n' +
   '  .logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}\n' +
-  '  .logo-box{width:36px;height:36px;background:linear-gradient(135deg,#00e5a0,#7c6dfa);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}\n' +
+  '  .logo-box{width:36px;height:36px;background:linear-gradient(135deg,#00e5a0,#4a5c4e);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}\n' +
   '  .logo-text{font-size:18px;font-weight:800}\n' +
-  '  .badge{padding:2px 9px;border-radius:4px;background:rgba(124,109,250,.15);border:1px solid rgba(124,109,250,.3);color:#7c6dfa;font-size:10px;font-weight:700;font-family:monospace;letter-spacing:.5px}\n' +
+  '  .badge{padding:2px 9px;border-radius:4px;background:rgba(74,92,78,.12);border:1px solid rgba(74,92,78,.25);color:#4a5c4e;font-size:10px;font-weight:700;font-family:monospace;letter-spacing:.5px}\n' +
   '  h1{font-size:28px;font-weight:800;margin-bottom:4px}\n' +
   '  .subtitle{font-size:13px;color:#718096;margin-bottom:28px}\n' +
   '  /* Hero stats */\n' +
@@ -1693,7 +1720,7 @@ function exportMetricsDashboard() {
   '  <div class="hero-card" style="--c:#00e5a0"><div class="hero-n">' + p(avg.faithfulness||0) + '%</div><div class="hero-l">Faithfulness</div></div>\n' +
   '  <div class="hero-card" style="--c:#ff4e6a"><div class="hero-n">' + p(avg.hallucination||0) + '%</div><div class="hero-l">Hallucination</div></div>\n' +
   '  <div class="hero-card" style="--c:#f5a623"><div class="hero-n">' + p(avg.tps||0) + '</div><div class="hero-l">Avg TPS</div></div>\n' +
-  '  <div class="hero-card" style="--c:#7c6dfa"><div class="hero-n">' + passRate + '%</div><div class="hero-l">Answer Success</div></div>\n' +
+  '  <div class="hero-card" style="--c:#4a5c4e"><div class="hero-n">' + passRate + '%</div><div class="hero-l">Answer Success</div></div>\n' +
   '  <div class="hero-card" style="--c:#4285f4"><div class="hero-n">' + n + '</div><div class="hero-l">Test Queries</div></div>\n' +
   '  <div class="hero-card" style="--c:#a0aec0"><div class="hero-n">' + p(avg.latency_s||0) + 's</div><div class="hero-l">Avg Latency</div></div>\n' +
   '</div>\n' +
@@ -1924,8 +1951,7 @@ async function publishProfile() {
         const profilePayload = { ...payload, kbChunks: [] }; // don't send chunks here
         let res = null;
         try {
-          const profEncoded = encodeURIComponent(JSON.stringify(profilePayload));
-          const r = await fetch(GAS_URL + '?payload=' + profEncoded, { method:'GET', mode:'cors' });
+          const r = await fetch('https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(profilePayload) });
           if (r.ok) res = await r.json();
         } catch(e) {
           console.warn('[Studio] Profile publish fetch failed:', e.message);
@@ -1946,8 +1972,7 @@ async function publishProfile() {
                 isBatch: true,
                 batchIndex: Math.floor(i/BATCH),
               };
-              const chunkEncoded = encodeURIComponent(JSON.stringify(chunkPayload));
-              await fetch(GAS_URL + '?payload=' + chunkEncoded, { method:'GET', mode:'cors' });
+              await fetch('https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(chunkPayload) });
             } catch(e) { /* best effort */ }
           }
           console.log('[Studio] KB chunks uploaded to GAS: ' + kbChunksToSend.length);
@@ -2097,16 +2122,20 @@ const SUPER_ADMINS = [
 function checkSuperAdmin(email,pass){ const e=email.toLowerCase().trim(),h=btoa(pass); const f=SUPER_ADMINS.find(a=>a.email===e&&a.passHash===h); return f?{success:true,name:f.name,role:'admin',appAccess:['forge','studio','orchestrator']}:null; }
 function isSuperAdminEmail(email){ return SUPER_ADMINS.some(a=>a.email===email.toLowerCase().trim()); }
 class GASDb {
-  constructor(u){ this.u=u; }
+  constructor(u){ this.gasUrl=u; this.proxy='https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec'; }
   async get(p){
-    try{ const r=await fetch(this.u+'?'+new URLSearchParams(p),{mode:'cors'}); if(r.ok) return r.json(); }catch(e){ console.warn('[GASDb.get]',e.message); }
+    try{
+      const r=await fetch(this.proxy+'?'+new URLSearchParams(p));
+      if(r.ok) return r.json();
+      console.warn('[GASDb.get] HTTP',r.status);
+    }catch(e){ console.warn('[GASDb.get]',e.message); }
     return null;
   }
   async post(p){
     try{
-      const payload = encodeURIComponent(JSON.stringify(p));
-      const r = await fetch(this.u+'?payload='+payload, {method:'GET',mode:'cors'});
+      const r=await fetch(this.proxy,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
       if(r.ok) return r.json();
+      console.warn('[GASDb.post] HTTP',r.status);
     }catch(e){ console.warn('[GASDb.post]',e.message); }
     return null;
   }
@@ -2184,7 +2213,7 @@ function showStudioErr(msg, type) {
   el.style.display = 'block';
   if (type === 'warn') {
     el.style.background = 'rgba(245,166,35,.1)';
-    el.style.borderColor = 'rgba(245,166,35,.3)';
+    el.style.borderColor = 'rgba(140,109,63,.25)';
     el.style.color = '#f5a623';
   } else {
     el.style.background = '';
@@ -2209,6 +2238,373 @@ if (loadStudioSession()) {
 } else {
   document.getElementById('studioLoginModal').classList.remove('hidden');
 }
+
+// ════════════════════════════════════════════════════
+//  FINE-TUNE MODAL
+// ════════════════════════════════════════════════════
+function openFineTuneModal() {
+  // Load published profiles from localStorage
+  let published = [];
+  try { published = JSON.parse(localStorage.getItem('slmforge_published_profiles') || '[]'); } catch(e) {}
+  if (!published.length) {
+    toast('No published models found. Publish a model in Step 7 first.', 'err');
+    return;
+  }
+  // Build modal
+  let existing = document.getElementById('fineTuneModal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'fineTuneModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;padding:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:800">🔧 Fine-Tune Existing Model</div>
+        <button onclick="document.getElementById('fineTuneModal').remove()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Select a published SLM to load its configuration into the current session. You can then modify the system prompt, knowledge base, examples, and parameters — then re-publish as a new version.
+      </p>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Published Models (${published.length})</div>
+      <div id="ftModelList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
+        ${published.map((p,i) => `
+          <div onclick="selectFineTuneModel('${p.id}')" id="ftCard-${p.id}" style="border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='#4a5c4e'" onmouseout="this.style.borderColor=(window._ftSelected==='${p.id}'?'#4a5c4e':'var(--border)')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-size:18px">${p.icon||'🤖'}</span>
+              <div>
+                <div style="font-size:13px;font-weight:700">${p.name||'Unnamed'}</div>
+                <div style="font-size:10px;color:var(--muted)">${p.category||'General'} · v${p.version||1} · ${p.modelKey||'unknown'}</div>
+              </div>
+              <span style="margin-left:auto;padding:2px 8px;border-radius:4px;background:rgba(0,229,160,.1);color:var(--a2);font-size:9px;font-weight:700">PUBLISHED</span>
+            </div>
+            ${p.desc ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${p.desc.slice(0,100)}</div>` : ''}
+            <div style="font-size:10px;color:var(--muted);margin-top:6px">
+              ${(p.kbChunks||p.kbChunkCount||0) ? `📚 ${typeof p.kbChunks==='object'?p.kbChunks.length:(p.kbChunkCount||0)} KB chunks  ` : ''}
+              ${(p.examples||[]).length ? `💡 ${(p.examples||[]).length} examples  ` : ''}
+              Published ${p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : '—'}
+            </div>
+          </div>`).join('')}
+      </div>
+      <div id="ftActions" style="display:none;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">What would you like to fine-tune?</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="ft_prompt" checked style="accent-color:#4a5c4e"> System Prompt &amp; Persona</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="ft_kb" checked style="accent-color:#4a5c4e"> Knowledge Base</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="ft_examples" checked style="accent-color:#4a5c4e"> Few-Shot Examples</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="ft_params" checked style="accent-color:#4a5c4e"> Model Parameters (temp, max tokens, etc.)</label>
+        </div>
+        <div style="background:rgba(140,109,63,.08);border:1px solid rgba(245,166,35,.2);border-radius:6px;padding:10px;font-size:10px;color:#f5a623;margin-bottom:12px">
+          ⚠ Loading will overwrite the <strong>current session</strong> with the selected model's config. Your unsaved changes will be lost. The original published model stays untouched until you re-publish.
+        </div>
+        <button onclick="applyFineTune()" style="width:100%;padding:11px;border-radius:8px;background:linear-gradient(135deg,#4a5c4e,#00e5a0);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer">Load &amp; Fine-Tune →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  window._ftSelected = null;
+}
+window.openFineTuneModal = openFineTuneModal;
+
+function selectFineTuneModel(id) {
+  window._ftSelected = id;
+  document.querySelectorAll('[id^="ftCard-"]').forEach(el => {
+    el.style.borderColor = el.id === 'ftCard-'+id ? '#4a5c4e' : 'var(--border)';
+    el.style.background  = el.id === 'ftCard-'+id ? 'rgba(60,74,92,.08)' : '';
+  });
+  document.getElementById('ftActions').style.display = 'block';
+}
+window.selectFineTuneModel = selectFineTuneModel;
+
+function applyFineTune() {
+  if (!window._ftSelected) { toast('Select a model first','err'); return; }
+  let published = [];
+  try { published = JSON.parse(localStorage.getItem('slmforge_published_profiles') || '[]'); } catch(e) {}
+  const src = published.find(p => p.id === window._ftSelected);
+  if (!src) { toast('Model not found','err'); return; }
+
+  const ftPrompt   = document.getElementById('ft_prompt')?.checked;
+  const ftKb       = document.getElementById('ft_kb')?.checked;
+  const ftExamples = document.getElementById('ft_examples')?.checked;
+  const ftParams   = document.getElementById('ft_params')?.checked;
+
+  // Find or create a draft profile for fine-tuning
+  const activeProfile = profiles.find(x => x.id === activeId);
+  if (!activeProfile) { toast('No active profile in studio','err'); return; }
+
+  if (ftPrompt) {
+    activeProfile.role     = src.role     || activeProfile.role;
+    activeProfile.criteria = src.criteria || activeProfile.criteria;
+    activeProfile.format   = src.format   || activeProfile.format;
+    activeProfile.scale    = src.scale    || activeProfile.scale;
+    activeProfile.systemPrompt = src.systemPrompt || activeProfile.systemPrompt;
+    activeProfile.task     = src.task     || activeProfile.task;
+    // Update UI fields
+    if (document.getElementById('pRole')) document.getElementById('pRole').value = activeProfile.role || '';
+    if (document.getElementById('pCriteria')) document.getElementById('pCriteria').value = activeProfile.criteria || '';
+  }
+  if (ftKb && src.kbChunks) {
+    activeProfile.kbChunks = src.kbChunks;
+    activeProfile.kbFiles  = src.kbFiles  || activeProfile.kbFiles;
+    kbChunks = src.kbChunks;
+    kbFiles  = src.kbFiles || kbFiles;
+    const kbEl = document.getElementById('kbFileList');
+    if (kbEl) kbEl.innerHTML = `<div style="font-size:10px;color:var(--a2);padding:6px">📚 Loaded ${kbChunks.length} chunks from ${src.name}</div>`;
+  }
+  if (ftExamples && src.examples) {
+    activeProfile.examples = src.examples;
+    examples = src.examples;
+    if (typeof renderExamples === 'function') renderExamples();
+  }
+  if (ftParams && src.params) {
+    Object.assign(params, src.params);
+    activeProfile.params = {...src.params};
+    // Sync sliders
+    ['Temp','MaxTok','TopK','TopP'].forEach(n => {
+      const el = document.getElementById('p'+n);
+      const vEl = document.getElementById('p'+n+'V');
+      if (el && params[n.toLowerCase()]) { el.value = params[n.toLowerCase()]; if(vEl) vEl.textContent = params[n.toLowerCase()]; }
+    });
+    if (document.getElementById('pMaxTok') && params.maxTok) { document.getElementById('pMaxTok').value=params.maxTok; const v=document.getElementById('pMaxTokV'); if(v)v.textContent=params.maxTok; }
+    if (document.getElementById('pTemp')   && params.temp)   { document.getElementById('pTemp').value=params.temp;     const v=document.getElementById('pTempV');   if(v)v.textContent=params.temp; }
+  }
+  // Set model selection
+  if (src.modelKey) { selectedModel = src.modelKey; if(typeof renderModels==='function') renderModels(); }
+  // Update name to indicate it's a fine-tune
+  activeProfile.name = (src.name||'Model') + ' (Fine-Tune)';
+  activeProfile.desc = (src.desc || '') + '\n\nFine-tuned from v' + (src.version||1) + ' on ' + new Date().toLocaleDateString();
+  activeProfile.status = 'draft';
+  if (document.getElementById('pName')) document.getElementById('pName').value = activeProfile.name;
+  if (document.getElementById('pDesc')) document.getElementById('pDesc').value = activeProfile.desc;
+  saveToStorage();
+  if (typeof refreshPreview === 'function') refreshPreview();
+  if (typeof renderProfileList === 'function') renderProfileList();
+  document.getElementById('fineTuneModal').remove();
+  toast('✓ Fine-tune loaded — modify and re-publish when ready', 'ok');
+  // Jump to step 3 (prompt) for editing
+  if (typeof goStep === 'function') goStep(3);
+}
+window.applyFineTune = applyFineTune;
+
+// ════════════════════════════════════════════════════
+//  DETAILED REPORT (renamed from exportMetricsDashboard)
+// ════════════════════════════════════════════════════
+function exportDetailedReport() {
+  exportMetricsDashboard(); // existing logic now serves as the detailed report
+}
+window.exportDetailedReport = exportDetailedReport;
+
+// ════════════════════════════════════════════════════
+//  LEADERSHIP REPORT — executive summary, visual, no raw numbers
+// ════════════════════════════════════════════════════
+function exportLeadershipReport() {
+  if (!testMetrics.length) { toast('Run at least one test query first','err'); return; }
+
+  const profileName = document.getElementById('pName')?.value?.trim() || 'SLM Profile';
+  const category    = document.getElementById('pCategory')?.value?.trim() || 'General';
+  const allModels   = [...MODELS.fast,...MODELS.mid,...MODELS.large];
+  const modelInfo   = allModels.find(m=>m.key===selectedModel);
+  const modelName   = modelInfo?.name || selectedModel || 'Unknown';
+  const n           = testMetrics.length;
+
+  // Compute averages (same logic as detailed)
+  const avg = {};
+  const skipK = new Set(['latency_s','tps','resp_length','kb_coverage']);
+  Object.keys(testMetrics[0]).filter(k=>typeof testMetrics[0][k]==='number'&&!skipK.has(k))
+    .forEach(k=>{ avg[k]=testMetrics.reduce((s,m)=>s+(m[k]||0),0)/n; });
+  avg.tps=testMetrics.reduce((s,m)=>s+(m.tps||0),0)/n;
+  avg.latency_s=testMetrics.reduce((s,m)=>s+(m.latency_s||0),0)/n;
+  avg.resp_length=Math.round(testMetrics.reduce((s,m)=>s+(m.resp_length||0),0)/n);
+  const kbRowsL=testMetrics.filter(m=>m.kb_coverage!==null&&m.kb_coverage!==undefined);
+  avg.kb_coverage=kbRowsL.length?kbRowsL.reduce((s,m)=>s+(m.kb_coverage||0),0)/kbRowsL.length:null;
+  const passRate=Math.round(testMetrics.filter(m=>m.asr==='Pass').length/n*100);
+
+  function grade(v) {
+    if (v>=80) return {label:'Excellent',color:'#00e5a0',bg:'rgba(0,229,160,.1)'};
+    if (v>=65) return {label:'Good',color:'#4a5c4e',bg:'rgba(74,92,78,.08)'};
+    if (v>=45) return {label:'Fair',color:'#f5a623',bg:'rgba(245,166,35,.1)'};
+    return {label:'Needs Work',color:'#ff4e6a',bg:'rgba(255,78,106,.1)'};
+  }
+  function bar(v,inv=false,color='#00e5a0') {
+    const pct=Math.min(inv?100-v:v,100);
+    return `<div style="height:6px;background:#1e2530;border-radius:3px;overflow:hidden;margin-top:5px"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px"></div></div>`;
+  }
+  function label(v,inv=false) {
+    const g=grade(inv?100-v:v); return `<span style="padding:2px 8px;border-radius:4px;background:${g.bg};color:${g.color};font-size:10px;font-weight:700">${g.label}</span>`;
+  }
+
+  const overall=avg.overall||0;
+  const ovGrade=grade(overall);
+  const hallucPct=avg.hallucination||0;
+  const faithPct=avg.faithfulness||0;
+  const accuracy=avg.accuracy||0;
+  const coherence=avg.coherence||0;
+
+  // Executive summary narrative
+  let summary = `This SLM (Small Language Model) was evaluated across ${n} test ${n===1?'query':'queries'}. `;
+  summary += `The model achieved an <strong>Overall Score of ${overall.toFixed(0)}%</strong>, rated as <strong style="color:${ovGrade.color}">${ovGrade.label}</strong>. `;
+  if (passRate>=80) summary += `Answer Success Rate is strong at ${passRate}%, indicating the model reliably produces valid responses. `;
+  else if (passRate>=50) summary += `Answer Success Rate of ${passRate}% suggests the model is functional but has room to improve. `;
+  else summary += `Answer Success Rate of ${passRate}% is low — consider refining the system prompt or knowledge base. `;
+  if (hallucPct<15) summary += `Hallucination risk is low (${hallucPct.toFixed(0)}%), meaning responses are well-grounded. `;
+  else if (hallucPct<35) summary += `Some hallucination detected (${hallucPct.toFixed(0)}%) — recommend expanding the knowledge base. `;
+  else summary += `High hallucination rate (${hallucPct.toFixed(0)}%) — knowledge base or grounding needs significant improvement. `;
+
+  // Key metrics for leadership
+  const KPIs = [
+    { label:'Overall Quality',  val:overall,     inv:false,  desc:'Composite of all evaluation dimensions' },
+    { label:'Accuracy',         val:accuracy,    inv:false,  desc:'How correctly the model answers queries' },
+    { label:'Faithfulness',     val:faithPct,    inv:false,  desc:'Response grounded in provided context' },
+    { label:'Hallucination Risk',val:hallucPct,  inv:true,   desc:'Lower is better — indicates fabrication rate' },
+    { label:'Response Coherence',val:coherence,  inv:false,  desc:'Logical flow and sentence continuity' },
+    { label:'Answer Success',   val:passRate,    inv:false,  desc:'% of queries with a valid, meaningful answer' },
+  ];
+
+  const kpiCards = KPIs.map(k => {
+    const g = grade(k.inv ? 100-k.val : k.val);
+    return `<div style="background:#0f1318;border:1px solid #1e2530;border-radius:10px;padding:16px">
+      <div style="font-size:11px;color:#718096;margin-bottom:8px">${k.label}</div>
+      <div style="font-size:28px;font-weight:900;color:${g.color};font-family:monospace">${k.val.toFixed(0)}<span style="font-size:14px">%</span></div>
+      <div style="height:5px;background:#1e2530;border-radius:3px;overflow:hidden;margin:8px 0"><div style="height:100%;width:${Math.min(k.inv?100-k.val:k.val,100)}%;background:${g.color};border-radius:3px"></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="padding:2px 7px;border-radius:4px;background:${g.bg};color:${g.color};font-size:9px;font-weight:700">${g.label}</span>
+        <span style="font-size:9px;color:#4a5568">${k.desc}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Radar-style summary (SVG)
+  const radarDims = [
+    { label:'Quality',  val:overall },
+    { label:'Accuracy', val:accuracy },
+    { label:'Faithfulness', val:faithPct },
+    { label:'Coherence',val:coherence },
+    { label:'Conciseness',val:avg.conciseness||0 },
+    { label:'Specificity',val:avg.specificity||0 },
+  ];
+  const cx=180, cy=180, R=130, sides=radarDims.length;
+  function polarPt(i, frac) {
+    const angle = (Math.PI*2*i/sides) - Math.PI/2;
+    return [cx + Math.cos(angle)*R*frac, cy + Math.sin(angle)*R*frac];
+  }
+  const bgPoly = [.2,.4,.6,.8,1].map(f=>radarDims.map((_,i)=>polarPt(i,f).join(',')).join(' ')).map((pts,li)=>`<polygon points="${pts}" fill="none" stroke="#1e2530" stroke-width="${li===4?1.5:0.5}"/>`).join('');
+  const axes = radarDims.map((_,i)=>{ const [x,y]=polarPt(i,1); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#1e2530" stroke-width="0.8"/>`; }).join('');
+  const dataPath = radarDims.map((d,i)=>{ const [x,y]=polarPt(i,Math.max(0,Math.min(d.val/100,1))); return x+','+y; }).join(' ');
+  const labelEls = radarDims.map((d,i)=>{ const [x,y]=polarPt(i,1.18); return `<text x="${x}" y="${y}" fill="#a0aec0" font-size="11" text-anchor="middle" dominant-baseline="middle">${d.label}</text>`; }).join('');
+  const radar = `<svg viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:320px;display:block;margin:0 auto">${bgPoly}${axes}<polygon points="${dataPath}" fill="rgba(0,229,160,.2)" stroke="#00e5a0" stroke-width="2"/>${radarDims.map((d,i)=>{ const [x,y]=polarPt(i,Math.max(0,Math.min(d.val/100,1))); return `<circle cx="${x}" cy="${y}" r="4" fill="#00e5a0"/>`; }).join('')}${labelEls}</svg>`;
+
+  // Recommendations
+  const recs = [];
+  if (hallucPct>25) recs.push({ icon:'📚', text:'<strong>Expand the Knowledge Base</strong> — High hallucination suggests insufficient grounding context. Add more relevant documents.' });
+  if ((avg.coherence||0)<50) recs.push({ icon:'✍️', text:'<strong>Improve System Prompt Clarity</strong> — Low coherence scores indicate the model may need more structured output instructions.' });
+  if (passRate<60) recs.push({ icon:'🎯', text:'<strong>Add Few-Shot Examples</strong> — A low Answer Success Rate often improves significantly with 3–5 well-crafted examples.' });
+  if ((avg.specificity||0)<40) recs.push({ icon:'🔍', text:'<strong>Include Domain-Specific Terminology</strong> in the knowledge base to improve specificity scores.' });
+  if ((avg.conciseness||0)<50) recs.push({ icon:'⚖️', text:'<strong>Adjust Max Tokens</strong> — Response length seems sub-optimal; reducing max_tokens can improve conciseness.' });
+  if (!recs.length) recs.push({ icon:'🏆', text:'<strong>Model is performing well</strong> across all dimensions. Consider testing with more complex queries.' });
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leadership Report — ${profileName}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:#07090c;color:#dde3ee;min-height:100vh;padding:40px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo-box{width:42px;height:42px;background:linear-gradient(135deg,#00e5a0,#4a5c4e);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-text{font-size:20px;font-weight:900}
+.badge{padding:3px 10px;border-radius:4px;background:rgba(74,92,78,.12);border:1px solid rgba(74,92,78,.25);color:#4a5c4e;font-size:10px;font-weight:700;font-family:monospace}
+h1{font-size:32px;font-weight:900;margin-bottom:4px}
+.meta{font-size:12px;color:#718096;margin-bottom:32px}
+.section{margin-bottom:32px}
+.section-title{font-size:14px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#718096;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.exec-box{background:#0f1318;border:1px solid #1e2530;border-radius:12px;padding:20px;margin-bottom:32px;font-size:14px;line-height:1.8;color:#cbd5e0}
+.score-hero{display:flex;align-items:center;gap:20px;background:#0f1318;border:1px solid;border-radius:14px;padding:24px;margin-bottom:32px}
+.score-num{font-size:72px;font-weight:900;font-family:monospace;line-height:1}
+.score-detail{flex:1}
+.score-grade{font-size:18px;font-weight:800;margin-bottom:6px}
+.score-sub{font-size:12px;color:#718096;line-height:1.6}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:32px}
+.radar-wrap{background:#0f1318;border:1px solid #1e2530;border-radius:12px;padding:20px;margin-bottom:32px}
+.rec-list{display:flex;flex-direction:column;gap:10px}
+.rec-item{display:flex;gap:12px;background:#0f1318;border:1px solid #1e2530;border-radius:8px;padding:14px;font-size:13px;line-height:1.6}
+.rec-icon{font-size:20px;flex-shrink:0}
+.info-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:32px}
+.info-cell{background:#0f1318;border:1px solid #1e2530;border-radius:8px;padding:12px}
+.info-label{font-size:9px;color:#718096;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:monospace}
+.info-val{font-size:13px;font-weight:700}
+.footer{text-align:center;font-size:11px;color:#4a5568;padding:20px;border-top:1px solid #1e2530;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-box">⚡</div>
+  <div class="logo-text">SLM Forge</div>
+  <span class="badge">LEADERSHIP REPORT</span>
+</div>
+<h1>${profileName}</h1>
+<div class="meta">${category} · Model: ${modelName} · ${n} test ${n===1?'query':'queries'} · ${new Date().toLocaleString()}</div>
+
+<div class="score-hero" style="border-color:${ovGrade.color}">
+  <div class="score-num" style="color:${ovGrade.color}">${overall.toFixed(0)}<span style="font-size:32px">%</span></div>
+  <div class="score-detail">
+    <div class="score-grade" style="color:${ovGrade.color}">${ovGrade.label} Performance</div>
+    <div class="score-sub">
+      Answer Success Rate: <strong>${passRate}%</strong><br>
+      Hallucination Risk: <strong>${hallucPct.toFixed(0)}% ${hallucPct<20?'🟢 Low':hallucPct<40?'🟡 Moderate':'🔴 High'}</strong><br>
+      Avg Response Time: <strong>${avg.latency_s.toFixed(2)}s</strong>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">📝 Executive Summary</div>
+  <div class="exec-box">${summary}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">📊 Key Performance Indicators</div>
+  <div class="kpi-grid">${kpiCards}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">🕸️ Performance Radar</div>
+  <div class="radar-wrap">${radar}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">🔑 Model Configuration</div>
+  <div class="info-row">
+    <div class="info-cell"><div class="info-label">Model</div><div class="info-val">${modelName}</div></div>
+    <div class="info-cell"><div class="info-label">Category</div><div class="info-val">${category}</div></div>
+    <div class="info-cell"><div class="info-label">KB Chunks</div><div class="info-val">${kbChunks.length||0}</div></div>
+    <div class="info-cell"><div class="info-label">Examples</div><div class="info-val">${examples.length||0}</div></div>
+    <div class="info-cell"><div class="info-label">Test Queries</div><div class="info-val">${n}</div></div>
+    <div class="info-cell"><div class="info-label">Generated</div><div class="info-val">${new Date().toLocaleDateString()}</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">💡 Recommendations</div>
+  <div class="rec-list">${recs.map(r=>`<div class="rec-item"><span class="rec-icon">${r.icon}</span><div>${r.text}</div></div>`).join('')}</div>
+</div>
+
+<div class="footer">SLM Forge · Leadership Report · Confidential · ${new Date().toISOString()}</div>
+</body>
+</html>`;
+
+  try {
+    const blob = new Blob([html], { type:'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = (profileName.replace(/[^a-zA-Z0-9]/g,'-')||'slm')+'-leadership-'+new Date().toISOString().slice(0,10)+'.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },200);
+    toast('Leadership Report exported ✓','ok');
+  } catch(err) { toast('Export failed: '+err.message,'err'); }
+}
+window.exportLeadershipReport = exportLeadershipReport;
+
 </script>
 
 <!-- Studio Login Modal -->

@@ -4,33 +4,61 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SLM Forge — Orchestrator</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f8ef7'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='Arial' fill='white'%3E⚡%3C/text%3E%3C/svg%3E"/>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
 :root{
-  --bg:#0a0c10;--surface:#111318;--surface2:#181c24;--surface3:#1e2330;
-  --border:#252b38;--border2:#2e3547;
-  --accent:#f59e0b;--accent-glow:rgba(245,158,11,.1);
-  --a2:#22c55e;--a2-glow:rgba(34,197,94,.1);
-  --a3:#7c6dfa;--danger:#ef4444;
-  --text:#e8eaf0;--text2:#9aa3b5;--text3:#5c6478;--muted:#5c6478;
-  --radius:10px;--radius-sm:6px;--shadow:0 4px 24px rgba(0,0,0,.4);
+  /* ── Logmark palette ── */
+  --bg:         #f5f3ed;      /* cream — main page background */
+  --surface:    #ffffff;      /* white — cards, panels */
+  --surface2:   #faf9f6;      /* paper — hover states */
+  --surface3:   #f0ede5;      /* slightly deeper cream */
+  --border:     #e2e0d8;      /* rule — dividers */
+  --border2:    #ccc9be;      /* stronger border */
+
+  /* Brand accents */
+  --accent:     #4a5c4e;      /* sage — primary interactive */
+  --accent-hover:#3a4a3e;     /* sage dark */
+  --accent-glow:rgba(74,92,78,.10);
+  --a2:         #3c4a5c;      /* slate — secondary accent */
+  --a2-glow:    rgba(60,74,92,.10);
+  --a3:         #8c6d3f;      /* amber — warnings / highlights */
+  --danger:     #9b3a3a;      /* muted red */
+
+  /* Text */
+  --text:       #1a1a18;      /* ink — primary text */
+  --text1:      #1a1a18;
+  --text2:      #3d3d38;      /* ink2 — secondary text */
+  --text3:      #7a7a72;      /* ink3 — muted text */
+  --muted:      #7a7a72;
+
+  /* Status */
+  --green:      #4a5c4e;      /* sage for success */
+  --green-glow: rgba(74,92,78,.12);
+  --amber:      #8c6d3f;
+  --red:        #9b3a3a;
+
+  /* Layout */
+  --radius:     4px;
+  --radius-sm:  2px;
+  --shadow:     0 2px 16px rgba(26,26,24,.08);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Epilogue',sans-serif;min-height:100vh;overflow:hidden;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(245,166,35,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,.015) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
 
 /* NAV */
-nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(7,9,12,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:rgba(250,249,246,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
 .logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;}
-.logo-box{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--a3));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;}
-.orch-badge{padding:2px 8px;border-radius:4px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.logo-box{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.orch-badge{padding:2px 8px;border-radius:4px;background:rgba(140,109,63,.12);border:1px solid rgba(140,109,63,.25);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;}
 .nav-tabs{display:flex;gap:2px;}
-.ntab{padding:5px 14px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+.ntab{padding:5px 14px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'Epilogue',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
 .ntab:hover{color:var(--text);background:var(--surface2);}
-.ntab.active{color:var(--accent);background:rgba(245,166,35,.08);}
+.ntab.active{color:var(--accent);background:rgba(140,109,63,.08);}
 .nav-links{display:flex;gap:8px;}
-.nav-link{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;transition:.15s;}
-.nav-link.studio{border-color:rgba(124,109,250,.3);color:var(--a3);}
+.nav-link{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;transition:.15s;}
+.nav-link.studio{border-color:rgba(74,92,78,.25);color:var(--a3);}
 .nav-link.forge{border-color:rgba(0,229,160,.3);color:var(--a2);}
 
 /* LAYOUT */
@@ -44,15 +72,15 @@ nav{position:fixed;top:0;inset-inline:0;z-index:200;display:flex;align-items:cen
 .lp-tree{flex:1;overflow-y:auto;padding:8px 6px;}
 .folder-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;cursor:pointer;transition:.15s;margin-bottom:2px;}
 .folder-item:hover{background:var(--surface2);}
-.folder-item.active{background:rgba(245,166,35,.08);color:var(--accent);}
+.folder-item.active{background:rgba(140,109,63,.08);color:var(--accent);}
 .folder-icon{font-size:14px;flex-shrink:0;}
 .folder-name{font-size:12px;font-weight:700;flex:1;}
-.folder-count{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);padding:1px 5px;border-radius:3px;background:var(--surface2);}
-.folder-item.active .folder-count{background:rgba(245,166,35,.15);color:var(--accent);}
-.add-folder-btn{margin:4px 6px;padding:7px;border-radius:7px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;width:calc(100% - 12px);}
+.folder-count{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);padding:1px 5px;border-radius:3px;background:var(--surface2);}
+.folder-item.active .folder-count{background:rgba(140,109,63,.12);color:var(--accent);}
+.add-folder-btn{margin:4px 6px;padding:7px;border-radius:7px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Epilogue',sans-serif;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;width:calc(100% - 12px);}
 .add-folder-btn:hover{border-color:var(--accent);color:var(--accent);}
 .lp-foot{padding:10px 12px;border-top:1px solid var(--border);}
-.lp-refresh{width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;}
+.lp-refresh{width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Epilogue',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;}
 .lp-refresh:hover{border-color:var(--accent);color:var(--accent);}
 
 /* MAIN */
@@ -65,19 +93,19 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
 .stat-card{padding:16px;border-radius:10px;background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;}
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent));}
-.stat-n{font-size:28px;font-weight:800;color:var(--c,var(--accent));font-family:'JetBrains Mono',monospace;}
+.stat-n{font-size:28px;font-weight:800;color:var(--c,var(--accent));font-family:'DM Mono',monospace;}
 .stat-l{font-size:10px;color:var(--muted);margin-top:3px;}
-.stat-delta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--a2);margin-top:4px;}
+.stat-delta{font-family:'DM Mono',monospace;font-size:9px;color:var(--a2);margin-top:4px;}
 
 /* FOLDER VIEW HEADER */
 .folder-header{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .folder-title{display:flex;align-items:center;gap:10px;}
 .folder-title h2{font-size:18px;font-weight:800;}
-.folder-breadcrumb{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.folder-breadcrumb{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
 .folder-actions{display:flex;gap:8px;}
-.btn{padding:7px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;border:1px solid var(--border);background:transparent;color:var(--muted);}
+.btn{padding:7px 16px;border-radius:7px;font-family:'Epilogue',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;border:1px solid var(--border);background:transparent;color:var(--muted);}
 .btn:hover{color:var(--text);border-color:var(--text);}
-.btn-primary{background:linear-gradient(135deg,rgba(245,166,35,.2),rgba(245,166,35,.08));border-color:rgba(245,166,35,.4);color:var(--accent);}
+.btn-primary{background:linear-gradient(135deg,rgba(245,166,35,.2),rgba(140,109,63,.08));border-color:rgba(245,166,35,.4);color:var(--accent);}
 .btn-primary:hover{background:rgba(245,166,35,.25);}
 .btn-accent{background:rgba(0,229,160,.08);border-color:rgba(0,229,160,.25);color:var(--a2);}
 .btn-accent:hover{background:rgba(0,229,160,.15);}
@@ -93,41 +121,41 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .slm-card-name{font-size:14px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .slm-card-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
 .slm-card-tags{display:flex;gap:5px;flex-wrap:wrap;}
-.tag{padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;}
+.tag{padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;}
 .tag-model{background:rgba(245,166,35,.1);color:var(--accent);}
-.tag-format{background:rgba(124,109,250,.1);color:var(--a3);}
+.tag-format{background:rgba(74,92,78,.08);color:var(--a3);}
 .tag-kb{background:rgba(0,229,160,.1);color:var(--a2);}
 .tag-ex{background:rgba(255,78,106,.1);color:var(--danger);}
 /* Metrics row */
 .slm-metrics{padding:10px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-bottom:1px solid var(--border);background:rgba(245,166,35,.02);}
 .slm-metric{text-align:center;}
-.slm-metric-n{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--text);}
+.slm-metric-n{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--text);}
 .slm-metric-l{font-size:9px;color:var(--muted);margin-top:1px;}
 /* Meta row */
 .slm-meta{padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
-.slm-meta-item{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);}
+.slm-meta-item{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
 .slm-meta-item b{color:var(--text);}
-.slm-version{margin-left:auto;padding:2px 7px;border-radius:4px;background:rgba(124,109,250,.1);border:1px solid rgba(124,109,250,.2);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:var(--a3);}
-.slm-update-badge{margin-left:6px;padding:2px 7px;border-radius:4px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;color:#f5a623;animation:pulse 2s ease-in-out infinite;}
+.slm-version{margin-left:auto;padding:2px 7px;border-radius:4px;background:rgba(74,92,78,.08);border:1px solid rgba(124,109,250,.2);font-family:'DM Mono',monospace;font-size:8px;font-weight:700;color:var(--a3);}
+.slm-update-badge{margin-left:6px;padding:2px 7px;border-radius:4px;background:rgba(140,109,63,.12);border:1px solid rgba(245,166,35,.4);font-family:'DM Mono',monospace;font-size:8px;font-weight:700;color:#f5a623;animation:pulse 2s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
 .version-panel{border-top:1px solid var(--border);padding:10px 14px;background:rgba(124,109,250,.03);}
 .version-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);margin-bottom:5px;font-size:11px;}
 .version-row.active-ver{border-color:rgba(0,229,160,.4);background:rgba(0,229,160,.06);}
-.version-badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:rgba(124,109,250,.15);color:var(--accent);flex-shrink:0;}
+.version-badge{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:rgba(74,92,78,.12);color:var(--accent);flex-shrink:0;}
 .version-badge.active-badge{background:rgba(0,229,160,.15);color:var(--a2);}
-.version-meta{flex:1;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;}
-.version-act-btn{padding:3px 8px;border-radius:4px;border:1px solid rgba(0,229,160,.3);background:rgba(0,229,160,.07);color:var(--a2);font-size:9px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+.version-meta{flex:1;color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;}
+.version-act-btn{padding:3px 8px;border-radius:4px;border:1px solid rgba(0,229,160,.3);background:rgba(0,229,160,.07);color:var(--a2);font-size:9px;font-weight:700;cursor:pointer;font-family:'Epilogue',sans-serif;}
 .version-act-btn:hover{background:rgba(0,229,160,.15);}
-.version-act-btn.rollback{border-color:rgba(245,166,35,.3);background:rgba(245,166,35,.07);color:var(--a3);}
-.version-act-btn.rollback:hover{background:rgba(245,166,35,.15);}
+.version-act-btn.rollback{border-color:rgba(140,109,63,.25);background:rgba(245,166,35,.07);color:var(--a3);}
+.version-act-btn.rollback:hover{background:rgba(140,109,63,.12);}
 /* Actions */
 .slm-actions{padding:10px 16px;display:flex;gap:6px;}
-.slm-btn{flex:1;padding:7px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
+.slm-btn{flex:1;padding:7px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Epilogue',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
 .slm-btn:hover{border-color:var(--accent);color:var(--accent);}
 .slm-btn.assign{border-color:rgba(0,229,160,.25);color:var(--a2);}
 .slm-btn.assign:hover{background:rgba(0,229,160,.08);}
 .slm-btn.load{border-color:rgba(245,166,35,.25);color:var(--accent);}
-.slm-btn.load:hover{background:rgba(245,166,35,.08);}
+.slm-btn.load:hover{background:rgba(140,109,63,.08);}
 .slm-btn.remove{border-color:rgba(255,78,106,.15);color:var(--danger);}
 .slm-btn.remove:hover{background:rgba(255,78,106,.06);}
 
@@ -144,7 +172,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .analytics-card-head h3{font-size:13px;font-weight:700;}
 .analytics-card-body{padding:14px 16px;overflow-x:auto;}
 .atable{width:100%;border-collapse:collapse;font-size:11px;}
-.atable th{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+.atable th{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
 .atable td{padding:7px 10px;border-bottom:1px solid var(--border);}
 .atable tr:last-child td{border-bottom:none;}
 .atable tr:hover td{background:var(--surface2);}
@@ -155,10 +183,10 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .user-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
 .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--a3),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
 .user-name{font-size:13px;font-weight:700;}
-.user-email{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
-.user-role{display:inline-block;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;margin-top:3px;}
+.user-email{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
+.user-role{display:inline-block;padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;margin-top:3px;}
 .user-role.admin{background:rgba(245,166,35,.12);color:var(--accent);}
-.user-role.developer{background:rgba(124,109,250,.12);color:var(--a3);}
+.user-role.developer{background:rgba(74,92,78,.10);color:var(--a3);}
 .user-role.user{background:rgba(0,229,160,.1);color:var(--a2);}
 .user-slms{margin-top:10px;border-top:1px solid var(--border);padding-top:10px;}
 .user-slm-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);font-size:10px;margin:2px;cursor:pointer;}
@@ -173,19 +201,19 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .modal-close:hover{color:var(--text);}
 .modal-title{font-size:16px;font-weight:800;margin-bottom:5px;}
 .modal-sub{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:18px;}
-.modal-section-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;}
+.modal-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;}
 .user-check-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;max-height:200px;overflow-y:auto;}
 .user-check{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:.15s;}
 .user-check:hover{border-color:rgba(0,229,160,.3);}
 .user-check.checked{border-color:var(--a2);background:rgba(0,229,160,.05);}
 .user-check input[type=checkbox]{accent-color:var(--a2);}
 .user-check-name{font-size:12px;font-weight:700;}
-.user-check-email{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.user-check-email{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
 
 /* DETAIL MODAL */
 .detail-section{margin-bottom:16px;}
-.detail-section-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;}
-.prompt-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:pre-wrap;max-height:180px;overflow-y:auto;line-height:1.7;}
+.detail-section-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;}
+.prompt-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:pre-wrap;max-height:180px;overflow-y:auto;line-height:1.7;}
 
 /* NOTICES */
 .notice{padding:10px 14px;border-radius:7px;font-size:11px;line-height:1.6;border:1px solid transparent;}
@@ -198,38 +226,38 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 40px;width:100%;max-width:420px;position:relative;}
 .login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--a3));border-radius:16px 16px 0 0;}
 .login-logo{display:flex;align-items:center;gap:9px;margin-bottom:20px;}
-.login-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--a3));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.login-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
 .login-logo-text{font-size:15px;font-weight:800;}
 .login-headline{font-size:20px;font-weight:800;margin-bottom:5px;}
 .login-sub{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
 .login-field{margin-bottom:14px;}
-.login-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
-.login-input{width:100%;padding:10px 13px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:.2s;}
+.login-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.login-input{width:100%;padding:10px 13px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Epilogue',sans-serif;font-size:13px;outline:none;transition:.2s;}
 .login-input:focus{border-color:var(--accent);}
 .login-error{color:var(--danger);font-size:11px;margin-bottom:10px;padding:8px 12px;background:rgba(255,78,106,.06);border:1px solid rgba(255,78,106,.15);border-radius:6px;display:none;}
-.login-btn{width:100%;padding:12px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#d4870d);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s;}
-.login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(245,166,35,.3);}
+.login-btn{width:100%;padding:12px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#d4870d);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:'Epilogue',sans-serif;transition:.2s;}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(140,109,63,.25);}
 .login-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
 .login-note{font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6;}
 /* License cards */
 .license-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
 .license-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;}
 .lc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.lc-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a3));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#000;flex-shrink:0;}
+.lc-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#000;flex-shrink:0;}
 .lc-name{font-size:13px;font-weight:700;}
-.lc-email{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
-.lc-status{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;margin-top:3px;}
+.lc-email{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.lc-status{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;margin-top:3px;}
 .lc-status.active{background:rgba(0,229,160,.12);color:var(--a2);}
 .lc-status.revoked{background:rgba(255,78,106,.1);color:var(--danger);}
 .lc-status.expired{background:rgba(245,166,35,.1);color:var(--accent);}
 .lc-apps{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;}
-.lc-app{padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;}
+.lc-app{padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;}
 .lc-app.forge{background:rgba(0,229,160,.1);color:var(--a2);}
-.lc-app.studio{background:rgba(124,109,250,.1);color:var(--a3);}
+.lc-app.studio{background:rgba(74,92,78,.08);color:var(--a3);}
 .lc-app.orchestrator{background:rgba(245,166,35,.1);color:var(--accent);}
-.lc-meta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);line-height:1.9;}
+.lc-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);line-height:1.9;}
 .lc-actions{display:flex;gap:6px;margin-top:10px;}
-.lc-btn{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
+.lc-btn{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Epilogue',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
 .lc-btn:hover{border-color:var(--accent);color:var(--accent);}
 .lc-btn.revoke{border-color:rgba(255,78,106,.2);color:var(--danger);}
 .lc-btn.revoke:hover{background:rgba(255,78,106,.08);}
@@ -240,16 +268,16 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .grant-box h3{font-size:16px;font-weight:800;margin-bottom:5px;}
 .grant-box p{font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.6;}
 .grant-field{margin-bottom:12px;}
-.grant-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block;}
-.grant-input,.grant-select{width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;}
+.grant-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block;}
+.grant-input,.grant-select{width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Epilogue',sans-serif;font-size:12px;outline:none;}
 .grant-input:focus,.grant-select:focus{border-color:var(--accent);}
 .app-checkboxes{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px;}
 .app-check{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;font-size:11px;font-weight:700;}
 .app-check:hover{border-color:var(--accent);}
 .app-check input{accent-color:var(--accent);}
 .nav-user-info{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
-.nav-user-pill{padding:3px 10px;border-radius:20px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);color:var(--accent);font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
-.nav-signout{padding:3px 9px;border-radius:6px;border:1px solid rgba(255,78,106,.2);background:transparent;color:var(--danger);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;}
+.nav-user-pill{padding:3px 10px;border-radius:20px;background:rgba(140,109,63,.08);border:1px solid rgba(245,166,35,.2);color:var(--accent);font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
+.nav-signout{padding:3px 9px;border-radius:6px;border:1px solid rgba(255,78,106,.2);background:transparent;color:var(--danger);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;}
 .toast.ok{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--a2);}
 .toast.err{background:rgba(255,78,106,.1);border-color:rgba(255,78,106,.3);color:var(--danger);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
@@ -379,7 +407,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
     </div>
     <div class="folder-actions">
       <button class="btn btn-accent" onclick="openAssignModal(null)">＋ Assign SLM to User</button>
-      <input id="searchInput" style="padding:6px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:11px;outline:none;width:180px" placeholder="Search SLMs…" oninput="filterSlms()">
+      <input id="searchInput" style="padding:6px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Epilogue',sans-serif;font-size:11px;outline:none;width:180px" placeholder="Search SLMs…" oninput="filterSlms()">
     </div>
   </div>
 
@@ -531,11 +559,11 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
         </p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
           <div>
-            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Default Password for New Users</label>
-            <input id="bulkDefaultPass" type="text" value="SLMForge2025!" style="width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none">
+            <label style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Default Password for New Users</label>
+            <input id="bulkDefaultPass" type="text" value="SLMForge2025!" style="width:100%;padding:8px 12px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none">
           </div>
           <div>
-            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Upload File</label>
+            <label style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Upload File</label>
             <div style="display:flex;gap:8px">
               <input type="file" id="bulkFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleBulkFile(this.files[0])">
               <button class="btn" onclick="document.getElementById('bulkFile').click()" style="flex:1;padding:7px">📁 Choose File</button>
@@ -544,7 +572,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
           </div>
         </div>
         <div id="bulkPreview" style="display:none">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px" id="bulkPreviewLabel"></div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px" id="bulkPreviewLabel"></div>
           <div style="overflow-x:auto;max-height:160px;border:1px solid var(--border);border-radius:6px">
             <table style="width:100%;border-collapse:collapse;font-size:11px" id="bulkPreviewTable"></table>
           </div>
@@ -660,16 +688,20 @@ const SUPER_ADMINS = [
 function checkSuperAdmin(email,pass){ const e=email.toLowerCase().trim(),h=btoa(pass); const f=SUPER_ADMINS.find(a=>a.email===e&&a.passHash===h); return f?{success:true,name:f.name,role:'admin',org:'',appAccess:['forge','studio','orchestrator'],isSuperAdmin:true}:null; }
 function isSuperAdminEmail(email){ return SUPER_ADMINS.some(a=>a.email===email.toLowerCase().trim()); }
 class GASDb {
-  constructor(url){ this.url=url; }
+  constructor(url){ this.gasUrl=url; this.proxy='https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec'; }
   async _get(p){
-    try{ const r=await fetch(this.url+'?'+new URLSearchParams(p),{mode:'cors'}); if(r.ok) return r.json(); }catch(e){ console.warn('[GASDb._get]',e.message); }
+    try{
+      const r=await fetch(this.proxy+'?'+new URLSearchParams(p));
+      if(r.ok) return r.json();
+      console.warn('[GASDb._get] HTTP',r.status);
+    }catch(e){ console.warn('[GASDb._get]',e.message); }
     return null;
   }
   async _post(p){
     try{
-      const payload = encodeURIComponent(JSON.stringify(p));
-      const r = await fetch(this.url+'?payload='+payload, {method:'GET',mode:'cors'});
+      const r=await fetch(this.proxy,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
       if(r.ok) return r.json();
+      console.warn('[GASDb._post] HTTP',r.status);
     }catch(e){ console.warn('[GASDb._post]',e.message); }
     return null;
   }
@@ -689,7 +721,7 @@ class GASDb {
   async activateVersion(id,version,by)     { return this._post({action:'activateVersion',id,version,activatedBy:by}); }
   async getUsers()                         { return this._get({action:'getUsers'}); }
 }
-class LocalDb { _g(k,d=[]){try{return JSON.parse(localStorage.getItem('slmf_l_'+k)||JSON.stringify(d));}catch(e){return d;}} _s(k,v){try{localStorage.setItem('slmf_l_'+k,JSON.stringify(v));}catch(e){}} async login(e,h){const u=this._g('users',[]).find(u=>u.email.toLowerCase()===e.toLowerCase());if(!u)return{success:false,error:'No account.'};if(u.pw!==h)return{success:false,error:'Wrong password.'};return{success:true,name:u.name,role:u.role||'user',org:'',appAccess:u.access||['forge']};} async register(e,h,n,o){const all=this._g('users',[]);if(all.find(u=>u.email===e))return{success:false,error:'Exists.'};all.push({email:e,pw:h,name:n,org:o,role:'user',access:['forge']});this._s('users',all);return{success:true,pending:true};} async getProfiles(e,r){const all=this._g('pub',[]);if(r==='admin'||r==='developer')return{profiles:all};const ac=this._g('ac',[]);const ids=new Set(ac.filter(x=>x.email===e).map(x=>x.pid));return{profiles:all.filter(p=>ids.has(p.id))};} async publishProfile(p){const all=this._g('pub',[]);const i=all.findIndex(x=>x.id===p.id);if(i>=0)all[i]=p;else all.push(p);this._s('pub',all);return{success:true};} async write(c,r){const l=this._g('log_'+c,[]);l.push({r,ts:new Date().toISOString()});this._s('log_'+c,l);return{success:true};} async getLicenses(){return{licenses:this._g('licenses',[])};} async grantLicense(d){const lic=this._g('licenses',[]);const i=lic.findIndex(l=>l.email===d.email);if(i>=0)lic[i]={...lic[i],...d,status:'active'};else lic.push({...d,status:'active',granted_at:new Date().toISOString()});this._s('licenses',lic);return{success:true};} async revokeLicense(e){const lic=this._g('licenses',[]).map(l=>l.email===e?{...l,status:'revoked'}:l);this._s('licenses',lic);return{success:true};} async getPending(){return{pending:this._g('pending',[]).filter(p=>p.status==='pending')};} async approvePending(e,role,ac,by){const p=this._g('pending',[]);const i=p.findIndex(x=>x.email===e);if(i>=0)p[i]={...p[i],status:'approved'};this._s('pending',p);await this.grantLicense({email:e,role,app_access:Array.isArray(ac)?ac.join(','):ac,granted_by:by});return{success:true};} async assignProfile(id,emails,by){const ac=this._g('ac',[]);emails.forEach(e=>ac.push({email:e,pid:id,by}));this._s('ac',ac);return{success:true};} }
+class LocalDb { _g(k,d=[]){try{return JSON.parse(localStorage.getItem('slmf_l_'+k)||JSON.stringify(d));}catch(e){return d;}} _s(k,v){try{localStorage.setItem('slmf_l_'+k,JSON.stringify(v));}catch(e){}} async login(e,h){const u=this._g('users',[]).find(u=>u.email.toLowerCase()===e.toLowerCase());if(!u)return{success:false,error:'No account.'};if(u.pw!==h)return{success:false,error:'Wrong password.'};return{success:true,name:u.name,role:u.role||'user',org:'',appAccess:u.access||['forge']};} async register(e,h,n,o){const all=this._g('users',[]);if(all.find(u=>u.email===e))return{success:false,error:'Exists.'};all.push({email:e,pw:h,name:n,org:o,role:'user',access:['forge']});this._s('users',all);return{success:true,pending:true};} async getProfiles(e,r){const all=this._g('pub',[]);if(r==='admin'||r==='developer')return{profiles:all};const ac=this._g('ac',[]);const ids=new Set(ac.filter(x=>x.email===e).map(x=>x.pid));return{profiles:all.filter(p=>ids.has(p.id))};} async publishProfile(p){const all=this._g('pub',[]);const i=all.findIndex(x=>x.id===p.id);if(i>=0)all[i]=p;else all.push(p);this._s('pub',all);return{success:true};} async write(c,r){const l=this._g('log_'+c,[]);l.push({r,ts:new Date().toISOString()});this._s('log_'+c,l);return{success:true};} async getLicenses(){return{licenses:this._g('licenses',[])};} async grantLicense(d){const lic=this._g('licenses',[]);const i=lic.findIndex(l=>l.email===d.email);if(i>=0)lic[i]={...lic[i],...d,status:'active'};else lic.push({...d,status:'active',granted_at:new Date().toISOString()});this._s('licenses',lic);return{success:true};} async revokeLicense(e){const lic=this._g('licenses',[]).map(l=>l.email===e?{...l,status:'revoked'}:l);this._s('licenses',lic);return{success:true};} async getPending(){return{pending:this._g('pending',[]).filter(p=>p.status==='pending')};} async approvePending(e,role,ac,by){const p=this._g('pending',[]);const i=p.findIndex(x=>x.email===e);if(i>=0)p[i]={...p[i],status:'approved'};this._s('pending',p);await this.grantLicense({email:e,role,app_access:Array.isArray(ac)?ac.join(','):ac,granted_by:by});return{success:true};} async assignProfile(id,emails,by){const ac=this._g('ac',[]);emails.forEach(e=>ac.push({email:e,pid:id,by}));this._s('ac',ac);return{success:true};} async getUsers(){const users=this._g('users',[]);return{success:true,users:users.map(u=>({email:u.email,name:u.name||'',org:u.org||'',role:u.role||'user',createdAt:u.createdAt||'',lastLogin:u.lastLogin||''}))};} }
 const db = DB_CONFIG.adapter==='local' ? new LocalDb() : new GASDb(DB_CONFIG.gasUrl);
 const GAS_URL = DB_CONFIG.gasUrl;
 const SHEET_ID = '1Ful1tNZdUYKMkz2DkrJ3RFQxKChkGkUw2m1tayLWqEw';
@@ -774,26 +806,25 @@ function bootOrch(u) {
   loadUsers(); // auto-load users on boot so Refresh Users works immediately
 }
 
-// ── GAS helpers ──
+// ── GAS helpers (all go through /api/db proxy — direct GAS fetch blocked by COEP) ──
 async function gasPost(payload) {
   try {
-    const encoded = encodeURIComponent(JSON.stringify(payload));
-    await fetch(GAS_URL + '?payload=' + encoded, { method:'GET', mode:'cors' });
+    await fetch('https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
   } catch(e) { console.warn('[gasPost]', e.message); }
 }
 async function gasPostWithResponse(payload) {
   try {
-    const encoded = encodeURIComponent(JSON.stringify(payload));
-    const r = await fetch(GAS_URL + '?payload=' + encoded, { method:'GET', mode:'cors' });
+    const r = await fetch('https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     if (r.ok) return r.json();
+    console.warn('[gasPostWithResponse] HTTP', r.status);
   } catch(e) { console.warn('[gasPostWithResponse]', e.message); }
   return null;
 }
 async function gasGet(params) {
   try {
-    const r = await fetch(GAS_URL+'?'+new URLSearchParams(params), {mode:'cors'});
+    const r = await fetch('https://script.google.com/macros/s/AKfycbyGqUE3c7AV8c3sGB6t8LkzAjvv11dVtptV4KO3I756giB3g4Gqx6VX7-Mn0pq7AzKTpw/exec?'+new URLSearchParams(params));
     if (r.ok) return r.json();
-    console.warn('[GAS] Non-OK response:', r.status, r.statusText);
+    console.warn('[GAS] Non-OK response:', r.status);
   } catch(e) {
     console.warn('[GAS] GET failed:', e.message, 'params:', params);
   }
@@ -823,16 +854,23 @@ async function loadAllProfiles() {
   const res = await gasGet({action:'getProfiles', role:'admin', email:'admin'});
   if (res?.profiles?.length) {
     allProfiles = res.profiles;
-    // Fetch real KB chunk counts from KB_Chunks sheet for each profile
+    // Fetch real KB chunks for each profile and cache them
+    const chunkCache = {};
+    try { Object.assign(chunkCache, JSON.parse(localStorage.getItem('slmforge_kb_cache')||'{}')); } catch(e){}
     await Promise.all(allProfiles.map(async p => {
       try {
         const cr = await gasGet({action:'getChunks', profileId:p.id});
-        if (cr?.chunks) {
-          p.kbChunks = cr.chunks; // Store chunks so metrics can use them
-          p.kbChunkCount = cr.count || cr.chunks.length;
+        if (cr?.chunks?.length) {
+          p.kbChunks = cr.chunks;
+          p.kbChunkCount = cr.chunks.length;
+          chunkCache[p.id] = { chunks: cr.chunks, cachedAt: Date.now() };
+        } else {
+          p.kbChunks = chunkCache[p.id]?.chunks || [];
+          p.kbChunkCount = p.kbChunks.length;
         }
       } catch(e) { p.kbChunks = []; p.kbChunkCount = 0; }
     }));
+    try { localStorage.setItem('slmforge_kb_cache', JSON.stringify(chunkCache)); } catch(e){}
   } else {
     // Fallback to local Studio profiles
     try {
@@ -974,7 +1012,7 @@ function renderSlmGrid() {
             ].map(([lbl,val,unit,lowGood])=>`
               <div style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:6px;text-align:center">
                 <div style="font-size:9px;color:var(--muted);margin-bottom:2px">${lbl}</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${
+                <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${
                   typeof val==='number'&&unit==='%' ? (lowGood
                     ? (val<=25?'var(--a2)':val<=40?'var(--a3)':'var(--danger)')
                     : (val>=70?'var(--a2)':val>=50?'var(--a3)':'var(--danger)'))
@@ -990,7 +1028,7 @@ function renderSlmGrid() {
           </div>
         `}
       </div>
-        <button onclick="exportSlmDashboard('${p.id}')" style="width:100%;padding:5px;border-radius:6px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.06);color:var(--a2);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px">⬇ Export Full Metrics Dashboard</button>
+        <button onclick="exportSlmDashboard('${p.id}')" style="width:100%;padding:5px;border-radius:6px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.06);color:var(--a2);font-family:'Epilogue',sans-serif;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px">⬇ Export Full Metrics Dashboard</button>
       </div>
 
       <div class="slm-meta">
@@ -1004,7 +1042,7 @@ function renderSlmGrid() {
 
       <!-- Version History Panel (collapsible) -->
       <div id="versions-${p.id}" style="display:none" class="version-panel">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Version History</div>
+        <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Version History</div>
         ${(p.versionHistory&&p.versionHistory.length ? [...p.versionHistory].reverse() : [{version:p.version||1,publishedAt:p.publishedAt,publishedBy:p.developerEmail,modelKey:p.modelKey}]).map(v=>{
           const isActive = (v.version === (p.activeVersion||p.version||1));
           const vDate = v.publishedAt ? new Date(v.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
@@ -1060,19 +1098,19 @@ function renderFolderMetrics() {
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <span style="font-size:18px">${icons[cat]||'📁'}</span>
         <div style="font-size:13px;font-weight:700">${cat}</div>
-        <div style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted)">${ps.length} SLMs</div>
+        <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">${ps.length} SLMs</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         <div style="text-align:center">
-          <div style="font-size:17px;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace">${kbTotal}</div>
+          <div style="font-size:17px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace">${kbTotal}</div>
           <div style="font-size:9px;color:var(--muted)">KB Chunks</div>
         </div>
         <div style="text-align:center">
-          <div style="font-size:17px;font-weight:800;color:var(--a2);font-family:'JetBrains Mono',monospace">${accuracy}</div>
+          <div style="font-size:17px;font-weight:800;color:var(--a2);font-family:'DM Mono',monospace">${accuracy}</div>
           <div style="font-size:9px;color:var(--muted)">Accuracy</div>
         </div>
         <div style="text-align:center">
-          <div style="font-size:17px;font-weight:800;color:var(--a3);font-family:'JetBrains Mono',monospace">${exTotal}</div>
+          <div style="font-size:17px;font-weight:800;color:var(--a3);font-family:'DM Mono',monospace">${exTotal}</div>
           <div style="font-size:9px;color:var(--muted)">Examples</div>
         </div>
       </div>
@@ -1193,7 +1231,7 @@ function exportOrchestratorDashboard(id) {
 
 <div class="hero">
   ${[['Overall',m.overall+'%','#00e5a0'],['Accuracy',m.accuracy+'%','#00e5a0'],['Faithfulness',m.faithfulness+'%','#00e5a0'],
-     ['Hallucination',m.hallucination+'%','#ff4e6a'],['TPS','—'+' t/s','#f5a623'],['Latency','—'+'s','#7c6dfa'],
+     ['Hallucination',m.hallucination+'%','#ff4e6a'],['TPS','—'+' t/s','#f5a623'],['Latency','—'+'s','#4a5c4e'],
      ['Grounding',(m.grounding||0)+'%','#4285f4'],['F1 Score',(m.accuracy||0)+'%','#00e5a0']].map(([l,v,c])=>
     `<div class="hero-card"><div class="hero-n" style="color:${c}">${v}</div><div class="hero-l">${l}</div></div>`).join('')}
 </div>
@@ -1266,9 +1304,16 @@ async function confirmAssign() {
     });
     closeAssignModal();
     if (res?.success) {
+      // Bust the user-specific SLM cache for every assigned user so next refresh picks up new assignment
+      checked.forEach(email => {
+        try {
+          const cacheKey = 'slmforge_user_slms_' + email.toLowerCase().replace(/[^a-z0-9]/g,'_');
+          localStorage.removeItem(cacheKey);
+        } catch(e) {}
+      });
       // Re-fetch from GAS to get confirmed fresh state
       await refreshProfileAssignments();
-      toast(`Assigned to ${checked.length} user${checked.length>1?'s':''} ✓`, 'ok');
+      toast(`Assigned to ${checked.length} user${checked.length>1?'s':''} ✓ — they will see it on next login/refresh`, 'ok');
     } else {
       renderSlmGrid(); renderUserGrid();
       toast(`Assigned locally (GAS sync pending)`, 'ok');
@@ -1288,7 +1333,7 @@ function openDetailModal(id) {
   document.getElementById('detailName').textContent    = p.name;
   document.getElementById('detailDesc').textContent    = p.desc||'';
   document.getElementById('detailPrompt').textContent  = p.systemPrompt||'(no system prompt)';
-  document.getElementById('detailDev').innerHTML       = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(p.developerEmail||'—')}</span> · Published ${p.publishedAt?new Date(p.publishedAt).toLocaleString():'—'} · <span style="color:var(--a3)">v${p.version||1}</span>`;
+  document.getElementById('detailDev').innerHTML       = `<span style="font-family:'DM Mono',monospace;font-size:11px">${esc(p.developerEmail||'—')}</span> · Published ${p.publishedAt?new Date(p.publishedAt).toLocaleString():'—'} · <span style="color:var(--a3)">v${p.version||1}</span>`;
   const kbCount = Array.isArray(p.kbChunks)?p.kbChunks.length:0;
   document.getElementById('detailKb').textContent = kbCount ? kbCount+' chunks indexed' : 'No knowledge base uploaded';
   const exEl = document.getElementById('detailExamples');
@@ -1339,7 +1384,7 @@ async function loadUsers() {
   if (btn) { btn.disabled=true; btn.textContent='Loading…'; }
 
   try {
-    const res = await gasGet({action:'getUsers'});
+    const res = await db.getUsers();
     if (res?.users?.length) {
       allUsers = res.users;
       toast('Users loaded — ' + allUsers.length + ' accounts found', 'ok');
@@ -1377,9 +1422,9 @@ function renderUserGrid() {
           <div class="user-role ${u.role||'user'}">${u.role||'user'}</div>
         </div>
       </div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px">${lastLogin}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px">${lastLogin}</div>
       ${assignedSlms.length ? `<div class="user-slms">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Assigned SLMs</div>
+        <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Assigned SLMs</div>
         ${assignedSlms.map(p=>`<span class="user-slm-tag" title="Click to unassign" onclick="unassign('${p.id}','${u.email}')">${p.icon||'🤖'} ${p.name} <span style="color:var(--muted);font-size:9px">✕</span></span>`).join('')}
       </div>` : `<div style="font-size:10px;color:var(--muted);margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">No SLMs assigned — <button class="btn" style="padding:2px 8px;font-size:10px" onclick="openAssignModal(null)">Assign now</button></div>`}
     </div>`;
@@ -1506,7 +1551,7 @@ async function handleBulkFile(file) {
       <td style="padding:6px 10px;font-family:monospace;font-size:10px;border-bottom:1px solid var(--border)">${esc(u.email)}</td>
       <td style="padding:6px 10px;font-size:11px;border-bottom:1px solid var(--border)">${esc(u.name||'—')}</td>
       <td style="padding:6px 10px;font-size:11px;border-bottom:1px solid var(--border)">${esc(u.org||'—')}</td>
-      <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><span style="padding:1px 6px;border-radius:3px;font-family:monospace;font-size:8px;font-weight:700;background:${u.role==='admin'?'rgba(245,166,35,.12)':u.role==='developer'?'rgba(124,109,250,.12)':'rgba(0,229,160,.1)'};color:${u.role==='admin'?'var(--accent)':u.role==='developer'?'var(--a3)':'var(--a2)'}">${u.role}</span></td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border)"><span style="padding:1px 6px;border-radius:3px;font-family:monospace;font-size:8px;font-weight:700;background:${u.role==='admin'?'rgba(245,166,35,.12)':u.role==='developer'?'rgba(74,92,78,.10)':'rgba(0,229,160,.1)'};color:${u.role==='admin'?'var(--accent)':u.role==='developer'?'var(--a3)':'var(--a2)'}">${u.role}</span></td>
     </tr>`).join('') +
     '</tbody>';
 
@@ -1567,7 +1612,7 @@ async function loadAnalytics() {
   document.getElementById('aToday').textContent    = '—';
 
   document.getElementById('usersTable').innerHTML = allUsers.length ?
-    allUsers.map((u,i)=>`<tr><td>${esc(u.name||'—')}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px">${esc(u.email)}</td><td>${esc(u.org||'—')}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px">${u.lastLogin?new Date(u.lastLogin).toLocaleDateString():'-'}</td></tr>`).join('') :
+    allUsers.map((u,i)=>`<tr><td>${esc(u.name||'—')}</td><td style="font-family:'DM Mono',monospace;font-size:10px">${esc(u.email)}</td><td>${esc(u.org||'—')}</td><td style="font-family:'DM Mono',monospace;font-size:10px">${u.lastLogin?new Date(u.lastLogin).toLocaleDateString():'-'}</td></tr>`).join('') :
     '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:16px">Go to Users tab → Refresh Users to load data</td></tr>';
 
   document.getElementById('feedbackList').innerHTML = `<div style="font-size:11px;color:var(--muted);line-height:2">
@@ -1609,7 +1654,7 @@ function renderLicenses() {
   document.getElementById('licRevoked').textContent = revoked;
 
   // Super admin card (always shown)
-  const superAdminCard = `<div class="license-card" style="border-color:rgba(245,166,35,.3);background:rgba(245,166,35,.02)">
+  const superAdminCard = `<div class="license-card" style="border-color:rgba(140,109,63,.25);background:rgba(245,166,35,.02)">
     <div class="lc-top">
       <div class="lc-avatar" style="background:linear-gradient(135deg,#f5a623,#ff6a00)">⭐</div>
       <div>
@@ -1773,14 +1818,14 @@ function renderPending() {
   if (empty) empty.style.display = 'none';
   list.innerHTML = pendingRegistrations.map(p=>`
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px">
-      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a3));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;flex-shrink:0">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;flex-shrink:0">
         ${(p.name||p.email).split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase()}
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700">${esc(p.name||'—')}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">${esc(p.email)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${esc(p.email)}</div>
         ${p.org?`<div style="font-size:10px;color:var(--muted)">${esc(p.org)}</div>`:''}
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px">Registered: ${new Date(p.registeredAt).toLocaleString()}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px">Registered: ${new Date(p.registeredAt).toLocaleString()}</div>
       </div>
       <div style="display:flex;gap:7px;flex-shrink:0">
         <button class="btn btn-accent" style="padding:7px 14px;font-size:11px" onclick="openApproveModal('${esc(p.email)}','${esc(p.name||'')}','${esc(p.org||'')}')">✓ Approve</button>

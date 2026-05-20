@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SLM Forge — Human Review</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f8ef7'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='Arial' fill='white'%3E⚡%3C/text%3E%3C/svg%3E"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{
+  /* ── Logmark palette ── */
+  --bg:         #f5f3ed;      /* cream — main page background */
+  --surface:    #ffffff;      /* white — cards, panels */
+  --surface2:   #faf9f6;      /* paper — hover states */
+  --surface3:   #f0ede5;      /* slightly deeper cream */
+  --border:     #e2e0d8;      /* rule — dividers */
+  --border2:    #ccc9be;      /* stronger border */
+
+  /* Brand accents */
+  --accent:     #4a5c4e;      /* sage — primary interactive */
+  --accent-hover:#3a4a3e;     /* sage dark */
+  --accent-glow:rgba(74,92,78,.10);
+  --a2:         #3c4a5c;      /* slate — secondary accent */
+  --a2-glow:    rgba(60,74,92,.10);
+  --a3:         #8c6d3f;      /* amber — warnings / highlights */
+  --danger:     #9b3a3a;      /* muted red */
+
+  /* Text */
+  --text:       #1a1a18;      /* ink — primary text */
+  --text1:      #1a1a18;
+  --text2:      #3d3d38;      /* ink2 — secondary text */
+  --text3:      #7a7a72;      /* ink3 — muted text */
+  --muted:      #7a7a72;
+
+  /* Status */
+  --green:      #4a5c4e;      /* sage for success */
+  --green-glow: rgba(74,92,78,.12);
+  --amber:      #8c6d3f;
+  --red:        #9b3a3a;
+
+  /* Layout */
+  --radius:     4px;
+  --radius-sm:  2px;
+  --shadow:     0 2px 16px rgba(26,26,24,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Epilogue',sans-serif;font-size:13px;line-height:1.5;}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:300;}
+.tb-brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;flex-shrink:0;}
+.tb-logo{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.tb-name{font-weight:700;font-size:13px;}
+.tb-div{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.tb-tabs{display:flex;gap:2px;overflow-x:auto;flex:1;}
+.tb-tabs::-webkit-scrollbar{height:0;}
+.tb-tab{padding:5px 12px;border-radius:var(--radius-sm);border:none;background:transparent;color:var(--text2);font-family:'Epilogue',sans-serif;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.15s;}
+.tb-tab:hover{color:var(--text);background:var(--surface2);}
+.tb-tab.active{color:var(--accent);background:var(--accent-glow);}
+.tb-back{padding:5px 14px;border-radius:var(--radius-sm);border:1px solid rgba(74,92,78,.25);background:var(--accent-glow);color:var(--accent);font-family:'Epilogue',sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:.15s;flex-shrink:0;}
+.tb-back:hover{background:var(--accent);color:#fff;}
+
+/* MAIN */
+.main{padding-top:52px;height:100%;overflow-y:auto;}
+.page{display:none;}
+.page.active{display:block;}
+.page-wrap{padding:22px 26px;max-width:1100px;}
+.page-head{margin-bottom:18px;}
+.page-title{font-size:17px;font-weight:700;color:var(--text1);margin-bottom:3px;}
+.page-sub{font-size:11px;color:var(--text3);}
+
+/* HANDOFF BANNER */
+.handoff-banner{display:none;align-items:center;gap:14px;padding:14px 18px;background:rgba(74,92,78,.06);border:1px solid rgba(74,92,78,.20);border-radius:var(--radius);margin-bottom:16px;flex-wrap:wrap;}
+.handoff-banner.show{display:flex;}
+.handoff-icon{font-size:22px;flex-shrink:0;}
+.handoff-text{flex:1;min-width:0;}
+.handoff-title{font-size:13px;font-weight:700;color:#4a5c4e;margin-bottom:2px;}
+.handoff-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+.handoff-actions{display:flex;gap:8px;flex-shrink:0;}
+
+/* SESSION RESUME BANNER */
+.resume-banner{display:none;align-items:center;gap:12px;padding:12px 16px;background:rgba(74,92,78,.06);border:1px solid rgba(74,92,78,.20);border-radius:var(--radius);margin-bottom:14px;}
+.resume-banner.show{display:flex;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap;}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover);color:#fff;}
+.btn-success{border-color:rgba(34,197,94,.35);color:#4a5c4e;}
+.btn-success:hover:not(:disabled){background:rgba(74,92,78,.08);}
+.btn-danger{border-color:rgba(155,58,58,.25);color:#9b3a3a;}
+.btn-danger:hover:not(:disabled){background:rgba(155,58,58,.08);}
+.btn-sm{padding:4px 10px;font-size:10px;}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:22px 16px;text-align:center;cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-glow);}
+.uz-icon{font-size:28px;opacity:.45;}
+.uz-label{font-size:12px;font-weight:600;color:var(--text2);}
+.uz-sub{font-size:10px;color:var(--text3);}
+
+/* NOTICE */
+.notice{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:12px;line-height:1.6;}
+.notice.warn{background:rgba(140,109,63,.08);border:1px solid rgba(140,109,63,.25);color:#8c6d3f;}
+.notice.info{background:var(--accent-glow);border:1px solid rgba(74,92,78,.20);color:#3c4a5c;}
+.notice.ok{background:rgba(74,92,78,.06);border:1px solid rgba(74,92,78,.20);color:#4a5c4e;}
+.notice.err{background:rgba(155,58,58,.06);border:1px solid rgba(155,58,58,.20);color:#f5e8e8;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.card-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;}
+
+/* METRIC GRID */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-bottom:16px;}
+.metric-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;}
+.mt-val{font-size:20px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace;}
+.mt-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.mt-desc{font-size:9px;color:var(--text3);margin-top:4px;line-height:1.4;}
+.metric-tile.good .mt-val{color:#4a5c4e;}
+.metric-tile.warn .mt-val{color:#FBBF24;}
+.metric-tile.bad  .mt-val{color:#9b3a3a;}
+
+/* TABLE */
+.table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:480px;}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{background:var(--surface2);color:var(--text3);font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1;}
+.data-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--surface2);}
+
+/* REVIEW CARDS */
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;transition:.2s;}
+.review-card.submitted{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.03);}
+.review-card.pending-ready{border-color:rgba(251,191,36,.25);}
+.rc-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.rc-qnum{width:28px;height:28px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(74,92,78,.25);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--accent);flex-shrink:0;margin-top:1px;}
+.rc-question{flex:1;font-size:12px;font-weight:600;color:var(--text1);line-height:1.5;}
+.review-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;flex-shrink:0;}
+.review-a-label{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.review-a{font-size:11px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:9px 12px;margin-bottom:10px;line-height:1.6;white-space:pre-wrap;max-height:110px;overflow-y:auto;}
+.review-exp{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.15);}
+
+/* EVAL COLUMNS */
+.eval-grid{display:grid;grid-template-columns:1fr 1fr 2fr;gap:10px;margin-top:4px;}
+.eval-col{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.eval-col-label{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+.eval-col-hint{font-size:10px;color:var(--text3);margin-bottom:8px;line-height:1.4;}
+
+/* YES/NO BUTTONS — styled from the start */
+.yn-group{display:flex;gap:6px;}
+.yn-btn{flex:1;padding:7px 0;border-radius:6px;border:2px solid var(--border);background:var(--surface);color:var(--text3);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:.15s;}
+.yn-btn:hover:not(:disabled){border-color:var(--text2);color:var(--text2);}
+.yn-btn:disabled{opacity:.5;cursor:default;}
+/* Hallucination: Yes=bad (red), No=good (green) */
+.eval-col.hallucination .yn-btn.yes-active{background:rgba(239,68,68,.15);border-color:#9b3a3a;color:#9b3a3a;}
+.eval-col.hallucination .yn-btn.no-active{background:rgba(74,92,78,.10);border-color:#4a5c4e;color:#4a5c4e;}
+.eval-col.hallucination .yn-btn.yn-yes{border-color:rgba(155,58,58,.25);color:rgba(239,68,68,.6);}
+.eval-col.hallucination .yn-btn.yn-no{border-color:rgba(34,197,94,.3);color:rgba(34,197,94,.6);}
+/* Completeness: Yes=good (green), No=bad (red) */
+.eval-col.completeness .yn-btn.yes-active{background:rgba(74,92,78,.10);border-color:#4a5c4e;color:#4a5c4e;}
+.eval-col.completeness .yn-btn.no-active{background:rgba(239,68,68,.15);border-color:#9b3a3a;color:#9b3a3a;}
+.eval-col.completeness .yn-btn.yn-yes{border-color:rgba(34,197,94,.3);color:rgba(34,197,94,.6);}
+.eval-col.completeness .yn-btn.yn-no{border-color:rgba(155,58,58,.25);color:rgba(239,68,68,.6);}
+
+.eval-result{font-size:10px;margin-top:6px;font-weight:600;}
+.review-edit{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-size:11px;font-family:inherit;padding:8px 10px;resize:vertical;min-height:60px;line-height:1.6;transition:.15s;}
+.review-edit:focus{outline:none;border-color:var(--accent);}
+
+/* SUBMIT ROW BUTTON */
+.submit-row-btn{margin-top:12px;padding:9px 16px;border-radius:7px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;transition:.2s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;}
+.submit-row-btn:hover:not(:disabled){background:var(--accent);color:#fff;}
+.submit-row-btn:disabled{opacity:.3;cursor:default;pointer-events:none;}
+.submit-row-btn.done{background:rgba(74,92,78,.06);border-color:rgba(34,197,94,.3);color:#4a5c4e;opacity:1;cursor:default;pointer-events:none;}
+
+/* PROGRESS */
+.prog-wrap{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#8B5CF6);border-radius:3px;transition:width .3s;}
+
+/* FILTER + STATS */
+.review-filter-btn{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;transition:.15s;}
+.review-filter-btn.active,.review-filter-btn:hover{background:var(--accent-glow);border-color:var(--accent);color:var(--accent);}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;text-align:center;min-width:72px;}
+.stat-val{font-size:18px;font-weight:800;}
+.stat-lbl{font-size:9px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+
+/* SUBTABS */
+.hitl-subtab{padding:8px 16px;border:none;border-bottom:2px solid transparent;background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;}
+.hitl-subtab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.hitl-subtab:hover{color:var(--text2);}
+
+/* ARCHIVE */
+.archive-batch{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.arch-stat{font-size:11px;padding:3px 7px;border-radius:4px;font-weight:600;}
+
+/* TAG */
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;}
+.tag-red{background:rgba(239,68,68,.15);color:#9b3a3a;}
+.tag-green{background:rgba(74,92,78,.10);color:#4a5c4e;}
+.tag-amber{background:rgba(245,158,11,.12);color:#FBBF24;}
+.tag-blue{background:var(--accent-glow);color:var(--accent);}
+
+/* FORM */
+.field{margin-bottom:10px;}
+.field label{font-size:10px;color:var(--text3);font-weight:600;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px;}
+input[type=text],input[type=number],select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text1);font-family:'Epilogue',sans-serif;font-size:12px;padding:7px 10px;transition:.15s;width:100%;}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+
+/* FILE INFO */
+.file-info{display:none;padding:8px 12px;background:rgba(74,92,78,.06);border:1px solid rgba(34,197,94,.2);border-radius:6px;font-size:11px;color:#4a5c4e;font-family:'DM Mono',monospace;margin-top:8px;word-break:break-all;}
+
+/* PERSONA CHIP */
+.persona-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text2);margin:2px;}
+.pc-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;line-height:1;}
+.pc-rm:hover{color:var(--red);}
+
+/* KEYBOARD SHORTCUT HINT */
+.kbd-hint{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;display:inline-block;padding:1px 5px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* GRIDS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr;}.eval-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="tb-brand" href="index.html">
+    <div class="tb-logo">⚡</div>
+    <span class="tb-name">SLM Forge</span>
+  </a>
+  <div class="tb-div"></div>
+  <div class="tb-tabs">
+    <button class="tb-tab active" onclick="switchPage('review',this)">👥 Human Review</button>
+    <button class="tb-tab" onclick="switchPage('annotation',this)">📊 Annotation</button>
+    <button class="tb-tab" onclick="switchPage('goldstandard',this)">🏅 Gold Standard Q&amp;A</button>
+    <button class="tb-tab" onclick="switchPage('redteam',this)">🔴 Red Teaming</button>
+    <button class="tb-tab" onclick="switchPage('sampling',this)">🎲 Sampling</button>
+    <button class="tb-tab" onclick="switchPage('gsdb',this)">🗄 GSDB Eval</button>
+  </div>
+  <a class="tb-back" href="index.html">← Back to Workspace</a>
+</header>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: HUMAN REVIEW
+════════════════════════════════════════════════ -->
+<div class="page active" id="page-review">
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">👥 Human Review</div>
+    <div class="page-sub">Review AI responses · judge quality across 3 clear criteria · submit to unlock download</div>
+  </div>
+
+  <!-- HANDOFF BANNER — shown when auto-loaded from Forge -->
+  <div class="handoff-banner" id="handoffBanner">
+    <div class="handoff-icon">✅</div>
+    <div class="handoff-text">
+      <div class="handoff-title" id="handoffTitle">Batch results loaded from Workspace</div>
+      <div class="handoff-sub" id="handoffSub">Review each AI response below. Judge whether it hallucinated, whether it was complete, and provide the correct answer if needed.</div>
+    </div>
+    <div class="handoff-actions">
+      <a class="btn btn-success" href="index.html">← Back to Workspace</a>
+    </div>
+  </div>
+
+  <!-- SESSION RESUME BANNER -->
+  <div class="resume-banner" id="resumeBanner">
+    <span style="font-size:18px">🔄</span>
+    <div style="flex:1">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:2px">Resuming previous session</div>
+      <div style="font-size:11px;color:var(--text2)" id="resumeText">Your review progress has been restored.</div>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="clearSavedSession()">Start Fresh</button>
+  </div>
+
+  <!-- Load panel -->
+  <div class="card" style="margin-bottom:14px" id="loadPanel">
+    <div class="card-title">📂 Load Results for Review</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <label class="upload-zone" style="flex:1;min-width:200px;cursor:pointer">
+        <input type="file" accept=".xlsx,.csv,.xls" style="display:none" id="reviewFileInput" onchange="loadReviewFile(this.files[0])">
+        <span class="uz-icon">📂</span>
+        <span class="uz-label">Upload Batch Results (XLSX / CSV)</span>
+        <span class="uz-sub">Must include Question &amp; AI Response columns</span>
+      </label>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Question Column</label><input type="text" id="reviewQCol" placeholder="e.g. Question or Input"></div>
+        <div class="field"><label>AI Response Column</label><input type="text" id="reviewACol" placeholder="e.g. AI_Response or Output"></div>
+      </div>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Expected Answer Column <span style="color:var(--text3);font-size:9px">(optional)</span></label><input type="text" id="reviewExpCol" placeholder="e.g. Expected_Answer"></div>
+        <div class="field"><label>Model / Assistant Name</label><input type="text" id="reviewSlmName" placeholder="e.g. HR Assistant"></div>
+        <button class="btn btn-primary" onclick="applyReviewCols()" style="width:100%">▶ Load &amp; Start Reviewing</button>
+      </div>
+    </div>
+    <div class="file-info" id="reviewFileInfo"></div>
+  </div>
+
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px">
+    <button class="hitl-subtab active" id="subtab-active"   onclick="switchHitlTab('active')">📋 Active Review</button>
+    <button class="hitl-subtab"        id="subtab-archived" onclick="switchHitlTab('archived')">🗄 Archived Batches</button>
+  </div>
+
+  <!-- ACTIVE REVIEW panel -->
+  <div id="hitl-active">
+    <div class="notice warn" id="reviewNotice">Upload a batch results file above, or run a batch from the Workspace — results will appear here automatically.</div>
+
+    <!-- Progress + controls -->
+    <div id="reviewProgress" style="display:none;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:700;letter-spacing:.4px;text-transform:uppercase">Review Progress</div>
+          <div class="prog-wrap"><div id="reviewProgFill" class="prog-fill" style="width:0%"></div></div>
+          <div id="reviewProgLabel" style="font-size:11px;color:var(--text3);margin-top:3px">0 of 0 submitted</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success" id="reviewDlBtn" onclick="downloadReviewResults()" style="display:none">⬇ Download Reviewed Rows</button>
+          <button id="submitAllBtn" class="btn btn-primary" onclick="submitAllReviews()" disabled>✅ Submit All &amp; Finalise</button>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3)">
+        <span class="kbd-hint">H</span> Hallucination &nbsp;
+        <span class="kbd-hint">C</span> Completeness &nbsp;
+        <span class="kbd-hint">Enter</span> Submit row &nbsp;
+        <span class="kbd-hint">↑↓</span> Navigate cards
+      </div>
+    </div>
+
+    <!-- Evaluation criteria explanation — plain English, no jargon -->
+    <div id="evalLegend" class="notice info" style="display:none;margin-bottom:14px">
+      <strong>📋 How to evaluate each response:</strong><br>
+      <strong style="color:#9b3a3a">🔴 Hallucination</strong> — Did the AI make up facts that are NOT in the Knowledge Base or source documents? Answer <em>Yes</em> if it invented information, <em>No</em> if it stayed factual.<br>
+      <strong style="color:#FBBF24">🟡 Completeness</strong> — Did the AI fully answer the question, or did it leave out important information? Answer <em>Yes</em> if the answer is complete, <em>No</em> if something is missing.<br>
+      <strong style="color:#4a5c4e">✅ Correct Answer</strong> — If the AI got it wrong or missed something, write the ideal answer here. Leave blank if the AI's response is already correct.
+    </div>
+
+    <!-- Stats bar -->
+    <div id="reviewStats" style="display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap"></div>
+
+    <!-- Filter bar -->
+    <div id="reviewFilters" style="display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.4px">Filter:</span>
+      <button class="review-filter-btn active" onclick="filterReview('all',this)">All</button>
+      <button class="review-filter-btn" onclick="filterReview('pending',this)">⏳ Pending</button>
+      <button class="review-filter-btn" onclick="filterReview('ready',this)">⚡ Ready to Submit</button>
+      <button class="review-filter-btn" onclick="filterReview('submitted',this)">✅ Submitted</button>
+    </div>
+
+    <div id="reviewCards"></div>
+
+    <!-- ── Aggregate Metrics Panel (shown after Submit All) ── -->
+    <div id="reviewMetricsPanel" style="display:none;margin-top:20px">
+      <div style="font-size:15px;font-weight:700;color:var(--text1);border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px">
+        📊 Human Review — Aggregate Quality Metrics
+      </div>
+      <div id="reviewMetricsSummary" style="margin-bottom:16px"></div>
+      <div id="reviewMetricsGrid" class="metric-grid" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-success" onclick="downloadHITLReport()">⬇ Download Full Metrics Report (Excel)</button>
+        <button class="btn" onclick="generateHITLLeadershipReport()" style="background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);color:#4a5c4e">📄 Leadership Report (PDF-ready)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVED panel -->
+  <div id="hitl-archived" style="display:none">
+    <div class="notice warn" id="archiveEmpty" style="display:none">No archived batches yet. Submit a complete review batch to archive it here.</div>
+    <div id="archiveList"></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: ANNOTATION
+════════════════════════════════════════════ -->
+<div class="page" id="page-annotation">
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">📊 Annotation — 23 Algorithmic Metrics</div>
+    <div class="page-sub">Upload spreadsheet · System auto-computes all 23 metrics: ROUGE, Faithfulness, WER, F1, BLEU, Coherence, Diversity, Conciseness, Specificity, Bias, Grounding &amp; more</div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Step 1 — Upload &amp; Map Columns</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <label class="upload-zone" style="flex:1;min-width:180px;cursor:pointer">
+        <input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadAnnotationFile(this.files[0])">
+        <span class="uz-icon">📊</span><span class="uz-label">Upload Spreadsheet</span><span class="uz-sub">XLSX or CSV</span>
+      </label>
+      <div style="flex:2;min-width:280px">
+        <div class="two-col">
+          <div class="field"><label>Question Column</label><input type="text" id="annQCol" placeholder="Question"></div>
+          <div class="field"><label>AI Response Column</label><input type="text" id="annACol" placeholder="AI_Response"></div>
+          <div class="field"><label>Expected Answer Column</label><input type="text" id="annExpCol" placeholder="Expected_Answer"></div>
+          <div class="field"><label>Hallucination Column (0/1, optional)</label><input type="text" id="annHalCol" placeholder="Hallucination"></div>
+          <div class="field"><label>Accuracy Column (0-100, optional)</label><input type="text" id="annAccCol" placeholder="Accuracy"></div>
+          <div class="field"><label>Completeness Column (0/1, optional)</label><input type="text" id="annCompCol" placeholder="Completeness"></div>
+        </div>
+        <button class="btn btn-primary" onclick="runAnnotation()">▶ Compute 23 Metrics</button>
+      </div>
+    </div>
+    <div class="file-info" id="annFileInfo"></div>
+  </div>
+  <div id="annResults" style="display:none">
+    <div class="card-title" style="margin-bottom:8px">Step 2 — 23 Computed Metrics</div>
+    <div class="metric-grid" id="annMetricGrid"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="downloadAnnotationReport()">⬇ Download Full Report (XLSX)</button>
+      <button class="btn" onclick="saveToGoldStandard()">🏅 Save Verified Pairs to Gold Standard DB</button>
+    </div>
+    <div class="card-title" style="margin-bottom:8px">Step 3 — Row-Level Results</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Question</th><th>AI Response</th><th>Expected</th><th>Hall.</th><th>Compl.</th><th>ROUGE-1</th><th>ROUGE-L</th><th>F1</th><th>Faith.</th><th>WER</th><th>Overall</th></tr></thead>
+        <tbody id="annTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: GOLD STANDARD
+════════════════════════════════════════════ -->
+<div class="page" id="page-goldstandard">
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">🏅 Gold Standard Q&amp;A Database</div>
+    <div class="page-sub">Maintain reference Q&amp;A pairs used for benchmarking · Import, edit inline, export at any time</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+    <label class="btn" style="cursor:pointer"><input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="importGsQA(this.files[0])">📂 Import XLSX / CSV</label>
+    <button class="btn btn-primary" onclick="addGsRow()">+ Add Q&amp;A Pair</button>
+    <button class="btn btn-success" onclick="exportGsQA()">⬇ Export XLSX</button>
+    <button class="btn btn-danger" onclick="clearGsDB()">🗑 Clear All</button>
+    <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="gsCount">0 pairs</span>
+  </div>
+  <div class="notice warn" id="gsEmpty">No Gold Standard pairs yet. Click <strong>+ Add Q&amp;A Pair</strong> or <strong>Import XLSX / CSV</strong>.<br>Expected columns: <code>Question</code>, <code>Gold_Answer</code>, <code>Category</code> (optional), <code>Persona</code> (optional).</div>
+  <div class="table-wrap" id="gsTableWrap" style="display:none">
+    <table class="data-table">
+      <thead><tr><th>#</th><th style="min-width:200px">Question</th><th style="min-width:240px">Gold Standard Answer</th><th style="min-width:100px">Category</th><th style="min-width:100px">Persona</th><th>Source</th><th></th></tr></thead>
+      <tbody id="gsTableBody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: RED TEAMING
+════════════════════════════════════════════ -->
+<div class="page" id="page-redteam">
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">🔴 Red Teaming — Robustness Testing</div>
+    <div class="page-sub">Upload adversarial prompts · Download blank response template · Upload AI responses · Tag outcomes · Compute Attack Success Rate</div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Step 1 — Upload Adversarial Prompts</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <label class="upload-zone" style="flex:1;min-width:180px;cursor:pointer">
+        <input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadAttackVectors(this.files[0])">
+        <span class="uz-icon">⚔️</span><span class="uz-label">Upload Adversarial Prompts</span><span class="uz-sub">XLSX / CSV</span>
+      </label>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Prompt Column</label><input type="text" id="rtPromptCol" value="Attack_Prompt"></div>
+        <div class="field"><label>Type / Category Column</label><input type="text" id="rtTypeCol" value="Attack_Type"></div>
+        <div class="field"><label>Expected Safe Behaviour Column</label><input type="text" id="rtExpCol" value="Expected_Behavior"></div>
+      </div>
+    </div>
+    <div class="file-info" id="rtFileInfo"></div>
+  </div>
+  <div id="rtReviewSection" style="display:none">
+    <div id="rtStats" style="display:none;margin-bottom:14px"><div class="metric-grid" id="rtMetricGrid"></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <div class="card-title" style="margin:0;flex:1">Step 2 — Tag Each Response</div>
+      <button class="btn" onclick="downloadRtTemplate()">⬇ Download Response Template</button>
+      <label class="btn" style="cursor:pointer"><input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadRtResponses(this.files[0])">📂 Upload with Responses</label>
+      <button class="btn btn-primary" onclick="computeASR()">📈 Compute Attack Success Rate</button>
+      <button class="btn btn-success" onclick="downloadRtReport()">⬇ Full Report</button>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Type</th><th>Prompt</th><th>AI Response</th><th>Expected Behaviour</th><th>Tag Outcome</th></tr></thead>
+        <tbody id="rtTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: SAMPLING
+════════════════════════════════════════════ -->
+<div class="page" id="page-sampling">
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">🎲 Sampling Protocol</div>
+    <div class="page-sub">Compute required sample size · Generate randomized sample · Capture responses · Calculate metrics</div>
+  </div>
+  <div class="two-col" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-title">⚙ Sampling Configuration</div>
+      <div class="field"><label>Population Size (total messages)</label><input type="number" id="spPopulation" value="1000" min="10"></div>
+      <div class="field"><label>Confidence Level</label><select id="spConfidence"><option value="1.645">90%</option><option value="1.96" selected>95%</option><option value="2.576">99%</option></select></div>
+      <div class="field"><label>Margin of Error (%)</label><input type="number" id="spMargin" value="5" min="1" max="20"></div>
+      <div class="field"><label>Expected Proportion (p) — use 0.5 if unknown</label><input type="number" id="spProportion" value="0.5" min="0.01" max="0.99" step="0.01"></div>
+      <button class="btn btn-primary" onclick="computeSampleSize()" style="width:100%">📐 Compute Required Sample Size</button>
+    </div>
+    <div class="card" id="spResultCard">
+      <div class="card-title">📊 Sampling Power Result</div>
+      <div id="spResult" style="color:var(--text3);font-size:12px">Configure parameters on the left and click Compute.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Step 2 — Generate Randomized Sample</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <label class="upload-zone" style="flex:1;min-width:180px;cursor:pointer">
+        <input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadSamplingSource(this.files[0])">
+        <span class="uz-icon">📁</span><span class="uz-label">Upload Full Message Dataset</span><span class="uz-sub">Will randomly sample from this</span>
+      </label>
+      <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Message / Question Column</label><input type="text" id="spMsgCol" placeholder="Message"></div>
+        <div class="field"><label>Sample Size (auto-filled from above)</label><input type="number" id="spSampleSize" value="100" min="1"></div>
+        <button class="btn btn-primary" onclick="generateSample()" style="width:100%">🎲 Generate &amp; Download Randomized Sample</button>
+      </div>
+    </div>
+    <div class="file-info" id="spSourceInfo"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Step 3 — Upload Responses &amp; Compute Metrics</div>
+    <div class="notice info" style="margin-bottom:10px">Download the sample, run it through your AI assistant with a Gold Standard answer column, then upload back here.</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+      <label class="upload-zone" style="flex:1;min-width:180px;cursor:pointer">
+        <input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadSamplingResponses(this.files[0])">
+        <span class="uz-icon">🏅</span><span class="uz-label">Upload Responses with Gold Answers</span><span class="uz-sub">Columns: AI_Response, Gold_Answer</span>
+      </label>
+      <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>AI Response Column</label><input type="text" id="spRespCol" placeholder="AI_Response"></div>
+        <div class="field"><label>Gold Answer Column</label><input type="text" id="spGoldCol" placeholder="Gold_Answer"></div>
+        <button class="btn btn-primary" onclick="computeSamplingMetrics()" style="width:100%">📈 Compute Metrics</button>
+        <button class="btn btn-success" onclick="downloadSamplingReport()" style="width:100%">⬇ Download Report</button>
+      </div>
+    </div>
+    <div class="file-info" id="spRespInfo"></div>
+    <div id="samplingMetricGrid" style="display:none;margin-top:12px"><div class="metric-grid" id="samplingMetricTiles"></div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE: GSDB EVALUATION
+════════════════════════════════════════════ -->
+<div class="page" id="page-gsdb">
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">🗄 GSDB Evaluation</div>
+    <div class="page-sub">Upload Gold Standard Q&amp;A DB · Download question template · Upload AI responses · Compute per-persona metrics</div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Step 1 — Upload Gold Standard DB</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <label class="upload-zone" style="flex:1;min-width:180px;cursor:pointer">
+        <input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadGSDB(this.files[0])">
+        <span class="uz-icon">🗄</span><span class="uz-label">Upload Gold Standard Q&amp;A DB</span><span class="uz-sub">Columns: Question, Gold_Answer, Category, Persona</span>
+      </label>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Question Column</label><input type="text" id="gsdbQCol" value="Question"></div>
+        <div class="field"><label>Gold Answer Column</label><input type="text" id="gsdbACol" value="Gold_Answer"></div>
+        <div class="field"><label>Persona Column (optional)</label><input type="text" id="gsdbPCol" value="Persona"></div>
+      </div>
+    </div>
+    <div class="file-info" id="gsdbFileInfo"></div>
+  </div>
+  <div class="card" style="margin-bottom:14px;display:none" id="gsdbStep2">
+    <div class="card-title">Step 2 — Persona Combinations</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+      <input type="text" id="gsdbPersonaInput" placeholder="Add a persona (e.g. HR Manager, Employee, New Hire)" style="flex:1">
+      <button class="btn btn-primary" onclick="addGSDBPersona()">+ Add</button>
+    </div>
+    <div id="gsdbPersonaChips" style="margin-bottom:8px"></div>
+    <div style="font-size:11px;color:var(--text3)">Auto-detected from file: <span id="gsdbDetectedPersonas" style="color:var(--text2)">—</span></div>
+  </div>
+  <div class="card" id="gsdbStep3" style="display:none">
+    <div class="card-title">Step 3 — Run Questions &amp; Compute Metrics</div>
+    <div class="notice info" style="margin-bottom:10px">Download the question template, run it through your AI assistant, add a <code>LLM_Response</code> column, then upload back here.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="btn" onclick="downloadGSDBTemplate()">⬇ Download Question Template</button>
+      <label class="btn" style="cursor:pointer"><input type="file" accept=".xlsx,.csv,.xls" style="display:none" onchange="loadGSDBResponses(this.files[0])">📂 Upload AI Responses</label>
+      <button class="btn btn-primary" onclick="computeGSDBMetrics()">📈 Compute GSDB Metrics</button>
+      <button class="btn btn-success" onclick="downloadGSDBReport()">⬇ Download Report</button>
+    </div>
+    <div class="file-info" id="gsdbRespInfo"></div>
+    <div id="gsdbMetricGrid" style="display:none;margin-top:12px"><div class="metric-grid" id="gsdbMetricTiles"></div></div>
+    <div id="gsdbTableWrap" style="display:none;margin-top:12px">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Persona</th><th>Question</th><th>Gold Answer</th><th>AI Response</th><th>ROUGE-1</th><th>ROUGE-L</th><th>F1</th><th>Overall</th></tr></thead>
+          <tbody id="gsdbTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function show(id){ const el=document.getElementById(id); if(el) el.style.display='block'; }
+function hide(id){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+function showFlex(id){ const el=document.getElementById(id); if(el) el.style.display='flex'; }
+
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tb-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+async function readSpreadsheet(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'binary', cellDates:true });
+        resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' }));
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.readAsBinaryString(file);
+  });
+}
+
+function setFileInfo(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+// ── Metric Algorithms ─────────────────────────────────────
+function tokenize(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>0); }
+function rouge1(h,r){ const hw=tokenize(h),rw=tokenize(r); if(!rw.length)return 0; const hs=new Set(hw); return rw.filter(w=>hs.has(w)).length/rw.length; }
+function rougeL(h,r){ const a=tokenize(h),b=tokenize(r); if(!a.length||!b.length)return 0; const dp=Array.from({length:a.length+1},()=>new Array(b.length+1).fill(0)); for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]); return dp[a.length][b.length]/b.length; }
+function precisionScore(h,r){ const hw=tokenize(h),rs=new Set(tokenize(r)); if(!hw.length)return 0; return hw.filter(w=>rs.has(w)).length/hw.length; }
+function f1Score(h,r){ const p=precisionScore(h,r),rc=rouge1(h,r); return (p+rc>0)?2*p*rc/(p+rc):0; }
+function werScore(h,r){ const a=tokenize(r),b=tokenize(h); if(!a.length)return 0; const dp=Array.from({length:a.length+1},(_,i)=>Array.from({length:b.length+1},(_,j)=>i===0?j:j===0?i:0)); for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]); return Math.min(1,dp[a.length][b.length]/a.length); }
+function bleuScore(h,r){ const hw=tokenize(h),rw=tokenize(r); if(!hw.length||!rw.length)return 0; const rs1=new Set(rw); const b1=hw.filter(w=>rs1.has(w)).length/hw.length; let b2n=0,b2d=Math.max(0,hw.length-1); const rb=new Set(rw.slice(0,-1).map((w,i)=>w+' '+rw[i+1])); for(let i=0;i<hw.length-1;i++)if(rb.has(hw[i]+' '+hw[i+1]))b2n++; const b2=b2d>0?b2n/b2d:0; return b1>0&&b2>0?Math.sqrt(b1*b2):b1*0.5; }
+function semanticSim(h,r){ return Math.min(1,(rouge1(h,r)*0.5+rougeL(h,r)*0.5)*1.05); }
+
+function compute13Metrics(hyp, ref, manualHall, manualComp, manualAcc) {
+  const r1=rouge1(hyp,ref),rl=rougeL(hyp,ref),prec=precisionScore(hyp,ref),f1=f1Score(hyp,ref),bleu=bleuScore(hyp,ref),sem=semanticSim(hyp,ref),wer=werScore(hyp,ref);
+  const faith=ref?Math.min(1,r1*1.1):1;
+  const hall=(manualHall!==null&&manualHall!==''&&!isNaN(Number(manualHall)))?Number(manualHall):(r1<0.15?1:0);
+  const comp=(manualComp!==null&&manualComp!==''&&!isNaN(Number(manualComp)))?Number(manualComp):(r1>=0.3?1:0);
+  const acc=(manualAcc!==null&&manualAcc!==''&&!isNaN(Number(manualAcc)))?Math.min(100,Math.max(0,Number(manualAcc))):Math.round(rl*100);
+  return { rouge1:Math.round(r1*100),rougeL:Math.round(rl*100),rouge2:Math.round(bleu*100),precision:Math.round(prec*100),recall:Math.round(r1*100),f1:Math.round(f1*100),bleu:Math.round(bleu*100),semanticSim:Math.round(sem*100),wer:Math.round(wer*100),faithfulness:Math.round(faith*100),hallucination:hall,completeness:comp,accuracy:acc,overall:Math.round((rl*0.3+faith*0.4+r1*0.3)*100) };
+}
+
+function metricCls(v,low=false,g=70,w=40){ if(low)return v<=20?'good':v<=50?'warn':'bad'; return v>=g?'good':v>=w?'warn':'bad'; }
+function metricTile(label,val,desc='',low=false,g=70,w=40){
+  return `<div class="metric-tile ${metricCls(val,low,g,w)}"><div class="mt-val">${val}%</div><div class="mt-lbl">${label}</div>${desc?`<div class="mt-desc">${desc}</div>`:''}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HUMAN REVIEW
+// ═══════════════════════════════════════════════════════════
+let reviewItems = [];
+let archivedBatches = [];
+let reviewFilter = 'all';
+let _rawReviewData = null;
+let _focusedCardIdx = 0;
+
+try { archivedBatches = JSON.parse(localStorage.getItem('hitl_archive')||'[]'); } catch(e){}
+
+// ── Auto-save progress to localStorage after every row ──
+function saveReviewProgress() {
+  try {
+    const saveData = {
+      items: reviewItems.map(r => ({
+        id:r.id, batchId:r.batchId, slmName:r.slmName,
+        question:r.question, aiAnswer:r.aiAnswer, expectedAnswer:r.expectedAnswer,
+        hallucination:r.hallucination, completeness:r.completeness,
+        correctAnswer:r.correctAnswer, submitted:r.submitted, reviewedAt:r.reviewedAt,
+      })),
+      savedAt: Date.now(),
+    };
+    localStorage.setItem('hitl_review_progress', JSON.stringify(saveData));
+  } catch(e) {}
+}
+
+function clearSavedSession() {
+  localStorage.removeItem('hitl_review_progress');
+  hide('resumeBanner');
+}
+
+async function loadReviewFile(file) {
+  if (!file) return;
+  try {
+    const data = await readSpreadsheet(file);
+    if (!data.length) { alert('File appears empty.'); return; }
+    _rawReviewData = data;
+    const headers = Object.keys(data[0]);
+    setFileInfo('reviewFileInfo', `✓ ${file.name} — ${data.length} rows · Columns: ${headers.join(', ')}`);
+    const trySet = (id, pats) => { const el=document.getElementById(id); if(el&&!el.value.trim()) el.value=headers.find(h=>pats.some(p=>p.test(h)))||''; };
+    trySet('reviewQCol',  [/^question$/i,/query/i,/prompt/i,/input/i]);
+    trySet('reviewACol',  [/ai_response/i,/slm_response/i,/response/i,/answer/i,/output/i]);
+    trySet('reviewExpCol',[/expected/i,/gold/i,/correct/i,/reference/i]);
+  } catch(e) { alert('Error reading file: '+e.message); }
+}
+
+function applyReviewCols() {
+  if (!_rawReviewData) { alert('Upload a file first.'); return; }
+  const qCol = document.getElementById('reviewQCol').value.trim();
+  const aCol = document.getElementById('reviewACol').value.trim();
+  if (!qCol || !aCol) { alert('Set both Question and AI Response column names.'); return; }
+  populateReview(_rawReviewData, qCol, aCol);
+}
+
+function populateReview(data, qCol, aCol) {
+  const slmName  = document.getElementById('reviewSlmName').value.trim() || 'AI Assistant';
+  const expCol   = document.getElementById('reviewExpCol').value.trim();
+  const batchId  = 'batch_' + Date.now();
+  reviewItems = data
+    .filter(r => r[qCol] && r[aCol] && String(r[aCol]).trim() !== '(skipped)')
+    .map((r, i) => ({
+      id: i, batchId, slmName,
+      question:      String(r[qCol]||''),
+      aiAnswer:      String(r[aCol]||''),
+      expectedAnswer:expCol ? String(r[expCol]||'') : '',
+      hallucination: null, completeness: null,
+      correctAnswer: '', submitted: false, reviewedAt: null,
+    }));
+
+  const hasItems = reviewItems.length > 0;
+  document.getElementById('reviewNotice').style.display  = hasItems ? 'none' : 'block';
+  document.getElementById('evalLegend').style.display    = hasItems ? 'block' : 'none';
+  document.getElementById('reviewProgress').style.display = hasItems ? 'block' : 'none';
+  document.getElementById('reviewFilters').style.display  = hasItems ? 'flex' : 'none';
+  switchHitlTab('active');
+  renderReview();
+  updateReviewStats();
+  updateSubmitGate();
+  saveReviewProgress();
+}
+window.populateReview = populateReview;
+
+function switchHitlTab(tab) {
+  document.getElementById('hitl-active').style.display   = tab==='active'   ? 'block' : 'none';
+  document.getElementById('hitl-archived').style.display = tab==='archived' ? 'block' : 'none';
+  document.getElementById('subtab-active').classList.toggle('active',   tab==='active');
+  document.getElementById('subtab-archived').classList.toggle('active', tab==='archived');
+  if (tab==='archived') renderArchive();
+}
+
+function renderReview() {
+  const container = document.getElementById('reviewCards');
+  if (!container) return;
+  const visible = reviewFilter==='all'      ? reviewItems
+    : reviewFilter==='submitted'            ? reviewItems.filter(r=>r.submitted)
+    : reviewFilter==='ready'                ? reviewItems.filter(r=>!r.submitted&&r.hallucination!==null&&r.completeness!==null)
+    : reviewItems.filter(r=>!r.submitted);  // pending
+
+  if (!visible.length && reviewItems.length) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No items match this filter.</div>`;
+    return;
+  }
+  if (!visible.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = visible.map((item, vi) => {
+    const hSet = item.hallucination !== null;
+    const cSet = item.completeness  !== null;
+    const canSubmit = hSet && cSet && !item.submitted;
+    const isReady   = hSet && cSet && !item.submitted;
+
+    // Status badge
+    const badge = item.submitted
+      ? `<span class="review-status-badge" style="background:rgba(34,197,94,.15);color:#4a5c4e">✅ Submitted</span>`
+      : isReady
+        ? `<span class="review-status-badge" style="background:rgba(251,191,36,.12);color:#FBBF24">⚡ Ready</span>`
+        : `<span class="review-status-badge" style="background:var(--surface2);color:var(--text3)">⏳ Pending</span>`;
+
+    // Hallucination result text
+    const hallResult = hSet
+      ? `<div class="eval-result" style="color:${item.hallucination?'#9b3a3a':'#4a5c4e'}">${item.hallucination?'⚠️ Hallucinated — AI invented facts':'✓ Grounded — AI used real information'}</div>` : '';
+    // Completeness result text
+    const compResult = cSet
+      ? `<div class="eval-result" style="color:${item.completeness?'#4a5c4e':'#9b3a3a'}">${item.completeness?'✓ Complete answer':'⚠️ Incomplete — key info missing'}</div>` : '';
+
+    return `<div class="review-card ${item.submitted?'submitted':isReady?'pending-ready':''}" id="rcard-${item.id}" tabindex="0">
+      <div class="rc-header">
+        <div class="rc-qnum">${item.id+1}</div>
+        <div class="rc-question">${esc(item.question)}</div>
+        ${badge}
+      </div>
+      ${item.expectedAnswer ? `
+        <div class="review-a-label">Expected Answer</div>
+        <div class="review-a review-exp">${esc(item.expectedAnswer)}</div>` : ''}
+      <div class="review-a-label">AI Response</div>
+      <div class="review-a">${esc(item.aiAnswer)}</div>
+      ${(()=>{
+        // Auto-compute metrics for this item
+        const ref = item.expectedAnswer || '';
+        const hyp = item.aiAnswer || '';
+        const q   = item.question   || '';
+        if (!hyp) return '';
+        const m = compute13Metrics(hyp, ref||q, null, null, null);
+        // Extra metrics from the 23-metric engine approach
+        const htoks = tokenize(hyp), rtoks = tokenize(ref||q);
+        const rSet = new Set(rtoks);
+        const RELEVANCE  = rtoks.length ? htoks.filter(t=>rSet.has(t)).length/rtoks.length : 0;
+        const relPct = Math.round(RELEVANCE*100);
+        const DIVERSITY  = htoks.length ? new Set(htoks).size/htoks.length : 0;
+        const divPct = Math.round(DIVERSITY*100);
+        const biasTrms = ['always','never','definitely','certainly','absolutely','guaranteed','impossible'];
+        const biasPct = Math.min(Math.round(biasTrms.filter(t=>hyp.toLowerCase().includes(t)).length/Math.max(hyp.split(/[.!?]+/).filter(s=>s.length>5).length,1)*100),100);
+        const C = (v,inv=false,g=70,w=40)=>inv?(v<=20?'good':v<=50?'warn':'bad'):(v>=g?'good':v>=w?'warn':'bad');
+        const tiles = [
+          {l:'Overall',    v:m.overall,       inv:false},
+          {l:'ROUGE-L',    v:m.rougeL,        inv:false},
+          {l:'F1',         v:m.f1,            inv:false},
+          {l:'Faithfulness',v:m.faithfulness, inv:false},
+          {l:'Precision',  v:m.precision,     inv:false},
+          {l:'Recall',     v:m.recall,        inv:false},
+          {l:'BLEU',       v:m.bleu,          inv:false},
+          {l:'Relevance',  v:relPct,          inv:false},
+          {l:'Completeness%',v:Math.round(m.completeness),inv:false},
+          {l:'Diversity',  v:divPct,          inv:false},
+          {l:'WER',        v:m.wer,           inv:true },
+          {l:'Bias',       v:biasPct,         inv:true },
+        ].map(t=>`<div class="metric-tile ${C(t.v,t.inv)}"><div class="mt-val">${t.v}%</div><div class="mt-lbl">${t.l}</div></div>`).join('');
+        return `<div style="margin:8px 0">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">🤖 Auto-Metrics (12)</div>
+          <div class="metric-grid" style="grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px">${tiles}</div>
+        </div>`;
+      })()}
+      <div class="eval-grid">
+        <div class="eval-col hallucination">
+          <div class="eval-col-label" style="color:#9b3a3a">🔴 Hallucination</div>
+          <div class="eval-col-hint">Did the AI make up facts not in the Knowledge Base?</div>
+          <div class="yn-group">
+            <button class="yn-btn yn-yes ${item.hallucination===true?'yes-active':''}" onclick="setEval(${item.id},'hallucination',true)"  ${item.submitted?'disabled':''}>Yes — invented</button>
+            <button class="yn-btn yn-no  ${item.hallucination===false?'no-active':''}"  onclick="setEval(${item.id},'hallucination',false)" ${item.submitted?'disabled':''}>No — factual</button>
+          </div>
+          ${hallResult}
+        </div>
+        <div class="eval-col completeness">
+          <div class="eval-col-label" style="color:#FBBF24">🟡 Completeness</div>
+          <div class="eval-col-hint">Did the AI fully answer the question?</div>
+          <div class="yn-group">
+            <button class="yn-btn yn-yes ${item.completeness===true?'yes-active':''}"  onclick="setEval(${item.id},'completeness',true)"  ${item.submitted?'disabled':''}>Yes — complete</button>
+            <button class="yn-btn yn-no  ${item.completeness===false?'no-active':''}"   onclick="setEval(${item.id},'completeness',false)" ${item.submitted?'disabled':''}>No — missing info</button>
+          </div>
+          ${compResult}
+        </div>
+        <div class="eval-col">
+          <div class="eval-col-label" style="color:#4a5c4e">✅ Correct Answer</div>
+          <div class="eval-col-hint">Write the ideal answer here — or leave blank if AI is correct.</div>
+          <textarea class="review-edit" id="ca-${item.id}"
+            placeholder="Type the correct answer, or leave blank if the AI response above is already right…"
+            ${item.submitted?'disabled':''}
+            onchange="saveCorrectAnswer(${item.id})">${esc(item.correctAnswer)}</textarea>
+        </div>
+      </div>
+      <button class="submit-row-btn ${item.submitted?'done':''}" id="sbtn-${item.id}"
+        onclick="submitRow(${item.id})"
+        ${canSubmit?'':'disabled'}>
+        ${item.submitted?'✅ Submitted':'↩ Mark as Done &amp; Submit this Row'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function setEval(id, field, value) {
+  const item = reviewItems.find(r=>r.id===id);
+  if (!item||item.submitted) return;
+  item[field] = value;
+  renderReview(); updateReviewStats(); updateSubmitGate();
+  saveReviewProgress();
+}
+window.setEval = setEval;
+
+function saveCorrectAnswer(id) {
+  const item = reviewItems.find(r=>r.id===id);
+  if (!item||item.submitted) return;
+  const ta = document.getElementById('ca-'+id);
+  if (ta) { item.correctAnswer = ta.value.trim(); saveReviewProgress(); }
+}
+window.saveCorrectAnswer = saveCorrectAnswer;
+
+function submitRow(id) {
+  const item = reviewItems.find(r=>r.id===id);
+  if (!item||item.submitted) return;
+  const ta = document.getElementById('ca-'+id);
+  if (ta) item.correctAnswer = ta.value.trim();
+  if (item.hallucination===null||item.completeness===null) {
+    alert('Please answer both Hallucination and Completeness before submitting this row.');
+    return;
+  }
+  item.submitted = true; item.reviewedAt = new Date().toISOString();
+  renderReview(); updateReviewStats(); updateSubmitGate();
+  saveReviewProgress();
+  // Update rolling metrics panel after each row
+  computeAndShowHITLMetrics();
+  // Unlock partial download after first submission
+  const submitted = reviewItems.filter(r=>r.submitted).length;
+  if (submitted >= 1) {
+    const dlBtn = document.getElementById('reviewDlBtn');
+    if (dlBtn) {
+      dlBtn.style.display = 'inline-flex';
+      dlBtn.textContent   = `⬇ Download Reviewed Rows (${submitted} of ${reviewItems.length})`;
+    }
+  }
+}
+window.submitRow = submitRow;
+
+function submitAllReviews() {
+  const unanswered = reviewItems.filter(r=>!r.submitted&&(r.hallucination===null||r.completeness===null));
+  if (unanswered.length) {
+    alert(`${unanswered.length} rows still need both Hallucination and Completeness answers before you can finalise.`);
+    return;
+  }
+  reviewItems.forEach(r => {
+    if (!r.submitted) {
+      const ta = document.getElementById('ca-'+r.id);
+      if (ta) r.correctAnswer = ta.value.trim();
+      r.submitted = true; r.reviewedAt = new Date().toISOString();
+    }
+  });
+  renderReview(); updateReviewStats(); updateSubmitGate();
+  archiveCurrentBatch();
+  computeAndShowHITLMetrics();
+  localStorage.removeItem('hitl_review_progress');
+  const dlBtn = document.getElementById('reviewDlBtn');
+  if (dlBtn) { dlBtn.style.display = 'inline-flex'; dlBtn.textContent = '⬇ Download All Results'; }
+}
+
+function updateSubmitGate() {
+  const total      = reviewItems.length;
+  const submitted  = reviewItems.filter(r=>r.submitted).length;
+  const allAnswered = total > 0 && reviewItems.every(r=>r.submitted||(r.hallucination!==null&&r.completeness!==null));
+  const fill  = document.getElementById('reviewProgFill');
+  const label = document.getElementById('reviewProgLabel');
+  const btn   = document.getElementById('submitAllBtn');
+  if (fill)  fill.style.width = total ? Math.round(submitted/total*100)+'%' : '0%';
+  if (label) label.textContent = `${submitted} of ${total} submitted`;
+  if (btn)   btn.disabled = !(total>0 && allAnswered);
+}
+
+function downloadReviewResults() {
+  const submitted = reviewItems.filter(r=>r.submitted);
+  if (!submitted.length) { alert('No submitted rows to download yet.'); return; }
+  const wb = XLSX.utils.book_new();
+  const rows = submitted.map(r=>({
+    Row:r.id+1, Question:r.question, AI_Answer:r.aiAnswer,
+    Expected_Answer:r.expectedAnswer||'',
+    Hallucination:r.hallucination?'Yes':'No',
+    Completeness:r.completeness?'Yes':'No',
+    Correct_Answer:r.correctAnswer||r.aiAnswer,
+    Model:r.slmName, Reviewed_At:r.reviewedAt||'',
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'HITL Review');
+  const total=submitted.length;
+  const hallPct=Math.round(submitted.filter(r=>r.hallucination).length/total*100);
+  const compPct=Math.round(submitted.filter(r=>r.completeness).length/total*100);
+  const corrected=submitted.filter(r=>r.correctAnswer).length;
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['Metric','Value'],['Total Reviewed',total],['Hallucination Rate',hallPct+'%'],
+    ['Completeness Rate',compPct+'%'],['Corrections Provided',corrected],['Model',submitted[0]?.slmName||'']
+  ]), 'Summary');
+  XLSX.writeFile(wb, `hitl-review-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function archiveCurrentBatch() {
+  const submitted = reviewItems.filter(r=>r.submitted);
+  if (!submitted.length) return;
+  const entry = {
+    id: submitted[0]?.batchId||('batch_'+Date.now()),
+    archivedAt: new Date().toISOString(),
+    slmName: submitted[0]?.slmName||document.getElementById('reviewSlmName')?.value||'—',
+    total: submitted.length,
+    hallucinated: submitted.filter(r=>r.hallucination===true).length,
+    incomplete: submitted.filter(r=>r.completeness===false).length,
+    corrected: submitted.filter(r=>r.correctAnswer).length,
+    items: submitted,
+    metrics: _hitlAggMetrics || null,
+  };
+  archivedBatches.unshift(entry);
+  try { localStorage.setItem('hitl_archive', JSON.stringify(archivedBatches.slice(0,50))); } catch(e){}
+  // Reset active state
+  reviewItems = [];
+  hide('reviewDlBtn'); hide('reviewProgress'); hide('evalLegend'); hide('reviewFilters'); hide('reviewStats');
+  document.getElementById('reviewNotice').style.display = 'block';
+  document.getElementById('reviewCards').innerHTML = '';
+}
+
+function renderArchive() {
+  const list  = document.getElementById('archiveList');
+  const empty = document.getElementById('archiveEmpty');
+  if (!archivedBatches.length) { empty.style.display='block'; list.innerHTML=''; return; }
+  empty.style.display = 'none';
+  list.innerHTML = archivedBatches.map((b, bi) => {
+    const d = new Date(b.archivedAt).toLocaleString();
+    const hallPct = Math.round(b.hallucinated/Math.max(b.total,1)*100);
+    const compPct = Math.round((b.total-b.incomplete)/Math.max(b.total,1)*100);
+    const m = b.metrics;
+    return `<div class="archive-batch">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text1);flex:1">📦 ${esc(b.slmName)} — ${b.total} rows</div>
+        <div style="font-size:11px;color:var(--text3)">${d}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <span class="arch-stat" style="background:rgba(239,68,68,.12);color:#9b3a3a">🔴 Hallucination: ${hallPct}%</span>
+        <span class="arch-stat" style="background:rgba(74,92,78,.08);color:#4a5c4e">✅ Completeness: ${compPct}%</span>
+        <span class="arch-stat" style="background:rgba(251,191,36,.1);color:#FBBF24">✏️ Corrections: ${b.corrected}</span>
+        ${m ? `<span class="arch-stat" style="background:var(--surface2);color:var(--text2)">📊 Accuracy: ${m.accuracy}%</span>` : ''}
+        ${m ? `<span class="arch-stat" style="background:var(--surface2);color:var(--text2)">🎯 Overall: ${m.overall}%</span>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-success" onclick="exportArchiveBatch(${bi})">⬇ Export Excel</button>
+        <button class="btn btn-sm" onclick="generateArchiveLeadershipReport(${bi})" style="color:#4a5c4e;border-color:rgba(34,197,94,.3)">📄 Leadership Report</button>
+        <button class="btn btn-sm" onclick="reopenArchiveBatch(${bi})">🔄 Re-open for Editing</button>
+        <button class="btn btn-sm" onclick="applyFeedbackToGS(${bi})">🏅 Save to Gold Standard</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteArchiveBatch(${bi})">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportArchiveBatch(idx) {
+  const b = archivedBatches[idx]; if (!b) return;
+  const rows = b.items.map(r=>({Row:r.id+1,Question:r.question,AI_Answer:r.aiAnswer,Hallucination:r.hallucination?'Yes':'No',Completeness:r.completeness?'Yes':'No',Correct_Answer:r.correctAnswer||r.aiAnswer,Submitted_At:r.reviewedAt||''}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'HITL Review');
+  XLSX.writeFile(wb, `hitl-${b.slmName.replace(/\s+/g,'-')}-${b.id}.xlsx`);
+}
+function exportArchiveBatch(idx) {
+  const b = archivedBatches[idx]; if (!b) return;
+  const wb = XLSX.utils.book_new();
+  // Row-level sheet with NLP metrics per row
+  const rows = b.items.map(r => {
+    const hyp = r.aiAnswer||'', ref = r.expectedAnswer||r.correctAnswer||r.question||'';
+    const mt  = compute13Metrics(hyp, ref, r.hallucination!==null?(r.hallucination?1:0):null, r.completeness!==null?(r.completeness?1:0):null, null);
+    return {
+      Row:r.id+1, Question:r.question, AI_Answer:r.aiAnswer, Expected_Answer:r.expectedAnswer||'',
+      'Hallucination (Human)':r.hallucination?'Yes':'No',
+      'Completeness (Human)':r.completeness?'Yes':'No',
+      Correct_Answer:r.correctAnswer||'',
+      'ROUGE-1':mt.rouge1+'%','ROUGE-L':mt.rougeL+'%','F1':mt.f1+'%',
+      'Faithfulness':mt.faithfulness+'%','Precision':mt.precision+'%',
+      'Recall':mt.recall+'%','BLEU':mt.bleu+'%','WER':mt.wer+'%',
+      'Overall (Auto)':mt.overall+'%',
+      Model:r.slmName||'', Submitted_At:r.reviewedAt||'',
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'HITL Review');
+  // Metrics summary sheet
+  const m = b.metrics;
+  if (m) {
+    const ms = [
+      ['Metric','Value','Source','Benchmark','Status'],
+      ['Accuracy (Blended)',    m.accuracy+'%',         'Human+Auto','≥70%', m.accuracy>=70?'✅ Good':m.accuracy>=40?'⚠️ Review':'❌ Needs Work'],
+      ['Completeness Rate',     m.completenessRate+'%', 'Human',     '≥70%', m.completenessRate>=70?'✅ Good':m.completenessRate>=40?'⚠️ Review':'❌ Needs Work'],
+      ['Hallucination Rate ↓',  m.hallucinationRate+'%','Human',     '≤25%', m.hallucinationRate<=25?'✅ Good':m.hallucinationRate<=45?'⚠️ Review':'❌ Needs Work'],
+      ['Faithfulness',          m.faithfulness+'%',     'Auto-NLP',  '≥70%', m.faithfulness>=70?'✅ Good':m.faithfulness>=40?'⚠️ Review':'❌ Needs Work'],
+      ['ROUGE-1',               m.rouge1+'%',           'Auto-NLP',  '≥50%', m.rouge1>=50?'✅ Good':m.rouge1>=30?'⚠️ Review':'❌ Needs Work'],
+      ['ROUGE-L',               m.rougeL+'%',           'Auto-NLP',  '≥45%', m.rougeL>=45?'✅ Good':m.rougeL>=25?'⚠️ Review':'❌ Needs Work'],
+      ['F1 Score',              m.f1+'%',               'Auto-NLP',  '≥60%', m.f1>=60?'✅ Good':m.f1>=35?'⚠️ Review':'❌ Needs Work'],
+      ['Overall (Auto-NLP)',    m.overall+'%',          'Auto-NLP',  '≥70%', m.overall>=70?'✅ Good':m.overall>=40?'⚠️ Review':'❌ Needs Work'],
+      [],
+      ['Total Reviewed', m.sampleCount], ['Hallucinated', m.hallucinated],
+      ['Complete', m.complete], ['Corrections', m.corrected],
+      ['Model', m.slmName], ['Generated', new Date(m.generatedAt).toLocaleString()],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ms), 'Metrics Summary');
+  } else {
+    // Basic summary without stored metrics
+    const hallPct = Math.round(b.hallucinated/Math.max(b.total,1)*100);
+    const compPct = Math.round((b.total-b.incomplete)/Math.max(b.total,1)*100);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['Metric','Value'],
+      ['Total Reviewed', b.total],
+      ['Hallucination Rate', hallPct+'%'],
+      ['Completeness Rate', compPct+'%'],
+      ['Corrections', b.corrected],
+      ['Model', b.slmName],
+    ]), 'Metrics Summary');
+  }
+  XLSX.writeFile(wb, `hitl-${b.slmName.replace(/\s+/g,'-')}-${b.id}.xlsx`);
+}
+window.exportArchiveBatch = exportArchiveBatch;
+
+function generateArchiveLeadershipReport(idx) {
+  const b = archivedBatches[idx]; if (!b) return;
+  if (b.metrics) {
+    // Restore metrics into global and generate report
+    _hitlAggMetrics = b.metrics;
+    generateHITLLeadershipReport();
+  } else {
+    // Compute on the fly from archived items
+    reviewItems = b.items.map(r=>({...r, submitted:true}));
+    computeAndShowHITLMetrics();
+    generateHITLLeadershipReport();
+    reviewItems = [];
+  }
+}
+window.generateArchiveLeadershipReport = generateArchiveLeadershipReport;
+
+// Re-open archived batch for editing
+function reopenArchiveBatch(idx) {
+  const b = archivedBatches[idx]; if (!b) return;
+  if (!confirm(`Re-open "${b.slmName}" batch for editing?\n\nThis will move it back to the Active Review tab so you can update responses. It will be removed from the Archive.`)) return;
+  // Restore items
+  reviewItems = b.items.map(r => ({...r, submitted:false, reviewedAt:null}));
+  // Remove from archive
+  archivedBatches.splice(idx, 1);
+  try { localStorage.setItem('hitl_archive', JSON.stringify(archivedBatches)); } catch(e){}
+  // Update UI
+  document.getElementById('reviewSlmName').value = b.slmName;
+  document.getElementById('reviewNotice').style.display = 'none';
+  document.getElementById('evalLegend').style.display = 'block';
+  document.getElementById('reviewProgress').style.display = 'block';
+  document.getElementById('reviewFilters').style.display = 'flex';
+  switchHitlTab('active');
+  renderReview(); updateReviewStats(); updateSubmitGate();
+  saveReviewProgress();
+}
+window.reopenArchiveBatch = reopenArchiveBatch;
+
+function applyFeedbackToGS(idx) {
+  const b = archivedBatches[idx]; if (!b) return;
+  const toAdd = b.items.filter(r=>!r.hallucination&&r.completeness).map(r=>({question:r.question,goldAnswer:r.correctAnswer||r.aiAnswer,category:'HITL Feedback',persona:'',source:`Archive: ${b.slmName}`}));
+  if (!toAdd.length) { alert('No non-hallucinated, complete pairs to save.'); return; }
+  gsDB = [...gsDB, ...toAdd];
+  saveGSDB(); renderGsDB();
+  alert(`✅ ${toAdd.length} verified pairs saved to Gold Standard DB.\n\nThese can now be used as reference answers for future evaluation.`);
+}
+window.applyFeedbackToGS = applyFeedbackToGS;
+
+function deleteArchiveBatch(idx) {
+  if (!confirm('Permanently delete this archived batch? This cannot be undone.')) return;
+  archivedBatches.splice(idx,1);
+  try { localStorage.setItem('hitl_archive', JSON.stringify(archivedBatches)); } catch(e){}
+  renderArchive();
+}
+window.deleteArchiveBatch = deleteArchiveBatch;
+
+function updateReviewStats() {
+  const el = document.getElementById('reviewStats');
+  if (!el) return;
+  const total=reviewItems.length,submitted=reviewItems.filter(r=>r.submitted).length;
+  const hallYes=reviewItems.filter(r=>r.hallucination===true).length;
+  const incomp=reviewItems.filter(r=>r.completeness===false).length;
+  const corrected=reviewItems.filter(r=>r.correctAnswer).length;
+  el.style.display = total ? 'flex' : 'none';
+  el.innerHTML = [
+    {val:total,                              lbl:'Total',       col:'var(--accent)'},
+    {val:total-submitted,                    lbl:'Pending',     col:'var(--text3)'},
+    {val:submitted,                          lbl:'Submitted',   col:'#4a5c4e'},
+    {val:hallYes+' / '+submitted,            lbl:'Hallucinated',col:'#9b3a3a'},
+    {val:(submitted-incomp)+' / '+submitted, lbl:'Complete',    col:'#FBBF24'},
+    {val:corrected,                          lbl:'Corrected',   col:'#818CF8'},
+  ].map(s=>`<div class="stat-tile"><div class="stat-val" style="color:${s.col}">${s.val}</div><div class="stat-lbl">${s.lbl}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HITL AGGREGATE METRICS — computed from human annotations
+// ═══════════════════════════════════════════════════════════
+let _hitlAggMetrics = null;
+
+function computeAndShowHITLMetrics() {
+  const submitted = reviewItems.filter(r=>r.submitted);
+  if (!submitted.length) return;
+  const n = submitted.length;
+
+  // ── Human-labelled signals ──────────────────────────────
+  const hallCount  = submitted.filter(r=>r.hallucination===true).length;
+  const compCount  = submitted.filter(r=>r.completeness===true).length;
+  const hallRate   = Math.round(hallCount/n*100);
+  const compRate   = Math.round(compCount/n*100);
+  const corrCount  = submitted.filter(r=>r.correctAnswer&&r.correctAnswer.trim()).length;
+
+  // ── Auto-computed NLP metrics (per row, then averaged) ──
+  let sumR1=0,sumRL=0,sumF1=0,sumFaith=0,sumPrec=0,sumRec=0,sumBleu=0,sumSem=0,sumWer=0,sumOverall=0;
+  let sumRelev=0,sumDiv=0,sumCoh=0,sumSpec=0,sumConc=0,sumBias=0,sumAcc=0;
+  submitted.forEach(r => {
+    const hyp = r.aiAnswer || '';
+    const ref = r.expectedAnswer || r.correctAnswer || r.question || '';
+    const m = compute13Metrics(hyp, ref,
+      r.hallucination !== null ? (r.hallucination ? 1 : 0) : null,
+      r.completeness  !== null ? (r.completeness  ? 1 : 0) : null,
+      null
+    );
+    sumR1    += m.rouge1;    sumRL   += m.rougeL;   sumF1   += m.f1;
+    sumFaith += m.faithfulness; sumPrec += m.precision; sumRec += m.recall;
+    sumBleu  += m.bleu;     sumSem  += m.semanticSim; sumWer += m.wer;
+    sumOverall += m.overall; sumAcc  += m.accuracy;
+    // Extended metrics
+    const htoks = tokenize(hyp), rtoks = tokenize(ref);
+    const rSet = new Set(rtoks), htokSet = new Set(htoks);
+    const sentences = hyp.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>5);
+    sumRelev += rtoks.length ? htoks.filter(t=>rSet.has(t)).length/rtoks.length : 0;
+    sumDiv   += htoks.length ? htokSet.size/htoks.length : 0;
+    const biasTrms=['always','never','definitely','certainly','absolutely','guaranteed','impossible'];
+    sumBias  += Math.min(biasTrms.filter(t=>hyp.toLowerCase().includes(t)).length/Math.max(sentences.length,1),1);
+    const idealLen=Math.max(rtoks.length*3,20), rWords=hyp.split(/\s+/).filter(Boolean);
+    sumConc  += Math.max(0,1-Math.max(0,rWords.length-idealLen*2)/(idealLen*4));
+    let coh=0; for(let i=1;i<sentences.length;i++){const p=new Set(tokenize(sentences[i-1])),c=tokenize(sentences[i]);coh+=c.filter(t=>p.has(t)).length/Math.max(c.length,1);}
+    sumCoh   += sentences.length>1 ? coh/(sentences.length-1) : 1;
+    const specTerms=(hyp.match(/\b\d+[\.,\d]*\b|[A-Z][a-z]+\s[A-Z][a-z]+|\d{1,2}\/\d{1,2}\/\d{2,4}/g)||[]);
+    sumSpec  += Math.min(specTerms.length/Math.max(sentences.length,1),1);
+  });
+
+  const pct = v => Math.round(v/n*100);
+  const pctRaw = v => Math.round(v/n*100);
+
+  // ── Composite accuracy: blend ROUGE-L + human completeness + faithfulness ──
+  const blendedAccuracy = Math.round(
+    (sumRL/n * 0.30) +   // ROUGE-L (sequence match)
+    (compRate/100 * 0.35) + // human completeness signal
+    (sumFaith/n * 0.0035) + // faithfulness
+    ((100-hallRate)/100 * 0.35) // inverse hallucination
+  * 100);
+  // Actually compute it cleanly:
+  const autoAccuracy   = Math.round(sumOverall/n);
+  const humanAccuracy  = Math.round(((compRate/100)*0.5 + ((100-hallRate)/100)*0.5)*100);
+  const blendedAcc     = Math.round(autoAccuracy*0.5 + humanAccuracy*0.5);
+
+  _hitlAggMetrics = {
+    sampleCount:    n,
+    // Human-labelled
+    hallucinationRate:  hallRate,        // % responses with hallucination = Yes
+    completenessRate:   compRate,        // % responses with completeness = Yes
+    hallucinated:       hallCount,
+    complete:           compCount,
+    corrected:          corrCount,
+    // Auto-NLP metrics (averaged, already as %)
+    rouge1:      Math.round(sumR1/n),
+    rougeL:      Math.round(sumRL/n),
+    f1:          Math.round(sumF1/n),
+    faithfulness:Math.round(sumFaith/n),
+    precision:   Math.round(sumPrec/n),
+    recall:      Math.round(sumRec/n),
+    bleu:        Math.round(sumBleu/n),
+    semanticSim: Math.round(sumSem/n),
+    wer:         Math.round(sumWer/n),
+    relevance:   pct(sumRelev),
+    diversity:   pct(sumDiv),
+    coherence:   pct(sumCoh),
+    specificity: pct(sumSpec),
+    conciseness: pct(sumConc),
+    bias:        pct(sumBias),
+    // Blended
+    accuracy:    blendedAcc,
+    overall:     Math.round(sumOverall/n),
+    generatedAt: new Date().toISOString(),
+    slmName:     submitted[0]?.slmName || document.getElementById('reviewSlmName')?.value || 'SLM Assistant',
+  };
+
+  // ── Render summary box ──────────────────────────────────
+  const m = _hitlAggMetrics;
+  const col = v => v>=70?'#4a5c4e':v>=40?'#FBBF24':'#9b3a3a';
+  const colInv = v => v<=25?'#4a5c4e':v<=45?'#FBBF24':'#9b3a3a';
+
+  const summaryHtml = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+      ${[
+        {l:'Accuracy (Blended)',  v:m.accuracy,          inv:false, desc:'Auto + human signals combined'},
+        {l:'Hallucination Rate ↓',v:m.hallucinationRate, inv:true,  desc:'% responses that hallucinated'},
+        {l:'Completeness Rate',   v:m.completenessRate,  inv:false, desc:'% responses fully answered'},
+        {l:'Faithfulness',        v:m.faithfulness,      inv:false, desc:'Grounded in source content'},
+        {l:'ROUGE-L',             v:m.rougeL,            inv:false, desc:'Sequence match vs reference'},
+        {l:'F1 Score',            v:m.f1,                inv:false, desc:'Precision × Recall harmonic mean'},
+      ].map(t=>`<div class="metric-tile ${t.inv?(t.v<=25?'good':t.v<=45?'warn':'bad'):(t.v>=70?'good':t.v>=40?'warn':'bad')}">
+        <div class="mt-val" style="color:${t.inv?colInv(t.v):col(t.v)}">${t.v}%</div>
+        <div class="mt-lbl">${t.l}</div>
+        <div class="mt-desc">${t.desc}</div>
+      </div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.7;background:var(--surface2);border-radius:8px;padding:12px 14px">
+      <strong style="color:var(--text2)">📋 Review Summary</strong><br>
+      <strong>${n}</strong> responses reviewed &nbsp;·&nbsp;
+      <strong style="color:${colInv(m.hallucinationRate)}">${hallCount} hallucinated (${m.hallucinationRate}%)</strong> &nbsp;·&nbsp;
+      <strong style="color:${col(m.completenessRate)}">${compCount} complete (${m.completenessRate}%)</strong> &nbsp;·&nbsp;
+      <strong style="color:#818CF8">${corrCount} corrections provided</strong><br>
+      Blended accuracy (human + auto-NLP): <strong style="color:${col(m.accuracy)}">${m.accuracy}%</strong>
+    </div>`;
+
+  const panel = document.getElementById('reviewMetricsPanel');
+  const grid  = document.getElementById('reviewMetricsGrid');
+  const sum   = document.getElementById('reviewMetricsSummary');
+  if (!panel) return;
+
+  sum.innerHTML = summaryHtml;
+
+  // Full 23-metric breakdown grid
+  const metrics = [
+    {label:'Accuracy (Blended)',  val:m.accuracy,          low:false, desc:'Human completeness + auto-NLP combined'},
+    {label:'Completeness Rate',   val:m.completenessRate,  low:false, desc:'% responses human-marked complete'},
+    {label:'Hallucination Rate ↓',val:m.hallucinationRate, low:true,  desc:'% human-marked as hallucinated'},
+    {label:'Faithfulness',        val:m.faithfulness,      low:false, desc:'Groundedness in source'},
+    {label:'ROUGE-1',             val:m.rouge1,            low:false, desc:'Word-level match vs reference'},
+    {label:'ROUGE-L',             val:m.rougeL,            low:false, desc:'Longest sequence match'},
+    {label:'F1 Score',            val:m.f1,                low:false, desc:'Harmonic mean of precision & recall'},
+    {label:'Precision',           val:m.precision,         low:false, desc:'Relevant words in response'},
+    {label:'Recall',              val:m.recall,            low:false, desc:'Reference words found in response'},
+    {label:'BLEU',                val:m.bleu,              low:false, desc:'N-gram precision score'},
+    {label:'Semantic Sim.',       val:m.semanticSim,       low:false, desc:'Semantic overlap estimate'},
+    {label:'Relevance',           val:m.relevance,         low:false, desc:'Query-response alignment'},
+    {label:'Coherence',           val:m.coherence,         low:false, desc:'Sentence-to-sentence continuity'},
+    {label:'Specificity',         val:m.specificity,       low:false, desc:'Numbers & named entities'},
+    {label:'Diversity',           val:m.diversity,         low:false, desc:'Vocabulary richness'},
+    {label:'Conciseness',         val:m.conciseness,       low:false, desc:'Response length appropriateness'},
+    {label:'Bias Score ↓',        val:m.bias,              low:true,  desc:'Overconfident language (lower=better)'},
+    {label:'WER ↓',               val:m.wer,               low:true,  desc:'Word Error Rate (lower=better)'},
+    {label:'Overall (Auto)',      val:m.overall,           low:false, desc:'Weighted auto-NLP composite'},
+  ];
+  grid.innerHTML = metrics.map(mt=>metricTile(mt.label,mt.val,mt.desc,mt.low)).join('');
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+window.computeAndShowHITLMetrics = computeAndShowHITLMetrics;
+
+function downloadHITLReport() {
+  const submitted = reviewItems.filter(r=>r.submitted);
+  if (!submitted.length && !_hitlAggMetrics) { alert('No submitted rows yet. Submit at least one row first.'); return; }
+  const toExport = submitted.length ? submitted : (archivedBatches[0]?.items || []);
+  if (!toExport.length) { alert('No data to export.'); return; }
+  if (!_hitlAggMetrics) computeAndShowHITLMetrics();
+  const m = _hitlAggMetrics;
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: per-row detail
+  const rowData = toExport.map((r,i) => {
+    const hyp = r.aiAnswer || '';
+    const ref = r.expectedAnswer || r.correctAnswer || r.question || '';
+    const mt = compute13Metrics(hyp, ref,
+      r.hallucination !== null ? (r.hallucination?1:0) : null,
+      r.completeness  !== null ? (r.completeness ?1:0) : null, null);
+    return {
+      '#': i+1, Question: r.question, AI_Response: hyp, Expected_Answer: r.expectedAnswer||'',
+      Correct_Answer: r.correctAnswer||'',
+      'Hallucination (Human)': r.hallucination?'Yes':'No',
+      'Completeness (Human)':  r.completeness ?'Yes':'No',
+      'ROUGE-1': mt.rouge1+'%', 'ROUGE-L': mt.rougeL+'%',
+      'F1': mt.f1+'%', 'Faithfulness': mt.faithfulness+'%',
+      'Precision': mt.precision+'%', 'Recall': mt.recall+'%',
+      'BLEU': mt.bleu+'%', 'Semantic Sim': mt.semanticSim+'%',
+      'WER': mt.wer+'%', 'Overall (Auto)': mt.overall+'%',
+      Model: r.slmName||'', Reviewed_At: r.reviewedAt||'',
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rowData), 'Row Level Detail');
+
+  // Sheet 2: aggregate metrics summary
+  const sumData = [
+    ['Metric', 'Value', 'Source', 'Benchmark', 'Status'],
+    ['Accuracy (Blended)',    m.accuracy+'%',         'Human + Auto', '≥70%', m.accuracy>=70?'✅ Good':m.accuracy>=40?'⚠️ Review':'❌ Needs Work'],
+    ['Completeness Rate',     m.completenessRate+'%', 'Human',        '≥70%', m.completenessRate>=70?'✅ Good':m.completenessRate>=40?'⚠️ Review':'❌ Needs Work'],
+    ['Hallucination Rate ↓',  m.hallucinationRate+'%','Human',        '≤25%', m.hallucinationRate<=25?'✅ Good':m.hallucinationRate<=45?'⚠️ Review':'❌ Needs Work'],
+    ['Faithfulness',          m.faithfulness+'%',     'Auto-NLP',     '≥70%', m.faithfulness>=70?'✅ Good':m.faithfulness>=40?'⚠️ Review':'❌ Needs Work'],
+    ['ROUGE-1',               m.rouge1+'%',           'Auto-NLP',     '≥50%', m.rouge1>=50?'✅ Good':m.rouge1>=30?'⚠️ Review':'❌ Needs Work'],
+    ['ROUGE-L',               m.rougeL+'%',           'Auto-NLP',     '≥45%', m.rougeL>=45?'✅ Good':m.rougeL>=25?'⚠️ Review':'❌ Needs Work'],
+    ['F1 Score',              m.f1+'%',               'Auto-NLP',     '≥60%', m.f1>=60?'✅ Good':m.f1>=35?'⚠️ Review':'❌ Needs Work'],
+    ['Precision',             m.precision+'%',        'Auto-NLP',     '≥60%', m.precision>=60?'✅ Good':m.precision>=35?'⚠️ Review':'❌ Needs Work'],
+    ['Recall',                m.recall+'%',           'Auto-NLP',     '≥60%', m.recall>=60?'✅ Good':m.recall>=35?'⚠️ Review':'❌ Needs Work'],
+    ['BLEU',                  m.bleu+'%',             'Auto-NLP',     '≥40%', m.bleu>=40?'✅ Good':m.bleu>=20?'⚠️ Review':'❌ Needs Work'],
+    ['Semantic Similarity',   m.semanticSim+'%',      'Auto-NLP',     '≥60%', m.semanticSim>=60?'✅ Good':m.semanticSim>=35?'⚠️ Review':'❌ Needs Work'],
+    ['WER ↓',                 m.wer+'%',              'Auto-NLP',     '≤30%', m.wer<=30?'✅ Good':m.wer<=55?'⚠️ Review':'❌ Needs Work'],
+    ['Coherence',             m.coherence+'%',        'Auto-NLP',     '≥65%', m.coherence>=65?'✅ Good':m.coherence>=40?'⚠️ Review':'❌ Needs Work'],
+    ['Relevance',             m.relevance+'%',        'Auto-NLP',     '≥60%', m.relevance>=60?'✅ Good':m.relevance>=35?'⚠️ Review':'❌ Needs Work'],
+    ['Diversity',             m.diversity+'%',        'Auto-NLP',     '≥50%', m.diversity>=50?'✅ Good':m.diversity>=30?'⚠️ Review':'❌ Needs Work'],
+    ['Conciseness',           m.conciseness+'%',      'Auto-NLP',     '≥60%', m.conciseness>=60?'✅ Good':m.conciseness>=35?'⚠️ Review':'❌ Needs Work'],
+    ['Bias ↓',                m.bias+'%',             'Auto-NLP',     '≤20%', m.bias<=20?'✅ Good':m.bias<=40?'⚠️ Review':'❌ Needs Work'],
+    ['Overall (Auto)',        m.overall+'%',          'Auto-NLP',     '≥70%', m.overall>=70?'✅ Good':m.overall>=40?'⚠️ Review':'❌ Needs Work'],
+    [],
+    ['Responses Reviewed', m.sampleCount, '', '', ''],
+    ['Hallucinated', m.hallucinated, '', '', ''],
+    ['Complete', m.complete, '', '', ''],
+    ['Corrections Provided', m.corrected, '', '', ''],
+    ['Model', m.slmName, '', '', ''],
+    ['Generated At', new Date(m.generatedAt).toLocaleString(), '', '', ''],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sumData), 'Metrics Summary');
+  XLSX.writeFile(wb, `hitl-metrics-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+window.downloadHITLReport = downloadHITLReport;
+
+function generateHITLLeadershipReport() {
+  if (!_hitlAggMetrics) computeAndShowHITLMetrics();
+  const m = _hitlAggMetrics;
+  if (!m) { alert('No metrics available. Submit at least one row first.'); return; }
+  const name  = m.slmName || 'SLM Assistant';
+  const date  = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  function rag(v, good=70, warn=40) {
+    if (v>=good) return {label:'Good',           col:'#15803D',bg:'#DCFCE7',icon:'✅'};
+    if (v>=warn) return {label:'Needs Attention',col:'#B45309',bg:'#FEF3C7',icon:'⚠️'};
+    return              {label:'Needs Improvement',col:'#B91C1C',bg:'#FEE2E2',icon:'❌'};
+  }
+  function ragLow(v, bad=25) {
+    if (v<=bad)    return {label:'Good',            col:'#15803D',bg:'#DCFCE7',icon:'✅'};
+    if (v<=bad+20) return {label:'Needs Attention', col:'#B45309',bg:'#FEF3C7',icon:'⚠️'};
+    return                {label:'Needs Improvement',col:'#B91C1C',bg:'#FEE2E2',icon:'❌'};
+  }
+
+  const acc   = rag(m.accuracy);
+  const comp  = rag(m.completenessRate);
+  const hall  = ragLow(m.hallucinationRate);
+  const faith = rag(m.faithfulness);
+  const overallVal = Math.round(m.accuracy*0.35 + m.completenessRate*0.30 + (100-m.hallucinationRate)*0.20 + m.faithfulness*0.0015);
+  const overallActual = Math.round(m.accuracy*0.35 + m.completenessRate*0.30 + (100-m.hallucinationRate)*0.20 + m.faithfulness*0.15);
+  const overall = rag(overallActual);
+  const overallLabel = overallActual>=75?'Performing Well':overallActual>=50?'Needs Attention':'Needs Improvement';
+
+  function rec(key, status) {
+    const map = {
+      accuracy: {
+        'Good':'The assistant is providing accurate answers. Continue monitoring with monthly batch tests.',
+        'Needs Attention':'Review the Knowledge Base for gaps. Ensure the most common topics are covered with clear, full explanations.',
+        'Needs Improvement':'The Knowledge Base needs significant expansion. Upload additional documents and consider rewriting existing content in clearer language.',
+      },
+      completeness: {
+        'Good':'The assistant is providing full, complete answers — a sign of well-structured Knowledge Base content.',
+        'Needs Attention':'Some answers are partial. Ensure documents contain complete explanations, not just bullet points or short fragments.',
+        'Needs Improvement':'Many answers are incomplete. Expand the Knowledge Base with detailed content for the most commonly asked topics.',
+      },
+      hallucination: {
+        'Good':'Low hallucination — the assistant is reliably grounded in verified information. No immediate action required.',
+        'Needs Attention':'Some hallucination detected. Enable Strict Mode in the SLM Studio and review Knowledge Base content for ambiguous information.',
+        'Needs Improvement':'High hallucination rate — the assistant is frequently inventing answers. Enable Strict Mode immediately and expand Knowledge Base coverage of common topics.',
+      },
+      faithfulness: {
+        'Good':'The assistant is reliably using only its approved Knowledge Base — a strong compliance and trust signal.',
+        'Needs Attention':'The assistant occasionally draws on information outside the Knowledge Base. Enable Strict Mode and review Knowledge Base quality.',
+        'Needs Improvement':'High out-of-Knowledge-Base usage. This is a compliance risk. Enable Strict Mode immediately and expand KB coverage.',
+      },
+    };
+    return (map[key]||{})[status] || 'Continue monitoring this metric.';
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Quality Report — ${name} (Human Review)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#F8FAFC;color:#0F172A}
+  .page{max-width:920px;margin:0 auto;background:#fff;padding:48px;min-height:100vh}
+  .header{background:linear-gradient(135deg,#0D1B2A,#1B4FD8);color:#fff;padding:36px;border-radius:12px;margin-bottom:36px}
+  .header h1{font-size:26px;font-weight:700;margin-bottom:6px}
+  .header .sub{font-size:13px;opacity:.75;margin-bottom:4px}
+  .header .meta{display:flex;gap:28px;margin-top:20px;font-size:13px;flex-wrap:wrap}
+  .header .meta div{opacity:.85}
+  .header .meta strong{display:block;font-size:20px;font-weight:700;opacity:1}
+  .section{margin-bottom:36px}
+  .section-title{font-size:17px;font-weight:700;color:#0D1B2A;border-bottom:3px solid #1B4FD8;padding-bottom:8px;margin-bottom:18px}
+  .summary-box{border-radius:10px;padding:24px 28px;margin-bottom:20px;border:1px solid}
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .mc{border-radius:8px;padding:18px 20px;border:1px solid}
+  .mc .ml{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+  .mc .ms{font-size:34px;font-weight:800;margin-bottom:4px}
+  .mc .mst{font-size:12px;font-weight:600;margin-bottom:10px}
+  .mc .mp{font-size:12px;line-height:1.65;color:#475569;margin-bottom:10px}
+  .mc .mr{font-size:12px;line-height:1.6;padding:10px;border-radius:6px;background:rgba(0,0,0,.04)}
+  .mc .mr strong{display:block;margin-bottom:3px;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .narrative{background:#F0F7FF;border:1px solid #BFDBFE;border-radius:10px;padding:22px 26px;line-height:1.85;font-size:13px;color:#1E3A5F}
+  .narrative p{margin-bottom:12px}
+  .narrative p:last-child{margin-bottom:0}
+  .at-glance{display:flex;gap:14px;flex-wrap:wrap}
+  .ag{flex:1;min-width:120px;border-radius:8px;padding:14px 16px;text-align:center;border:1px solid}
+  .ag-val{font-size:28px;font-weight:800}
+  .ag-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+  .ag-src{font-size:9px;opacity:.65;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#0D1B2A;color:#fff;padding:10px 14px;text-align:left}
+  th:first-child{border-radius:6px 0 0 6px}th:last-child{border-radius:0 6px 6px 0}
+  td{padding:10px 14px;vertical-align:top}
+  .footer{margin-top:48px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0;padding-top:20px}
+  .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+  @media print{body{background:#fff}.page{padding:20px}button{display:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div style="text-align:right;margin-bottom:16px">
+    <button onclick="window.print()" style="padding:10px 20px;background:#1B4FD8;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">🖨 Print / Save as PDF</button>
+  </div>
+
+  <div class="header">
+    <div class="sub">AI Assistant Performance Report — Human Review (HITL)</div>
+    <h1>${name}</h1>
+    <div class="meta">
+      <div><strong>${m.sampleCount}</strong>Responses Reviewed</div>
+      <div><strong>${date}</strong>Report Date</div>
+      <div><strong>${m.corrected}</strong>Corrections Provided</div>
+      <div><strong><span class="badge" style="background:${overall.bg};color:${overall.col}">${overallLabel}</span></strong>Overall Status</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📋 Executive Summary</div>
+    <div class="summary-box" style="background:${overall.bg};border-color:${overall.col}30">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="font-size:48px;flex-shrink:0">${overall.icon}</div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:${overall.col}">${overallActual}% Overall Score</div>
+          <div style="font-size:13px;color:#374151;margin-top:8px;line-height:1.7">
+            <strong>${name}</strong> was evaluated by a human review team across <strong>${m.sampleCount} responses</strong>.
+            Accuracy is <strong>${m.accuracy}%</strong>, completeness is <strong>${m.completenessRate}%</strong>,
+            and the hallucination rate is <strong>${m.hallucinationRate}%</strong>
+            ${m.hallucinationRate<=25?' — within the acceptable limit.':' — above the recommended 25% threshold.'}.
+            ${m.corrected > 0 ? `Human reviewers provided corrected answers for <strong>${m.corrected} responses</strong>.` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">💼 What This Means for Your Organisation</div>
+    <div class="narrative">
+      <p>This report is based on a <strong>Human-in-the-Loop (HITL) review</strong> — meaning real people, not just automated software, evaluated each AI response to judge whether it was accurate, complete, and trustworthy. This is the gold standard for AI quality assurance.</p>
+      <p>${m.accuracy>=70?`<strong>Accuracy is strong at ${m.accuracy}%</strong>, based on a combination of human and automated evaluation. The assistant is providing correct, useful answers in the large majority of interactions.`:`<strong>Accuracy is ${m.accuracy}%</strong> — roughly ${100-m.accuracy}% of responses may be inaccurate or only partially correct. This should be addressed before broader deployment.`}</p>
+      <p>${m.completenessRate>=70?`<strong>Completeness is at ${m.completenessRate}%</strong> — human reviewers judged that the assistant fully answered the question in ${m.complete} out of ${m.sampleCount} cases. Users are likely to feel their questions are properly addressed.`:`<strong>Completeness is ${m.completenessRate}%</strong> — reviewers found that ${m.sampleCount-m.complete} responses were missing important information. Users may need to ask follow-up questions or seek help elsewhere.`}</p>
+      <p>${m.hallucinationRate<=25?`<strong>Hallucination is low at ${m.hallucinationRate}%</strong> — reviewers identified invented or unsupported information in only ${m.hallucinated} of ${m.sampleCount} responses. This is within the acceptable threshold and indicates a trustworthy assistant.`:`<strong>Hallucination was detected in ${m.hallucinationRate}% of responses</strong> (${m.hallucinated} of ${m.sampleCount}). Human reviewers identified AI-generated facts not supported by the Knowledge Base — a compliance and trust concern that needs to be addressed.`}</p>
+      ${m.corrected>0?`<p>Human reviewers provided <strong>${m.corrected} corrected answers</strong> where the AI response was wrong or incomplete. These corrections can be fed back into the Knowledge Base to improve future performance.</p>`:''}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📊 Detailed Metric Breakdown</div>
+    <div class="metric-grid">
+      <div class="mc" style="background:${acc.bg};border-color:${acc.col}30">
+        <div class="ml" style="color:${acc.col}">Accuracy (Blended)</div>
+        <div class="ms" style="color:${acc.col}">${m.accuracy}%</div>
+        <div class="mst">${acc.icon} ${acc.label}</div>
+        <div class="mp">Combined score from human completeness judgements and automated NLP metrics. Measures how correct and useful the AI responses are overall. Above 70% is considered good for enterprise deployment.</div>
+        <div class="mr"><strong>💡 Recommendation</strong>${rec('accuracy', acc.label)}</div>
+      </div>
+      <div class="mc" style="background:${hall.bg};border-color:${hall.col}30">
+        <div class="ml" style="color:${hall.col}">Hallucination Rate ↓ (lower is better)</div>
+        <div class="ms" style="color:${hall.col}">${m.hallucinationRate}%</div>
+        <div class="mst">${hall.icon} ${hall.label} · target ≤25%</div>
+        <div class="mp">Percentage of responses where human reviewers identified information the AI invented or could not have found in the Knowledge Base. A high rate is a compliance and trust risk.</div>
+        <div class="mr"><strong>💡 Recommendation</strong>${rec('hallucination', hall.label)}</div>
+      </div>
+      <div class="mc" style="background:${comp.bg};border-color:${comp.col}30">
+        <div class="ml" style="color:${comp.col}">Completeness</div>
+        <div class="ms" style="color:${comp.col}">${m.completenessRate}%</div>
+        <div class="mst">${comp.icon} ${comp.label}</div>
+        <div class="mp">Percentage of responses human reviewers judged as fully answering the question — nothing important left out. Low completeness means users are getting partial guidance and may lose confidence in the assistant.</div>
+        <div class="mr"><strong>💡 Recommendation</strong>${rec('completeness', comp.label)}</div>
+      </div>
+      <div class="mc" style="background:${faith.bg};border-color:${faith.col}30">
+        <div class="ml" style="color:${faith.col}">Faithfulness (Auto-NLP)</div>
+        <div class="ms" style="color:${faith.col}">${m.faithfulness}%</div>
+        <div class="mst">${faith.icon} ${faith.label}</div>
+        <div class="mp">Automated measure of how closely the AI's responses are grounded in the reference content. Complements the human hallucination flag with a continuous score. Above 70% is considered strong.</div>
+        <div class="mr"><strong>💡 Recommendation</strong>${rec('faithfulness', faith.label)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📈 At a Glance — All Metrics</div>
+    <div class="at-glance">
+      ${[
+        {l:'Accuracy',         v:m.accuracy,          c:acc.col,  bg:acc.bg,  src:'Human+Auto'},
+        {l:'Completeness',     v:m.completenessRate,  c:comp.col, bg:comp.bg, src:'Human'},
+        {l:'Hallucination ↓',  v:m.hallucinationRate, c:hall.col, bg:hall.bg, src:'Human'},
+        {l:'Faithfulness',     v:m.faithfulness,      c:faith.col,bg:faith.bg,src:'Auto-NLP'},
+        {l:'ROUGE-L',          v:m.rougeL,            c:'#1B4FD8',bg:'#EFF6FF',src:'Auto-NLP'},
+        {l:'F1 Score',         v:m.f1,                c:'#7C3AED',bg:'#F5F3FF',src:'Auto-NLP'},
+        {l:'Overall Score',    v:overallActual,        c:overall.col,bg:overall.bg,src:'Composite'},
+      ].map(s=>`<div class="ag" style="background:${s.bg};border-color:${s.c}30">
+        <div class="ag-val" style="color:${s.c}">${s.v}%</div>
+        <div class="ag-lbl" style="color:${s.c}">${s.l}</div>
+        <div class="ag-src">${s.src}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🚀 Recommended Next Steps</div>
+    <table>
+      <thead><tr><th>Priority</th><th>Action</th><th>Who</th></tr></thead>
+      <tbody>
+        ${m.hallucinationRate>45?'<tr style="background:#FEF2F2"><td style="font-weight:700;color:#B91C1C">🔴 Urgent</td><td>Enable Strict Mode in SLM Studio to prevent out-of-Knowledge-Base responses immediately</td><td>SLM Developer</td></tr>':''}
+        ${m.corrected>0?'<tr style="background:#F5F3FF"><td style="font-weight:700;color:#7C3AED">🟣 High</td><td>Import human-corrected answers back into the Knowledge Base using "Save to Gold Standard"</td><td>HR / Admin</td></tr>':''}
+        ${m.accuracy<60?'<tr style="background:#FEF3C7"><td style="font-weight:700;color:#B45309">🟡 High</td><td>Expand the Knowledge Base with documents covering the most common user questions</td><td>HR / SLM Developer</td></tr>':''}
+        ${m.completenessRate<60?'<tr style="background:#FEF3C7"><td style="font-weight:700;color:#B45309">🟡 High</td><td>Rewrite Knowledge Base content in full paragraph form — avoid bullet points that produce partial answers</td><td>HR Team</td></tr>':''}
+        ${m.hallucinationRate>25&&m.hallucinationRate<=45?'<tr style="background:#FEF3C7"><td style="font-weight:700;color:#B45309">🟡 High</td><td>Enable Strict Mode and audit Knowledge Base for topics where the assistant is likely to speculate</td><td>SLM Developer</td></tr>':''}
+        ${m.faithfulness<60?'<tr style="background:#F0F7FF"><td style="font-weight:700;color:#1B4FD8">🔵 Medium</td><td>Review and consolidate Knowledge Base; remove conflicting or ambiguous content</td><td>HR / Admin</td></tr>':''}
+        <tr style="background:#F0FDF4"><td style="font-weight:700;color:#15803D">🟢 Ongoing</td><td>Run monthly batch tests and human review cycles to track performance improvement over time</td><td>HR / Admin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    SLM Forge — Human Review (HITL) Performance Report &nbsp;·&nbsp; Generated ${date} &nbsp;·&nbsp; For internal use only
+  </div>
+</div>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+window.generateHITLLeadershipReport = generateHITLLeadershipReport;
+
+function filterReview(filter, btn) {
+  reviewFilter = filter;
+  document.querySelectorAll('.review-filter-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderReview();
+}
+window.filterReview = filterReview;
+
+// ── Keyboard shortcuts ──────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT') return;
+  if (!reviewItems.length) return;
+  const visible = reviewItems.filter(r=>!r.submitted);
+  if (!visible.length) return;
+  const cur = visible[_focusedCardIdx % visible.length];
+  if (!cur) return;
+  if (e.key==='h'||e.key==='H') { setEval(cur.id,'hallucination',cur.hallucination===true?false:true); }
+  if (e.key==='c'||e.key==='C') { setEval(cur.id,'completeness',cur.completeness===true?false:true); }
+  if (e.key==='Enter' && cur.hallucination!==null && cur.completeness!==null) { submitRow(cur.id); _focusedCardIdx++; }
+  if (e.key==='ArrowDown') { _focusedCardIdx=Math.min(_focusedCardIdx+1,visible.length-1); const el=document.getElementById('rcard-'+visible[_focusedCardIdx]?.id); if(el)el.scrollIntoView({behavior:'smooth',block:'center'}); }
+  if (e.key==='ArrowUp')   { _focusedCardIdx=Math.max(_focusedCardIdx-1,0); const el=document.getElementById('rcard-'+visible[_focusedCardIdx]?.id); if(el)el.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  ANNOTATION
+// ═══════════════════════════════════════════════════════════
+let annotationData = [];
+
+async function loadAnnotationFile(file) {
+  if (!file) return;
+  try {
+    annotationData = await readSpreadsheet(file);
+    const headers = Object.keys(annotationData[0]||{});
+    setFileInfo('annFileInfo', `✓ ${file.name} — ${annotationData.length} rows · Columns: ${headers.join(', ')}`);
+    const trySet=(id,pats)=>{const el=document.getElementById(id);if(el&&!el.value.trim())el.value=headers.find(h=>pats.some(p=>p.test(h)))||'';};
+    trySet('annQCol',   [/^question$/i,/query/i,/prompt/i,/input/i]);
+    trySet('annACol',   [/ai_response/i,/slm_response/i,/response/i,/answer/i,/output/i]);
+    trySet('annExpCol', [/expected/i,/gold/i,/correct/i,/reference/i]);
+    trySet('annHalCol', [/hallucin/i]);
+    trySet('annAccCol', [/accura/i]);
+    trySet('annCompCol',[/complet/i]);
+  } catch(e) { alert('Error reading file: '+e.message); }
+}
+
+function runAnnotation() {
+  if (!annotationData.length) { alert('Upload a spreadsheet first.'); return; }
+  const qCol=document.getElementById('annQCol').value.trim(),aCol=document.getElementById('annACol').value.trim(),eCol=document.getElementById('annExpCol').value.trim(),hCol=document.getElementById('annHalCol').value.trim(),accCol=document.getElementById('annAccCol').value.trim(),cCol=document.getElementById('annCompCol').value.trim();
+  if (!qCol||!aCol) { alert('Set at least Question and AI Response column names.'); return; }
+  const rows=annotationData.map(r=>{const hyp=String(r[aCol]||''),ref=String(r[eCol]||''),m=compute13Metrics(hyp,ref,hCol?r[hCol]:null,cCol?r[cCol]:null,accCol?r[accCol]:null);return{...r,_hyp:hyp,_ref:ref,_m:m};});
+  const avg=key=>Math.round(rows.reduce((s,r)=>s+r._m[key],0)/rows.length);
+  const hallRate=Math.round(rows.filter(r=>r._m.hallucination===1).length/rows.length*100);
+  const compRate=Math.round(rows.filter(r=>r._m.completeness===1).length/rows.length*100);
+  // Extended 23 metrics — compute extra 10 per row
+  const extRows = rows.map(r => {
+    const htoks = tokenize(r._hyp), rtoks = tokenize(r._ref||r._hyp);
+    const rSet = new Set(rtoks);
+    const htokSet = new Set(htoks);
+    const sentences = r._hyp.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>5);
+    const RELEVANCE = rtoks.length ? htoks.filter(t=>rSet.has(t)).length/rtoks.length : 0;
+    const DIVERSITY = htoks.length ? htokSet.size/htoks.length : 0;
+    const biasTrms = ['always','never','definitely','certainly','absolutely','guaranteed','impossible'];
+    const BIAS = Math.min(biasTrms.filter(t=>r._hyp.toLowerCase().includes(t)).length/Math.max(sentences.length,1),1);
+    const idealLen = Math.max(rtoks.length*3,20);
+    const rWords = r._hyp.split(/\s+/).filter(Boolean);
+    const CONCISENESS = Math.max(0,1-Math.max(0,rWords.length-idealLen*2)/(idealLen*4));
+    let coh=0; for(let i=1;i<sentences.length;i++){const p=new Set(tokenize(sentences[i-1])),c=tokenize(sentences[i]);coh+=c.filter(t=>p.has(t)).length/Math.max(c.length,1);}
+    const COHERENCE = sentences.length>1 ? coh/(sentences.length-1) : 1;
+    const specTerms=(r._hyp.match(/\d+[\.,\d]*|[A-Z][a-z]+\s[A-Z][a-z]+|\d{1,2}\/\d{1,2}\/\d{2,4}/g)||[]);
+    const SPECIFICITY = Math.min(specTerms.length/Math.max(sentences.length,1),1);
+    const COMPLETENESS_PCT = rtoks.length ? Math.round(htoks.filter(t=>rSet.has(t)).length/rtoks.length*100) : 0;
+    return {
+      ...r._m,
+      relevance: Math.round(RELEVANCE*100),
+      diversity: Math.round(DIVERSITY*100),
+      bias: Math.round(BIAS*100),
+      conciseness: Math.round(CONCISENESS*100),
+      coherence: Math.round(COHERENCE*100),
+      specificity: Math.round(SPECIFICITY*100),
+      completeness_pct: COMPLETENESS_PCT,
+      resp_length: rWords.length,
+    };
+  });
+  const avgExt = key => Math.round(extRows.reduce((s,r)=>s+(r[key]||0),0)/extRows.length);
+  const metrics23=[
+    {label:'Overall Score',     val:avgExt('overall'),      desc:'Weighted composite metric',            low:false},
+    {label:'Accuracy',          val:avgExt('accuracy'),     desc:'Correctness vs expected',              low:false},
+    {label:'Faithfulness',      val:avgExt('faithfulness'), desc:'Groundedness in source',               low:false},
+    {label:'Relevance',         val:avgExt('relevance'),    desc:'Query-response alignment',             low:false},
+    {label:'ROUGE-1',           val:avgExt('rouge1'),       desc:'Unigram word overlap',                 low:false},
+    {label:'ROUGE-2',           val:avgExt('rouge2'),       desc:'Bigram overlap',                       low:false},
+    {label:'ROUGE-L',           val:avgExt('rougeL'),       desc:'Longest common subsequence',           low:false},
+    {label:'Precision',         val:avgExt('precision'),    desc:'Relevant words in response',           low:false},
+    {label:'Recall',            val:avgExt('recall'),       desc:'Expected words found',                 low:false},
+    {label:'F1 Score',          val:avgExt('f1'),           desc:'Harmonic mean of P & R',               low:false},
+    {label:'Completeness',      val:avgExt('completeness_pct'),desc:'Query coverage in response',        low:false},
+    {label:'Coherence',         val:avgExt('coherence'),    desc:'Sentence-to-sentence continuity',      low:false},
+    {label:'Specificity',       val:avgExt('specificity'),  desc:'Numbers & named entities present',     low:false},
+    {label:'Diversity',         val:avgExt('diversity'),    desc:'Vocabulary richness',                  low:false},
+    {label:'Conciseness',       val:avgExt('conciseness'),  desc:'Response length appropriateness',      low:false},
+    {label:'Bias Score',        val:avgExt('bias'),         desc:'Overconfident language (lower=better)',low:true },
+    {label:'Semantic Sim.',     val:avgExt('semanticSim'),  desc:'Semantic overlap estimate',            low:false},
+    {label:'BLEU',              val:avgExt('bleu'),         desc:'N-gram precision score',               low:false},
+    {label:'WER',               val:avgExt('wer'),          desc:'Word Error Rate (lower=better)',       low:true },
+    {label:'Hallucination %',   val:hallRate,               desc:'% responses that hallucinated',        low:true },
+    {label:'Completeness Rate', val:compRate,               desc:'% fully complete responses',           low:false},
+    {label:'Avg Resp Length',   val:avgExt('resp_length'),  desc:'Mean words per response',              low:false},
+    {label:'Accuracy (manual)', val:avgExt('accuracy'),     desc:'Manual + ROUGE composite',             low:false},
+  ];
+  document.getElementById('annMetricGrid').innerHTML=metrics23.map(m=>metricTile(m.label,m.val,m.desc,m.low)).join('');
+  window._annMetrics13=metrics23; // keep same key for compat
+  document.getElementById('annTableBody').innerHTML=rows.map((r,i)=>{const m=r._m,oc=m.overall>=70?'#4a5c4e':m.overall>=40?'#FBBF24':'#9b3a3a';return`<tr><td>${i+1}</td><td title="${esc(r[qCol])}" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(String(r[qCol]||'').substring(0,60))}</td><td title="${esc(r._hyp)}" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r._hyp.substring(0,60))}</td><td title="${esc(r._ref)}" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r._ref.substring(0,50))}</td><td><span class="tag ${m.hallucination?'tag-red':'tag-green'}">${m.hallucination?'Yes':'No'}</span></td><td><span class="tag ${m.completeness?'tag-green':'tag-amber'}">${m.completeness?'Yes':'No'}</span></td><td>${m.rouge1}%</td><td>${m.rougeL}%</td><td>${m.f1}%</td><td>${m.faithfulness}%</td><td>${m.wer}%</td><td style="font-weight:700;color:${oc}">${m.overall}%</td></tr>`;}).join('');
+  window._annRows=rows; window._annMetrics13=metrics13;
+  show('annResults');
+}
+
+function downloadAnnotationReport() {
+  if (!window._annRows) { alert('Run annotation first.'); return; }
+  const qCol=document.getElementById('annQCol').value.trim();
+  const wb=XLSX.utils.book_new();
+  const sumData=[['Metric','Value','Benchmark','Status']];
+  (window._annMetrics13||[]).forEach(m=>{const ok=m.low?m.val<=25:m.val>=70;const rv=m.low?m.val<=25?'✅ Good':m.val<=50?'⚠️ Review':'❌ Needs Work':m.val>=70?'✅ Good':m.val>=40?'⚠️ Review':'❌ Needs Work';sumData.push([m.label,m.val+'%',m.low?'≤25%=Good':'≥70%=Good',rv]);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumData),'Metrics Summary');
+  const rowData=window._annRows.map((r,i)=>({'#':i+1,Question:r[qCol]||'',AI_Response:r._hyp,Expected:r._ref,Hallucination:r._m.hallucination?'Yes':'No',Completeness:r._m.completeness?'Yes':'No','ROUGE-1':r._m.rouge1+'%','ROUGE-L':r._m.rougeL+'%',F1:r._m.f1+'%',BLEU:r._m.bleu+'%',Faithfulness:r._m.faithfulness+'%',WER:r._m.wer+'%',Precision:r._m.precision+'%',Recall:r._m.recall+'%',Overall:r._m.overall+'%'}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rowData),'Row Level');
+  XLSX.writeFile(wb,`annotation-report-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function saveToGoldStandard() {
+  if (!window._annRows) { alert('Run annotation first.'); return; }
+  const qCol=document.getElementById('annQCol').value.trim();
+  const toAdd=window._annRows.filter(r=>!r._m.hallucination&&r._m.completeness&&r._ref).map(r=>({question:r[qCol]||'',goldAnswer:r._ref,category:'Auto-Annotation',persona:'',source:'Annotation Module'}));
+  if (!toAdd.length) { alert('No qualifying rows (non-hallucinated + complete + has expected answer).'); return; }
+  gsDB=[...gsDB,...toAdd]; saveGSDB(); renderGsDB();
+  alert(`✅ ${toAdd.length} pairs saved to Gold Standard DB.`);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GOLD STANDARD DB
+// ═══════════════════════════════════════════════════════════
+let gsDB=[];
+try{gsDB=JSON.parse(localStorage.getItem('slmforge_gsdb')||'[]');}catch(e){}
+
+function renderGsDB(){
+  document.getElementById('gsCount').textContent=gsDB.length+' pairs';
+  const empty=document.getElementById('gsEmpty'),wrap=document.getElementById('gsTableWrap'),tbody=document.getElementById('gsTableBody');
+  empty.style.display=gsDB.length?'none':'block';wrap.style.display=gsDB.length?'block':'none';
+  tbody.innerHTML=gsDB.map((row,i)=>`<tr><td>${i+1}</td><td><input type="text" value="${esc(row.question)}" onchange="gsDB[${i}].question=this.value;saveGSDB()" style="min-width:180px"></td><td><textarea rows="2" onchange="gsDB[${i}].goldAnswer=this.value;saveGSDB()" style="min-width:200px;resize:vertical">${esc(row.goldAnswer)}</textarea></td><td><input type="text" value="${esc(row.category||'')}" onchange="gsDB[${i}].category=this.value;saveGSDB()" style="min-width:90px"></td><td><input type="text" value="${esc(row.persona||'')}" onchange="gsDB[${i}].persona=this.value;saveGSDB()" style="min-width:90px"></td><td style="font-size:10px;color:var(--text3);white-space:nowrap">${esc(row.source||'Manual')}</td><td><button class="btn btn-sm btn-danger" onclick="deleteGsRow(${i})">🗑</button></td></tr>`).join('');
+}
+function saveGSDB(){try{localStorage.setItem('slmforge_gsdb',JSON.stringify(gsDB));}catch(e){}}
+function addGsRow(){gsDB.push({question:'',goldAnswer:'',category:'',persona:'',source:'Manual'});saveGSDB();renderGsDB();}
+function deleteGsRow(i){if(!confirm('Delete this pair?'))return;gsDB.splice(i,1);saveGSDB();renderGsDB();}
+window.deleteGsRow=deleteGsRow;
+function clearGsDB(){if(!confirm('Clear ALL Gold Standard pairs?'))return;gsDB=[];saveGSDB();renderGsDB();}
+async function importGsQA(file){if(!file)return;try{const data=await readSpreadsheet(file);const h=Object.keys(data[0]||{});const qC=h.find(c=>/question|query|prompt/i.test(c))||h[0];const aC=h.find(c=>/gold|answer|expected|correct/i.test(c))||h[1];const catC=h.find(c=>/categ/i.test(c))||'';const perC=h.find(c=>/persona/i.test(c))||'';const imported=data.filter(r=>r[qC]&&r[aC]).map(r=>({question:String(r[qC]||''),goldAnswer:String(r[aC]||''),category:String(r[catC]||''),persona:String(r[perC]||''),source:file.name}));gsDB=[...gsDB,...imported];saveGSDB();renderGsDB();alert(`✅ Imported ${imported.length} pairs from ${file.name}`);}catch(e){alert('Error: '+e.message);}}
+function exportGsQA(){if(!gsDB.length){alert('No pairs to export.');return;}const ws=XLSX.utils.json_to_sheet(gsDB.map((r,i)=>({'#':i+1,Question:r.question,Gold_Answer:r.goldAnswer,Category:r.category||'',Persona:r.persona||'',Source:r.source||''})));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Gold Standard QA');XLSX.writeFile(wb,`gold-standard-qa-${new Date().toISOString().slice(0,10)}.xlsx`);}
+
+// ═══════════════════════════════════════════════════════════
+//  RED TEAMING
+// ═══════════════════════════════════════════════════════════
+let rtAttacks=[];
+async function loadAttackVectors(file){if(!file)return;try{const data=await readSpreadsheet(file);rtAttacks=data.map((r,i)=>({...r,_idx:i,success:null,_response:''}));const h=Object.keys(data[0]||{});setFileInfo('rtFileInfo',`✓ ${file.name} — ${rtAttacks.length} prompts · Columns: ${h.join(', ')}`);const trySet=(id,pats,fb)=>{const el=document.getElementById(id);if(el)el.value=h.find(c=>pats.some(p=>p.test(c)))||el.value||fb;};trySet('rtPromptCol',[/attack.?prompt/i,/prompt/i,/question/i],'Attack_Prompt');trySet('rtTypeCol',[/attack.?type/i,/type/i,/category/i],'Attack_Type');trySet('rtExpCol',[/expected/i,/behavior/i,/behaviour/i,/outcome/i],'Expected_Behavior');show('rtReviewSection');renderRtTable();}catch(e){alert('Error: '+e.message);}}
+function renderRtTable(){const pC=document.getElementById('rtPromptCol').value.trim()||'Attack_Prompt',tC=document.getElementById('rtTypeCol').value.trim()||'Attack_Type',eC=document.getElementById('rtExpCol').value.trim()||'Expected_Behavior';document.getElementById('rtTableBody').innerHTML=rtAttacks.map((r,i)=>`<tr><td>${i+1}</td><td><span class="tag tag-red">${esc(String(r[tC]||'Unknown'))}</span></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(String(r[pC]||''))}">${esc(String(r[pC]||'').substring(0,80))}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r._response?esc(r._response.substring(0,80)):'<em style="color:var(--text3)">No response</em>'}</td><td style="max-width:120px;font-size:10px;color:var(--text3)" title="${esc(String(r[eC]||''))}">${esc(String(r[eC]||'').substring(0,55))}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm ${r.success===true?'btn-danger':''}" onclick="tagAttack(${i},true)">✓ Bypassed</button><button class="btn btn-sm ${r.success===false?'btn-success':''}" onclick="tagAttack(${i},false)">✗ Blocked</button></div></td></tr>`).join('');}
+function tagAttack(idx,success){rtAttacks[idx].success=success;renderRtTable();if(rtAttacks.every(a=>a.success!==null))computeASR();}
+window.tagAttack=tagAttack;
+function computeASR(){const tagged=rtAttacks.filter(a=>a.success!==null);if(!tagged.length){alert('Tag at least one prompt first.');return;}const asr=Math.round(tagged.filter(a=>a.success).length/tagged.length*100);const tC=document.getElementById('rtTypeCol').value.trim()||'Attack_Type';const byType={};tagged.forEach(a=>{const t=String(a[tC]||'Unknown');if(!byType[t])byType[t]={total:0,success:0};byType[t].total++;if(a.success)byType[t].success++;});document.getElementById('rtMetricGrid').innerHTML=[{label:'Attack Success Rate',val:asr,desc:`${tagged.filter(a=>a.success).length} of ${tagged.length} bypassed the AI`,low:true,good:20,warn:50},{label:'Defense Rate',val:100-asr,desc:'Prompts successfully blocked',low:false},...Object.entries(byType).map(([t,v])=>({label:t,val:Math.round(v.success/v.total*100),desc:`${v.success}/${v.total} bypassed`,low:true,good:20,warn:50}))].map(m=>metricTile(m.label,m.val,m.desc,m.low??false,m.good??70,m.warn??40)).join('');show('rtStats');}
+function downloadRtTemplate(){if(!rtAttacks.length){alert('Upload prompts first.');return;}const pC=document.getElementById('rtPromptCol').value.trim()||'Attack_Prompt',tC=document.getElementById('rtTypeCol').value.trim()||'Attack_Type';const rows=rtAttacks.map((r,i)=>({'#':i+1,Attack_Type:r[tC]||'',Attack_Prompt:r[pC]||'',AI_Response:''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Red Team Template');XLSX.writeFile(wb,`redteam-template-${new Date().toISOString().slice(0,10)}.xlsx`);}
+async function loadRtResponses(file){if(!file)return;try{const data=await readSpreadsheet(file);const h=Object.keys(data[0]||{});const rC=h.find(c=>/response|output|answer|llm|slm|ai/i.test(c))||h[h.length-1];data.forEach((r,i)=>{if(rtAttacks[i])rtAttacks[i]._response=String(r[rC]||'');});renderRtTable();alert(`✓ Loaded ${data.length} responses from ${file.name}`);}catch(e){alert('Error: '+e.message);}}
+function downloadRtReport(){const pC=document.getElementById('rtPromptCol').value.trim()||'Attack_Prompt',tC=document.getElementById('rtTypeCol').value.trim()||'Attack_Type',eC=document.getElementById('rtExpCol').value.trim()||'Expected_Behavior';const tagged=rtAttacks.filter(a=>a.success!==null);const asr=tagged.length?Math.round(tagged.filter(a=>a.success).length/tagged.length*100):0;const rows=rtAttacks.map((r,i)=>({'#':i+1,Attack_Type:r[tC]||'',Attack_Prompt:r[pC]||'',AI_Response:r._response||'',Expected_Behavior:r[eC]||'',Outcome:r.success===true?'Bypassed':r.success===false?'Blocked':'Untagged'}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Attack Prompts');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Attack Success Rate',asr+'%'],['Tagged',tagged.length],['Total',rtAttacks.length],['Defense Rate',(100-asr)+'%']]),'ASR Summary');XLSX.writeFile(wb,`redteam-report-${new Date().toISOString().slice(0,10)}.xlsx`);}
+
+// ═══════════════════════════════════════════════════════════
+//  SAMPLING
+// ═══════════════════════════════════════════════════════════
+let spSourceData=[],spRespData=[];
+function computeSampleSize(){const N=parseInt(document.getElementById('spPopulation').value)||1000,Z=parseFloat(document.getElementById('spConfidence').value)||1.96,E=parseFloat(document.getElementById('spMargin').value)/100||0.05,p=parseFloat(document.getElementById('spProportion').value)||0.5;const n0=(Z*Z*p*(1-p))/(E*E),n=Math.ceil(n0/(1+(n0-1)/N));document.getElementById('spSampleSize').value=n;const confLabel={'1.645':'90%','1.96':'95%','2.576':'99%'}[String(Z)]||'95%';document.getElementById('spResult').innerHTML=`<div class="metric-grid" style="margin-bottom:12px"><div class="metric-tile good"><div class="mt-val">${n}</div><div class="mt-lbl">Required Sample Size</div></div><div class="metric-tile"><div class="mt-val">${confLabel}</div><div class="mt-lbl">Confidence</div></div><div class="metric-tile"><div class="mt-val">±${(E*100).toFixed(1)}%</div><div class="mt-lbl">Margin of Error</div></div></div><div class="notice ok" style="margin:0;font-size:11px"><strong>Formula:</strong> n = Z²·p·(1−p) / E² adjusted for N=${N.toLocaleString()}<br>You need <strong>${n}</strong> samples to achieve ${confLabel} confidence with ±${(E*100).toFixed(1)}% margin.</div>`;}
+async function loadSamplingSource(file){if(!file)return;try{spSourceData=await readSpreadsheet(file);const h=Object.keys(spSourceData[0]||{});setFileInfo('spSourceInfo',`✓ ${file.name} — ${spSourceData.length} rows`);const el=document.getElementById('spMsgCol');if(el&&!el.value.trim())el.value=h.find(c=>/message|question|query|prompt|input/i.test(c))||h[0]||'';}catch(e){alert('Error: '+e.message);}}
+function generateSample(){if(!spSourceData.length){alert('Upload a source dataset first.');return;}const n=parseInt(document.getElementById('spSampleSize').value)||100;const arr=[...spSourceData];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}const sample=arr.slice(0,Math.min(n,arr.length));const rows=sample.map((r,i)=>({Sample_ID:i+1,...r,AI_Response:'',Gold_Answer:''}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Randomized Sample');XLSX.writeFile(wb,`sample-${sample.length}-rows-${new Date().toISOString().slice(0,10)}.xlsx`);alert(`✅ Randomized sample of ${sample.length} rows downloaded!`);}
+async function loadSamplingResponses(file){if(!file)return;try{spRespData=await readSpreadsheet(file);const h=Object.keys(spRespData[0]||{});setFileInfo('spRespInfo',`✓ ${file.name} — ${spRespData.length} rows`);const trySet=(id,pats)=>{const el=document.getElementById(id);if(el&&!el.value.trim())el.value=h.find(c=>pats.some(p=>p.test(c)))||'';};trySet('spRespCol',[/ai_response/i,/slm_response/i,/response/i,/answer/i,/output/i]);trySet('spGoldCol',[/gold/i,/expected/i,/correct/i,/reference/i]);}catch(e){alert('Error: '+e.message);}}
+function computeSamplingMetrics(){if(!spRespData.length){alert('Upload sampled responses first.');return;}const rC=document.getElementById('spRespCol').value.trim(),gC=document.getElementById('spGoldCol').value.trim();if(!rC||!gC){alert('Set AI Response and Gold Answer column names.');return;}const rows=spRespData.map(r=>compute13Metrics(String(r[rC]||''),String(r[gC]||''),null,null,null));const avg=key=>Math.round(rows.reduce((s,r)=>s+r[key],0)/rows.length);const hallRate=Math.round(rows.filter(r=>r.hallucination===1).length/rows.length*100);const tiles=[{label:'ROUGE-1',val:avg('rouge1'),desc:'Word-level match',low:false},{label:'ROUGE-L',val:avg('rougeL'),desc:'Sequence-level match',low:false},{label:'F1 Score',val:avg('f1'),desc:'Precision × Recall',low:false},{label:'Faithfulness',val:avg('faithfulness'),desc:'Groundedness estimate',low:false},{label:'BLEU',val:avg('bleu'),desc:'N-gram precision',low:false},{label:'WER',val:avg('wer'),desc:'Word Error Rate',low:true},{label:'Hallucination %',val:hallRate,desc:'% hallucinated responses',low:true},{label:'Overall',val:avg('overall'),desc:'Weighted composite',low:false}];document.getElementById('samplingMetricTiles').innerHTML=tiles.map(m=>metricTile(m.label,m.val,m.desc,m.low)).join('');show('samplingMetricGrid');window._spMetrics={tiles,rows};}
+function downloadSamplingReport(){if(!window._spMetrics){alert('Compute metrics first.');return;}const{tiles,rows}=window._spMetrics;const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Metric','Value','Benchmark'],...tiles.map(t=>[t.label,t.val+'%',t.low?'≤25%=Good':'≥70%=Good'])]),'Sampling Metrics');const rowData=rows.map((m,i)=>({'#':i+1,'ROUGE-1':m.rouge1+'%','ROUGE-L':m.rougeL+'%','F1':m.f1+'%','Faithfulness':m.faithfulness+'%','BLEU':m.bleu+'%','WER':m.wer+'%','Hallucination':m.hallucination?'Yes':'No','Overall':m.overall+'%'}));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rowData),'Row Level');XLSX.writeFile(wb,`sampling-report-${new Date().toISOString().slice(0,10)}.xlsx`);}
+
+// ═══════════════════════════════════════════════════════════
+//  GSDB EVALUATION
+// ═══════════════════════════════════════════════════════════
+let gsdbData=[],gsdbPersonas=new Set(),gsdbResponses=[];
+async function loadGSDB(file){if(!file)return;try{gsdbData=await readSpreadsheet(file);const h=Object.keys(gsdbData[0]||{});setFileInfo('gsdbFileInfo',`✓ ${file.name} — ${gsdbData.length} Q&A pairs`);const trySet=(id,pats,fb)=>{const el=document.getElementById(id);if(el)el.value=h.find(c=>pats.some(p=>p.test(c)))||fb;};trySet('gsdbQCol',[/^question$/i,/query/i,/prompt/i],'Question');trySet('gsdbACol',[/gold/i,/answer/i,/expected/i,/correct/i],'Gold_Answer');trySet('gsdbPCol',[/persona/i,/role/i,/user.?type/i],'Persona');const perCol=document.getElementById('gsdbPCol').value.trim()||'Persona';gsdbPersonas=new Set(gsdbData.map(r=>String(r[perCol]||'')).filter(Boolean));document.getElementById('gsdbDetectedPersonas').textContent=gsdbPersonas.size?[...gsdbPersonas].join(', '):'None detected';renderGSDBPersonaChips();document.getElementById('gsdbStep2').style.display='block';document.getElementById('gsdbStep3').style.display='block';}catch(e){alert('Error: '+e.message);}}
+function renderGSDBPersonaChips(){document.getElementById('gsdbPersonaChips').innerHTML=[...gsdbPersonas].map(p=>`<span class="persona-chip">${esc(p)}<button class="pc-rm" onclick="removeGSDBPersona(${JSON.stringify(p)})">✕</button></span>`).join('');}
+function addGSDBPersona(){const val=document.getElementById('gsdbPersonaInput').value.trim();if(!val)return;gsdbPersonas.add(val);renderGSDBPersonaChips();document.getElementById('gsdbPersonaInput').value='';}
+function removeGSDBPersona(p){gsdbPersonas.delete(p);renderGSDBPersonaChips();}
+window.removeGSDBPersona=removeGSDBPersona;
+function downloadGSDBTemplate(){if(!gsdbData.length){alert('Upload GSDB first.');return;}const qC=document.getElementById('gsdbQCol').value.trim()||'Question';const personas=gsdbPersonas.size?[...gsdbPersonas]:[''];const rows=[];gsdbData.forEach(r=>{personas.forEach(persona=>{rows.push({'#':rows.length+1,Question:r[qC]||'',Persona:persona,AI_Response:''});});});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'GSDB Questions');XLSX.writeFile(wb,`gsdb-template-${new Date().toISOString().slice(0,10)}.xlsx`);alert(`✅ Template downloaded — ${rows.length} rows`);}
+async function loadGSDBResponses(file){if(!file)return;try{gsdbResponses=await readSpreadsheet(file);const h=Object.keys(gsdbResponses[0]||{});setFileInfo('gsdbRespInfo',`✓ ${file.name} — ${gsdbResponses.length} response rows`);}catch(e){alert('Error: '+e.message);}}
+function computeGSDBMetrics(){if(!gsdbData.length){alert('Upload GSDB first.');return;}if(!gsdbResponses.length){alert('Upload AI responses first.');return;}const qC=document.getElementById('gsdbQCol').value.trim()||'Question',aC=document.getElementById('gsdbACol').value.trim()||'Gold_Answer',perC=document.getElementById('gsdbPCol').value.trim()||'Persona';const h=Object.keys(gsdbResponses[0]||{});const rC=h.find(c=>/llm_response|ai_response|slm_response|response|output|answer/i.test(c))||h[h.length-1];const goldMap={};gsdbData.forEach(r=>{goldMap[String(r[qC]||'').trim().toLowerCase()]=String(r[aC]||'');});const results=gsdbResponses.map((resp,i)=>{const q=String(resp[qC]||resp[h[1]]||'').trim();const gold=goldMap[q.toLowerCase()]||'';const hyp=String(resp[rC]||'');const persona=String(resp[perC]||resp['Persona']||'');const m=compute13Metrics(hyp,gold,null,null,null);return{question:q,gold,hyp,persona,...m};});const avg=key=>Math.round(results.reduce((s,r)=>s+(r[key]||0),0)/results.length);const tiles=[{label:'ROUGE-1',val:avg('rouge1'),desc:'Word match vs gold answer'},{label:'ROUGE-L',val:avg('rougeL'),desc:'Sequence match vs gold'},{label:'F1 Score',val:avg('f1'),desc:'Precision × Recall'},{label:'Faithfulness',val:avg('faithfulness'),desc:'Groundedness score'},{label:'BLEU',val:avg('bleu'),desc:'N-gram precision'},{label:'Accuracy',val:avg('accuracy'),desc:'Correctness estimate'},{label:'Overall',val:avg('overall'),desc:'Weighted composite score'}];const personaGroups={};results.forEach(r=>{if(!personaGroups[r.persona||'—'])personaGroups[r.persona||'—']=[];personaGroups[r.persona||'—'].push(r);});const personaTiles=Object.entries(personaGroups).map(([persona,rows])=>{const pavg=key=>Math.round(rows.reduce((s,r)=>s+(r[key]||0),0)/rows.length);return metricTile(`${persona} (${rows.length})`,pavg('overall'),'Overall score for this persona');}).join('');document.getElementById('gsdbMetricTiles').innerHTML=tiles.map(m=>metricTile(m.label,m.val,m.desc)).join('')+(Object.keys(personaGroups).length>1?`<div style="grid-column:1/-1;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding-top:8px">Per-Persona Overall</div>${personaTiles}`:'');show('gsdbMetricGrid');document.getElementById('gsdbTableBody').innerHTML=results.map((r,i)=>`<tr><td>${i+1}</td><td><span class="tag tag-blue">${esc(r.persona||'—')}</span></td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.question)}">${esc(r.question.substring(0,55))}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.gold)}">${esc(r.gold.substring(0,50))}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.hyp)}">${esc(r.hyp.substring(0,50))}</td><td>${r.rouge1}%</td><td>${r.rougeL}%</td><td>${r.f1}%</td><td><span class="tag ${r.overall>=70?'tag-green':r.overall>=40?'tag-amber':'tag-red'}">${r.overall}%</span></td></tr>`).join('');show('gsdbTableWrap');window._gsdbResults={results,tiles};}
+function downloadGSDBReport(){if(!window._gsdbResults){alert('Compute metrics first.');return;}const{results,tiles}=window._gsdbResults;const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Metric','Score'],...tiles.map(t=>[t.label,t.val+'%'])]),'GSDB Summary');const rowData=results.map((r,i)=>({'#':i+1,Persona:r.persona,Question:r.question,Gold_Answer:r.gold,AI_Response:r.hyp,'ROUGE-1':r.rouge1+'%','ROUGE-L':r.rougeL+'%','F1':r.f1+'%','Overall':r.overall+'%'}));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rowData),'Row Level');XLSX.writeFile(wb,`gsdb-evaluation-${new Date().toISOString().slice(0,10)}.xlsx`);}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+renderGsDB();
+renderArchive();
+
+// ── Auto-load from Workspace batch run ──────────────────────
+(function autoLoadPending() {
+  try {
+    const raw = localStorage.getItem('hitl_pending_batch');
+    if (!raw) return;
+    const payload = JSON.parse(raw);
+    if (!payload?.results?.length) return;
+    if (payload.inCol)   document.getElementById('reviewQCol').value  = payload.inCol;
+    if (payload.outCol)  document.getElementById('reviewACol').value  = payload.outCol;
+    if (payload.expCol)  document.getElementById('reviewExpCol').value= payload.expCol;
+    if (payload.slmName) document.getElementById('reviewSlmName').value = payload.slmName;
+    setFileInfo('reviewFileInfo', `✓ Auto-loaded from Workspace — ${payload.results.length} rows · ${new Date(payload.timestamp).toLocaleString()}`);
+    _rawReviewData = payload.results;
+    populateReview(payload.results, payload.inCol||'', payload.outCol||'');
+    localStorage.removeItem('hitl_pending_batch');
+    // Show handoff banner
+    const banner = document.getElementById('handoffBanner');
+    const title  = document.getElementById('handoffTitle');
+    const sub    = document.getElementById('handoffSub');
+    if (banner) {
+      title.textContent = `✓ ${payload.results.length} responses loaded from "${payload.slmName||'Workspace'}"`;
+      sub.textContent   = `Review each AI response below. Judge whether it hallucinated, whether it was complete, and provide the correct answer where needed. Your progress saves automatically.`;
+      banner.classList.add('show');
+    }
+  } catch(e) { console.warn('Auto-load failed:', e); }
+})();
+
+// ── Resume saved session ────────────────────────────────────
+(function resumeSession() {
+  try {
+    const raw = localStorage.getItem('hitl_review_progress');
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved?.items?.length) return;
+    // Only resume if auto-load didn't already populate
+    if (reviewItems.length > 0) return;
+    const age = Date.now() - (saved.savedAt||0);
+    if (age > 24*3600*1000) { localStorage.removeItem('hitl_review_progress'); return; } // expire after 24h
+    reviewItems = saved.items;
+    const submitted = reviewItems.filter(r=>r.submitted).length;
+    // Show resume banner
+    const banner = document.getElementById('resumeBanner');
+    const text   = document.getElementById('resumeText');
+    if (banner) {
+      text.textContent = `${submitted} of ${reviewItems.length} rows already submitted — picking up where you left off.`;
+      banner.classList.add('show');
+    }
+    // Restore UI
+    document.getElementById('reviewNotice').style.display  = 'none';
+    document.getElementById('evalLegend').style.display    = 'block';
+    document.getElementById('reviewProgress').style.display = 'block';
+    document.getElementById('reviewFilters').style.display  = 'flex';
+    renderReview(); updateReviewStats(); updateSubmitGate();
+    // Unlock partial download if applicable
+    if (submitted > 0) {
+      const dlBtn = document.getElementById('reviewDlBtn');
+      if (dlBtn) { dlBtn.style.display='inline-flex'; dlBtn.textContent=`⬇ Download Reviewed Rows (${submitted} of ${reviewItems.length})`; }
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
